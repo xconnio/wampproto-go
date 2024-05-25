@@ -21,8 +21,8 @@ type ValidationSpec struct {
 type Fields struct {
 	RequestID int64
 	URI       string
-	Args      []interface{}
-	KwArgs    map[string]interface{}
+	Args      []any
+	KwArgs    map[string]any
 
 	SessionID int64
 
@@ -88,7 +88,12 @@ func validateMap(wampMsg []any, index int) (map[string]any, error) {
 	return item, nil
 }
 
-func ValidateArguments(wampMsg []any, index int, fields *Fields) error {
+func ValidateArgs(wampMsg []any, index int, fields *Fields) error {
+	// Ignore if Args item doesn't exist
+	if index >= len(wampMsg) {
+		return nil
+	}
+
 	data, err := validateSlice(wampMsg, index)
 	if err != nil {
 		return err
@@ -118,7 +123,12 @@ func ValidateDetails(wampMsg []any, index int, fields *Fields) error {
 	return nil
 }
 
-func ValidateKwArguments(wampMsg []any, index int, fields *Fields) error {
+func ValidateKwArgs(wampMsg []any, index int, fields *Fields) error {
+	// Ignore if KwArgs item doesn't exist
+	if index >= len(wampMsg) {
+		return nil
+	}
+
 	data, err := validateMap(wampMsg, index)
 	if err != nil {
 		return err

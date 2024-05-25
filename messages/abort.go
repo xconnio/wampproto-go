@@ -7,11 +7,13 @@ const MessageNameAbort = "ABORT"
 
 var abortValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	MinLength: 3,
-	MaxLength: 3,
+	MaxLength: 5,
 	Message:   MessageNameAbort,
 	Spec: Spec{
 		1: ValidateDetails,
 		2: ValidateReason,
+		3: ValidateArgs,
+		4: ValidateKwArgs,
 	},
 }
 
@@ -50,7 +52,21 @@ func (a *abort) Parse(wampMsg []any) error {
 }
 
 func (a *abort) Marshal() []any {
-	return []any{MessageTypeAbort, a.details, a.reason}
+	payload := []any{MessageTypeAbort, a.details, a.reason}
+
+	if a.args != nil {
+		payload = append(payload, a.args)
+	}
+
+	if a.kwArgs != nil {
+		if a.args == nil {
+			payload = append(payload, a.args)
+		}
+
+		payload = append(payload, a.kwArgs)
+	}
+
+	return payload
 }
 
 func (a *abort) Details() map[string]any {
@@ -74,6 +90,10 @@ func NewEmptyAbort() Abort {
 }
 
 func NewAbort(details map[string]any, reason string, args []any, KwArgs map[string]any) Abort {
+	if KwArgs != nil && args == nil {
+		args = []any{}
+	}
+
 	return &abort{
 		details: details,
 		reason:  reason,

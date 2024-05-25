@@ -1,15 +1,27 @@
 package messages
 
+import "fmt"
+
 const MessageTypeAbort = 3
 const MessageNameAbort = "ABORT"
+
+var abortValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
+	MinLength: 3,
+	MaxLength: 3,
+	Message:   MessageNameAbort,
+	Spec: Spec{
+		1: ValidateDetails,
+		2: ValidateReason,
+	},
+}
 
 type Abort interface {
 	Message
 
 	Details() map[string]any
 	Reason() string
-	Arguments() []any
-	KwArguments() map[string]any
+	Args() []any
+	KwArgs() map[string]any
 }
 
 type abort struct {
@@ -24,7 +36,17 @@ func (a *abort) Type() int {
 }
 
 func (a *abort) Parse(wampMsg []any) error {
-	panic("implement me")
+	fields, err := ValidateMessage(wampMsg, abortValidationSpec)
+	if err != nil {
+		return fmt.Errorf("abort: failed to validate message %s: %w", MessageNameAbort, err)
+	}
+
+	a.details = fields.Details
+	a.reason = fields.Reason
+	a.args = fields.Args
+	a.kwArgs = fields.KwArgs
+
+	return nil
 }
 
 func (a *abort) Marshal() []any {
@@ -39,11 +61,11 @@ func (a *abort) Reason() string {
 	return a.reason
 }
 
-func (a *abort) Arguments() []any {
+func (a *abort) Args() []any {
 	return a.args
 }
 
-func (a *abort) KwArguments() map[string]any {
+func (a *abort) KwArgs() map[string]any {
 	return a.kwArgs
 }
 

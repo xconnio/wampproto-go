@@ -8,10 +8,19 @@ import (
 
 func ToMessage(wampMsg []any) (messages.Message, error) {
 	messageType, _ := AsInt64(wampMsg[0])
+	var msg messages.Message
 	switch messageType {
+	case messages.MessageTypeAbort:
+		msg = messages.NewEmptyAbort()
 	default:
 		return nil, fmt.Errorf("unknown message %T", wampMsg[0])
 	}
+
+	if err := msg.Parse(wampMsg); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }
 
 func AsInt64(i interface{}) (int64, bool) {

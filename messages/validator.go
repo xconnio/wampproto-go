@@ -142,6 +142,16 @@ func ValidateRealm(wampMsg []any, index int, fields *Fields) error {
 	return nil
 }
 
+func ValidateAuthMethod(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateString(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.AuthMethod = data
+	return nil
+}
+
 func ValidateReason(wampMsg []any, index int, fields *Fields) error {
 	data, err := validateString(wampMsg, index)
 	if err != nil {

@@ -6,6 +6,8 @@ require (
 	github.com/fxamacker/cbor/v2 v2.6.0
 	github.com/stretchr/testify v1.6.1
 	github.com/vmihailenco/msgpack/v5 v5.4.1
+	golang.org/x/crypto v0.23.0
+	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d
 )
 
 require (

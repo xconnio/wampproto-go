@@ -122,6 +122,26 @@ func ValidateSessionID(wampMsg []any, index int, fields *Fields) error {
 	return nil
 }
 
+func ValidateRequestID(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateID(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.RequestID = data
+	return nil
+}
+
+func ValidateRegistrationID(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateID(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.RegistrationID = data
+	return nil
+}
+
 func ValidateSignature(wampMsg []any, index int, fields *Fields) error {
 	data, err := validateString(wampMsg, index)
 	if err != nil {
@@ -129,6 +149,16 @@ func ValidateSignature(wampMsg []any, index int, fields *Fields) error {
 	}
 
 	fields.Signature = data
+	return nil
+}
+
+func ValidateURI(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateString(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.URI = data
 	return nil
 }
 
@@ -169,6 +199,16 @@ func ValidateExtra(wampMsg []any, index int, fields *Fields) error {
 	}
 
 	fields.Extra = data
+	return nil
+}
+
+func ValidateOptions(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateMap(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.Options = data
 	return nil
 }
 

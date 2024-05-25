@@ -61,6 +61,15 @@ func sanityCheck(wampMsg []any, minLength, maxLength int) error {
 	return nil
 }
 
+func validateID(wampMsg []any, index int) (int64, error) {
+	item, ok := AsInt64(wampMsg[index])
+	if !ok {
+		return 0, fmt.Errorf(errString, index, "int64", wampMsg[index])
+	}
+
+	return item, nil
+}
+
 func validateString(wampMsg []any, index int) (string, error) {
 	item, ok := wampMsg[index].(string)
 	if !ok {
@@ -103,6 +112,46 @@ func ValidateArgs(wampMsg []any, index int, fields *Fields) error {
 	return nil
 }
 
+func ValidateSessionID(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateID(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.SessionID = data
+	return nil
+}
+
+func ValidateSignature(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateString(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.Signature = data
+	return nil
+}
+
+func ValidateRealm(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateString(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.Realm = data
+	return nil
+}
+
+func ValidateAuthMethod(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateString(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.AuthMethod = data
+	return nil
+}
+
 func ValidateReason(wampMsg []any, index int, fields *Fields) error {
 	data, err := validateString(wampMsg, index)
 	if err != nil {
@@ -110,6 +159,16 @@ func ValidateReason(wampMsg []any, index int, fields *Fields) error {
 	}
 
 	fields.Reason = data
+	return nil
+}
+
+func ValidateExtra(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateMap(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.Extra = data
 	return nil
 }
 

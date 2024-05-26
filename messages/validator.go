@@ -152,6 +152,26 @@ func ValidateRegistrationID(wampMsg []any, index int, fields *Fields) error {
 	return nil
 }
 
+func ValidatePublicationID(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateID(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.PublicationID = data
+	return nil
+}
+
+func ValidateSubscriptionID(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateID(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.SubscriptionID = data
+	return nil
+}
+
 func ValidateSignature(wampMsg []any, index int, fields *Fields) error {
 	data, err := validateString(wampMsg, index)
 	if err != nil {

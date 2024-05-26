@@ -37,8 +37,7 @@ func NewEmptyResult() Result {
 	return &resultMsg{}
 }
 
-func NewResult(requestID int64, details map[string]any, procedure string, args []any,
-	kwArgs map[string]any) Result {
+func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[string]any) Result {
 	return &resultMsg{
 		requestID: requestID,
 		details:   details,

@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnSubscribe = 32
+const MessageTypeUnSubscribe = 33
 const MessageNameUnSubscribe = "UNSUBSCRIBE"
 
 var unSubscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals

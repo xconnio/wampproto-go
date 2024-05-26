@@ -12,7 +12,6 @@ var resultValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	Spec: Spec{
 		1: ValidateRequestID,
 		2: ValidateDetails,
-		3: ValidateURI,
 		4: ValidateArgs,
 		5: ValidateKwArgs,
 	},
@@ -23,7 +22,6 @@ type Result interface {
 
 	RequestID() int64
 	Details() map[string]any
-	Procedure() string
 	Args() []any
 	KwArgs() map[string]any
 }
@@ -31,7 +29,6 @@ type Result interface {
 type resultMsg struct {
 	requestID int64
 	details   map[string]any
-	procedure string
 	args      []any
 	kwArgs    map[string]any
 }
@@ -45,7 +42,6 @@ func NewResult(requestID int64, details map[string]any, procedure string, args [
 	return &resultMsg{
 		requestID: requestID,
 		details:   details,
-		procedure: procedure,
 		args:      args,
 		kwArgs:    kwArgs,
 	}
@@ -57,10 +53,6 @@ func (e *resultMsg) RequestID() int64 {
 
 func (e *resultMsg) Details() map[string]any {
 	return e.details
-}
-
-func (e *resultMsg) Procedure() string {
-	return e.procedure
 }
 
 func (e *resultMsg) Args() []any {
@@ -83,7 +75,6 @@ func (e *resultMsg) Parse(wampMsg []any) error {
 
 	e.requestID = fields.RequestID
 	e.details = fields.Details
-	e.procedure = fields.URI
 	e.args = fields.Args
 	e.kwArgs = fields.KwArgs
 
@@ -91,7 +82,7 @@ func (e *resultMsg) Parse(wampMsg []any) error {
 }
 
 func (e *resultMsg) Marshal() []any {
-	result := []any{MessageTypeResult, e.requestID, e.details, e.procedure}
+	result := []any{MessageTypeResult, e.requestID, e.details}
 
 	if e.args != nil {
 		result = append(result, e.args)

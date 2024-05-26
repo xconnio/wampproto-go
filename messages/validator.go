@@ -34,7 +34,7 @@ type Fields struct {
 	AuthExtra   map[string]any
 	Roles       map[string]any
 
-	MessageType int
+	MessageType int64
 	Signature   string
 	Reason      string
 	Topic       string
@@ -119,6 +119,16 @@ func ValidateSessionID(wampMsg []any, index int, fields *Fields) error {
 	}
 
 	fields.SessionID = data
+	return nil
+}
+
+func ValidateMessageType(wampMsg []any, index int, fields *Fields) error {
+	data, err := validateID(wampMsg, index)
+	if err != nil {
+		return err
+	}
+
+	fields.MessageType = data
 	return nil
 }
 

@@ -1,6 +1,8 @@
 package messages
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const MessageTypeInvocation = 68
 const MessageNameInvocation = "INVOCATION"
@@ -22,32 +24,32 @@ type Invocation interface {
 	Message
 
 	RequestID() int64
+	RegistrationID() int64
 	Details() map[string]any
-	Procedure() string
 	Args() []any
 	KwArgs() map[string]any
 }
 
 type invocation struct {
-	requestID int64
-	details   map[string]any
-	procedure string
-	args      []any
-	kwArgs    map[string]any
+	requestID      int64
+	registrationID int64
+	details        map[string]any
+	args           []any
+	kwArgs         map[string]any
 }
 
 func NewEmptyInvocation() Invocation {
 	return &invocation{}
 }
 
-func NewInvocation(requestID int64, details map[string]any, procedure string, args []any,
+func NewInvocation(requestID, registrationID int64, details map[string]any, args []any,
 	kwArgs map[string]any) Invocation {
 	return &invocation{
-		requestID: requestID,
-		details:   details,
-		procedure: procedure,
-		args:      args,
-		kwArgs:    kwArgs,
+		requestID:      requestID,
+		registrationID: registrationID,
+		details:        details,
+		args:           args,
+		kwArgs:         kwArgs,
 	}
 }
 
@@ -59,8 +61,8 @@ func (e *invocation) Details() map[string]any {
 	return e.details
 }
 
-func (e *invocation) Procedure() string {
-	return e.procedure
+func (e *invocation) RegistrationID() int64 {
+	return e.registrationID
 }
 
 func (e *invocation) Args() []any {
@@ -82,8 +84,8 @@ func (e *invocation) Parse(wampMsg []any) error {
 	}
 
 	e.requestID = fields.RequestID
+	e.registrationID = fields.RegistrationID
 	e.details = fields.Details
-	e.procedure = fields.URI
 	e.args = fields.Args
 	e.kwArgs = fields.KwArgs
 
@@ -91,7 +93,7 @@ func (e *invocation) Parse(wampMsg []any) error {
 }
 
 func (e *invocation) Marshal() []any {
-	result := []any{MessageTypeInvocation, e.requestID, e.details, e.procedure}
+	result := []any{MessageTypeInvocation, e.requestID, e.registrationID, e.details}
 
 	if e.args != nil {
 		result = append(result, e.args)

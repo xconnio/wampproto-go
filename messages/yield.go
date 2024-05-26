@@ -6,13 +6,12 @@ const MessageTypeYield = 70
 const MessageNameYield = "YIELD"
 
 var yieldValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
-	MinLength: 4,
-	MaxLength: 6,
+	MinLength: 3,
+	MaxLength: 5,
 	Message:   MessageNameYield,
 	Spec: Spec{
 		1: ValidateRequestID,
 		2: ValidateOptions,
-		3: ValidateURI,
 		4: ValidateArgs,
 		5: ValidateKwArgs,
 	},
@@ -23,7 +22,6 @@ type Yield interface {
 
 	RequestID() int64
 	Options() map[string]any
-	Procedure() string
 	Args() []any
 	KwArgs() map[string]any
 }
@@ -31,7 +29,6 @@ type Yield interface {
 type yield struct {
 	requestID int64
 	options   map[string]any
-	procedure string
 	args      []any
 	kwArgs    map[string]any
 }
@@ -44,7 +41,6 @@ func NewYield(requestID int64, options map[string]any, procedure string, args []
 	return &yield{
 		requestID: requestID,
 		options:   options,
-		procedure: procedure,
 		args:      args,
 		kwArgs:    kwArgs,
 	}
@@ -56,10 +52,6 @@ func (e *yield) RequestID() int64 {
 
 func (e *yield) Options() map[string]any {
 	return e.options
-}
-
-func (e *yield) Procedure() string {
-	return e.procedure
 }
 
 func (e *yield) Args() []any {
@@ -82,7 +74,6 @@ func (e *yield) Parse(wampMsg []any) error {
 
 	e.requestID = fields.RequestID
 	e.options = fields.Options
-	e.procedure = fields.URI
 	e.args = fields.Args
 	e.kwArgs = fields.KwArgs
 
@@ -90,7 +81,7 @@ func (e *yield) Parse(wampMsg []any) error {
 }
 
 func (e *yield) Marshal() []any {
-	result := []any{MessageTypeYield, e.requestID, e.options, e.procedure}
+	result := []any{MessageTypeYield, e.requestID, e.options}
 
 	if e.args != nil {
 		result = append(result, e.args)

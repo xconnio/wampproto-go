@@ -17,87 +17,84 @@ var abortValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Abort interface {
-	Message
-
+type AbortFields interface {
 	Details() map[string]any
 	Reason() string
 	Args() []any
 	KwArgs() map[string]any
 }
 
-type abort struct {
+type abortFields struct {
 	details map[string]any
 	reason  string
 	args    []any
 	kwArgs  map[string]any
 }
 
-func (a *abort) Type() int {
-	return MessageTypeAbort
-}
-
-func (a *abort) Parse(wampMsg []any) error {
-	fields, err := ValidateMessage(wampMsg, abortValidationSpec)
-	if err != nil {
-		return fmt.Errorf("abort: failed to validate message %s: %w", MessageNameAbort, err)
-	}
-
-	a.details = fields.Details
-	a.reason = fields.Reason
-	a.args = fields.Args
-	a.kwArgs = fields.KwArgs
-
-	return nil
-}
-
-func (a *abort) Marshal() []any {
-	payload := []any{MessageTypeAbort, a.details, a.reason}
-
-	if a.args != nil {
-		payload = append(payload, a.args)
-	}
-
-	if a.kwArgs != nil {
-		if a.args == nil {
-			payload = append(payload, a.args)
-		}
-
-		payload = append(payload, a.kwArgs)
-	}
-
-	return payload
-}
-
-func (a *abort) Details() map[string]any {
-	return a.details
-}
-
-func (a *abort) Reason() string {
-	return a.reason
-}
-
-func (a *abort) Args() []any {
-	return a.args
-}
-
-func (a *abort) KwArgs() map[string]any {
-	return a.kwArgs
-}
-
-func NewEmptyAbort() Abort {
-	return &abort{}
-}
-
-func NewAbort(details map[string]any, reason string, args []any, KwArgs map[string]any) Abort {
-	if KwArgs != nil && args == nil {
-		args = []any{}
-	}
-
-	return &abort{
+func NewAbortFields(details map[string]any, reason string, args []any, KwArgs map[string]any) AbortFields {
+	return &abortFields{
 		details: details,
 		reason:  reason,
 		args:    args,
 		kwArgs:  KwArgs,
 	}
+}
+
+func (a *abortFields) Details() map[string]any {
+	return a.details
+}
+
+func (a *abortFields) Reason() string {
+	return a.reason
+}
+
+func (a *abortFields) Args() []any {
+	return a.args
+}
+
+func (a *abortFields) KwArgs() map[string]any {
+	return a.kwArgs
+}
+
+type Abort struct {
+	AbortFields
+}
+
+func NewAbort(fields AbortFields) *Abort {
+	return &Abort{
+		AbortFields: fields,
+	}
+}
+
+func (a *Abort) Type() int {
+	return MessageTypeAbort
+}
+
+func (a *Abort) Parse(wampMsg []any) error {
+	fields, err := ValidateMessage(wampMsg, abortValidationSpec)
+	if err != nil {
+		return fmt.Errorf("abort: failed to validate message %s: %w", MessageNameAbort, err)
+	}
+
+	a.AbortFields = NewAbortFields(fields.Details, fields.Reason, fields.Args, fields.KwArgs)
+
+	return nil
+}
+
+func (a *Abort) Marshal() []any {
+	payload := []any{MessageTypeAbort, a.Details(), a.Reason()}
+
+	if a.Args() != nil {
+		payload = append(payload, a.Args())
+	}
+
+	if a.KwArgs() != nil {
+		if a.Args() == nil {
+			payload = append(payload, a.Args())
+		}
+
+		payload = append(payload, a.KwArgs())
+	}
+
+	return payload
 }

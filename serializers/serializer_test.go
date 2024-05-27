@@ -12,9 +12,9 @@ import (
 func serializeDeserialize(t *testing.T, serializer serializers.Serializer) {
 	details := map[string]any{}
 	reason := "hello"
-	var args []any
+	args := []any{}
 	kwArgs := map[string]any{}
-	message := messages.NewAbort(details, reason, args, kwArgs)
+	message := messages.NewAbort(messages.NewAbortFields(details, reason, args, kwArgs))
 
 	data, err := serializer.Serialize(message)
 	require.NoError(t, err)
@@ -23,7 +23,7 @@ func serializeDeserialize(t *testing.T, serializer serializers.Serializer) {
 	deserialized, err := serializer.Deserialize(data)
 	require.NoError(t, err)
 	require.NotNil(t, deserialized)
-	abort := deserialized.(messages.Abort)
+	abort := deserialized.(*messages.Abort)
 
 	require.Equal(t, message.Reason(), abort.Reason())
 	require.Equal(t, message.Args(), abort.Args())

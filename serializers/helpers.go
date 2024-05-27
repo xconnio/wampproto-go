@@ -11,7 +11,7 @@ func ToMessage(wampMsg []any) (messages.Message, error) {
 	var msg messages.Message
 	switch messageType {
 	case messages.MessageTypeAbort:
-		msg = messages.NewEmptyAbort()
+		msg = &messages.Abort{}
 	default:
 		return nil, fmt.Errorf("unknown message %T", wampMsg[0])
 	}

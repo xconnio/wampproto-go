@@ -18,9 +18,7 @@ var callValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Call interface {
-	Message
-
+type CallFields interface {
 	RequestID() int64
 	Options() map[string]any
 	Procedure() string
@@ -28,7 +26,7 @@ type Call interface {
 	KwArgs() map[string]any
 }
 
-type call struct {
+type callFields struct {
 	requestID int64
 	options   map[string]any
 	procedure string
@@ -36,12 +34,9 @@ type call struct {
 	kwArgs    map[string]any
 }
 
-func NewEmptyCall() Call {
-	return &call{}
-}
-
-func NewCall(requestID int64, options map[string]any, procedure string, args []any, kwArgs map[string]any) Call {
-	return &call{
+func NewCallFields(requestID int64, options map[string]any, procedure string, args []any,
+	kwArgs map[string]any) CallFields {
+	return &callFields{
 		requestID: requestID,
 		options:   options,
 		procedure: procedure,
@@ -50,58 +45,62 @@ func NewCall(requestID int64, options map[string]any, procedure string, args []a
 	}
 }
 
-func (e *call) RequestID() int64 {
+func (e *callFields) RequestID() int64 {
 	return e.requestID
 }
 
-func (e *call) Options() map[string]any {
+func (e *callFields) Options() map[string]any {
 	return e.options
 }
 
-func (e *call) Procedure() string {
+func (e *callFields) Procedure() string {
 	return e.procedure
 }
 
-func (e *call) Args() []any {
+func (e *callFields) Args() []any {
 	return e.args
 }
 
-func (e *call) KwArgs() map[string]any {
+func (e *callFields) KwArgs() map[string]any {
 	return e.kwArgs
 }
 
-func (e *call) Type() int {
+type Call struct {
+	CallFields
+}
+
+func NewCall(fields CallFields) *Call {
+	return &Call{CallFields: fields}
+}
+
+func (e *Call) Type() int {
 	return MessageTypeCall
 }
 
-func (e *call) Parse(wampMsg []any) error {
+func (e *Call) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, callValidationSpec)
 	if err != nil {
 		return fmt.Errorf("call: failed to validate message %s: %w", MessageNameCall, err)
 	}
 
-	e.requestID = fields.RequestID
-	e.options = fields.Options
-	e.procedure = fields.URI
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.CallFields = NewCallFields(fields.RequestID, fields.Options, fields.URI, fields.Args, fields.KwArgs)
 
 	return nil
 }
 
-func (e *call) Marshal() []any {
-	result := []any{MessageTypeCall, e.requestID, e.options, e.procedure}
+func (e *Call) Marshal() []any {
+	result := []any{MessageTypeCall, e.RequestID(), e.Options(), e.Procedure()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

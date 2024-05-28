@@ -53,17 +53,17 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 
 	switch msg.Type() {
 	case messages.MessageTypeCall:
-		call := msg.(messages.Call)
+		call := msg.(*messages.Call)
 		w.callRequests[call.RequestID()] = call.RequestID()
 
 		return data, nil
 	case messages.MessageTypeYield:
-		yield := msg.(messages.Yield)
+		yield := msg.(*messages.Yield)
 		delete(w.invocationRequests, yield.RequestID())
 
 		return data, nil
 	case messages.MessageTypeRegister:
-		register := msg.(messages.Register)
+		register := msg.(*messages.Register)
 		w.registerRequests[register.RequestID()] = register.RequestID()
 
 		return data, nil
@@ -121,7 +121,7 @@ func (w *Session) Receive(data []byte) (messages.Message, error) {
 func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error) {
 	switch msg.Type() {
 	case messages.MessageTypeResult:
-		result := msg.(messages.Result)
+		result := msg.(*messages.Result)
 		_, exists := w.callRequests[result.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received RESULT for invalid requestID")
@@ -130,7 +130,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		delete(w.callRequests, result.RequestID())
 		return result, nil
 	case messages.MessageTypeRegistered:
-		registered := msg.(messages.Registered)
+		registered := msg.(*messages.Registered)
 		_, exists := w.registerRequests[registered.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received REGISTERED for invalid requestID")
@@ -154,7 +154,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		delete(w.registrations, registrationID)
 		return unregistered, nil
 	case messages.MessageTypeInvocation:
-		invocation := msg.(messages.Invocation)
+		invocation := msg.(*messages.Invocation)
 		_, exists := w.registrations[invocation.RegistrationID()]
 		if !exists {
 			return nil, fmt.Errorf("received INVOCATION for invalid registrationID")

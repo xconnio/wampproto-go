@@ -17,28 +17,22 @@ var resultValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Result interface {
-	Message
-
+type ResultFields interface {
 	RequestID() int64
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
 }
 
-type resultMsg struct {
+type resultFields struct {
 	requestID int64
 	details   map[string]any
 	args      []any
 	kwArgs    map[string]any
 }
 
-func NewEmptyResult() Result {
-	return &resultMsg{}
-}
-
-func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[string]any) Result {
-	return &resultMsg{
+func NewResultFields(requestID int64, details map[string]any, args []any, kwArgs map[string]any) ResultFields {
+	return &resultFields{
 		requestID: requestID,
 		details:   details,
 		args:      args,
@@ -46,53 +40,58 @@ func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[s
 	}
 }
 
-func (e *resultMsg) RequestID() int64 {
+func (e *resultFields) RequestID() int64 {
 	return e.requestID
 }
 
-func (e *resultMsg) Details() map[string]any {
+func (e *resultFields) Details() map[string]any {
 	return e.details
 }
 
-func (e *resultMsg) Args() []any {
+func (e *resultFields) Args() []any {
 	return e.args
 }
 
-func (e *resultMsg) KwArgs() map[string]any {
+func (e *resultFields) KwArgs() map[string]any {
 	return e.kwArgs
 }
 
-func (e *resultMsg) Type() int {
+type Result struct {
+	ResultFields
+}
+
+func NewResult(field ResultFields) *Result {
+	return &Result{ResultFields: field}
+}
+
+func (e *Result) Type() int {
 	return MessageTypeResult
 }
 
-func (e *resultMsg) Parse(wampMsg []any) error {
+func (e *Result) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, resultValidationSpec)
 	if err != nil {
 		return fmt.Errorf("result: failed to validate message %s: %w", MessageNameResult, err)
 	}
 
-	e.requestID = fields.RequestID
-	e.details = fields.Details
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.ResultFields = NewResultFields(fields.RequestID, fields.Details, fields.Args, fields.KwArgs)
 
 	return nil
 }
 
-func (e *resultMsg) Marshal() []any {
-	result := []any{MessageTypeResult, e.requestID, e.details}
+func (e *Result) Marshal() []any {
+	result := []any{MessageTypeResult, e.RequestID(), e.Details()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

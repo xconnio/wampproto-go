@@ -17,28 +17,22 @@ var yieldValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Yield interface {
-	Message
-
+type YieldFields interface {
 	RequestID() int64
 	Options() map[string]any
 	Args() []any
 	KwArgs() map[string]any
 }
 
-type yield struct {
+type yieldFields struct {
 	requestID int64
 	options   map[string]any
 	args      []any
 	kwArgs    map[string]any
 }
 
-func NewEmptyYield() Yield {
-	return &yield{}
-}
-
-func NewYield(requestID int64, options map[string]any, procedure string, args []any, kwArgs map[string]any) Yield {
-	return &yield{
+func NewYieldFields(requestID int64, options map[string]any, args []any, kwArgs map[string]any) YieldFields {
+	return &yieldFields{
 		requestID: requestID,
 		options:   options,
 		args:      args,
@@ -46,53 +40,58 @@ func NewYield(requestID int64, options map[string]any, procedure string, args []
 	}
 }
 
-func (e *yield) RequestID() int64 {
+func (e *yieldFields) RequestID() int64 {
 	return e.requestID
 }
 
-func (e *yield) Options() map[string]any {
+func (e *yieldFields) Options() map[string]any {
 	return e.options
 }
 
-func (e *yield) Args() []any {
+func (e *yieldFields) Args() []any {
 	return e.args
 }
 
-func (e *yield) KwArgs() map[string]any {
+func (e *yieldFields) KwArgs() map[string]any {
 	return e.kwArgs
 }
 
-func (e *yield) Type() int {
+type Yield struct {
+	YieldFields
+}
+
+func NewYield(fields YieldFields) *Yield {
+	return &Yield{YieldFields: fields}
+}
+
+func (e *Yield) Type() int {
 	return MessageTypeYield
 }
 
-func (e *yield) Parse(wampMsg []any) error {
+func (e *Yield) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, yieldValidationSpec)
 	if err != nil {
 		return fmt.Errorf("yield: failed to validate message %s: %w", MessageNameYield, err)
 	}
 
-	e.requestID = fields.RequestID
-	e.options = fields.Options
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.YieldFields = NewYieldFields(fields.RequestID, fields.Options, fields.Args, fields.KwArgs)
 
 	return nil
 }
 
-func (e *yield) Marshal() []any {
-	result := []any{MessageTypeYield, e.requestID, e.options}
+func (e *Yield) Marshal() []any {
+	result := []any{MessageTypeYield, e.RequestID(), e.Options()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

@@ -20,9 +20,7 @@ var invocationValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Invocation interface {
-	Message
-
+type InvocationFields interface {
 	RequestID() int64
 	RegistrationID() int64
 	Details() map[string]any
@@ -30,7 +28,7 @@ type Invocation interface {
 	KwArgs() map[string]any
 }
 
-type invocation struct {
+type invocationFields struct {
 	requestID      int64
 	registrationID int64
 	details        map[string]any
@@ -38,13 +36,9 @@ type invocation struct {
 	kwArgs         map[string]any
 }
 
-func NewEmptyInvocation() Invocation {
-	return &invocation{}
-}
-
-func NewInvocation(requestID, registrationID int64, details map[string]any, args []any,
-	kwArgs map[string]any) Invocation {
-	return &invocation{
+func NewInvocationFields(requestID, registrationID int64, details map[string]any, args []any,
+	kwArgs map[string]any) InvocationFields {
+	return &invocationFields{
 		requestID:      requestID,
 		registrationID: registrationID,
 		details:        details,
@@ -53,58 +47,63 @@ func NewInvocation(requestID, registrationID int64, details map[string]any, args
 	}
 }
 
-func (e *invocation) RequestID() int64 {
+func (e *invocationFields) RequestID() int64 {
 	return e.requestID
 }
 
-func (e *invocation) Details() map[string]any {
+func (e *invocationFields) Details() map[string]any {
 	return e.details
 }
 
-func (e *invocation) RegistrationID() int64 {
+func (e *invocationFields) RegistrationID() int64 {
 	return e.registrationID
 }
 
-func (e *invocation) Args() []any {
+func (e *invocationFields) Args() []any {
 	return e.args
 }
 
-func (e *invocation) KwArgs() map[string]any {
+func (e *invocationFields) KwArgs() map[string]any {
 	return e.kwArgs
 }
 
-func (e *invocation) Type() int {
+type Invocation struct {
+	InvocationFields
+}
+
+func NewInvocation(fields InvocationFields) *Invocation {
+	return &Invocation{InvocationFields: fields}
+}
+
+func (e *Invocation) Type() int {
 	return MessageTypeInvocation
 }
 
-func (e *invocation) Parse(wampMsg []any) error {
+func (e *Invocation) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, invocationValidationSpec)
 	if err != nil {
-		return fmt.Errorf("invocation: failed to validate message %s: %w", MessageNameInvocation, err)
+		return fmt.Errorf("invocationFields: failed to validate message %s: %w", MessageNameInvocation, err)
 	}
 
-	e.requestID = fields.RequestID
-	e.registrationID = fields.RegistrationID
-	e.details = fields.Details
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.InvocationFields = NewInvocationFields(fields.RequestID, fields.RegistrationID, fields.Details, fields.Args,
+		fields.KwArgs)
 
 	return nil
 }
 
-func (e *invocation) Marshal() []any {
-	result := []any{MessageTypeInvocation, e.requestID, e.registrationID, e.details}
+func (e *Invocation) Marshal() []any {
+	result := []any{MessageTypeInvocation, e.RequestID(), e.RegistrationID(), e.Details()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

@@ -63,7 +63,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 
 		return data, nil
 	case messages.MessageTypeRegister:
-		register := msg.(messages.Register)
+		register := msg.(*messages.Register)
 		w.registerRequests[register.RequestID()] = register.RequestID()
 
 		return data, nil
@@ -130,7 +130,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		delete(w.callRequests, result.RequestID())
 		return result, nil
 	case messages.MessageTypeRegistered:
-		registered := msg.(messages.Registered)
+		registered := msg.(*messages.Registered)
 		_, exists := w.registerRequests[registered.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received REGISTERED for invalid requestID")

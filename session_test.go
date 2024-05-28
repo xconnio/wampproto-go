@@ -12,13 +12,13 @@ import (
 
 func registerProc(t *testing.T, callee *wampproto.Session, uri string) {
 	// send register message
-	register := messages.NewRegister(1, nil, uri)
+	register := messages.NewRegister(messages.NewRegisterFields(1, nil, uri))
 	payload, err := callee.SendMessage(register)
 	require.NoError(t, err)
 	require.NotNil(t, payload)
 
 	// confirm registration
-	registered := messages.NewRegistered(1, 1)
+	registered := messages.NewRegistered(messages.NewRegisteredFields(1, 1))
 	reg, err := callee.ReceiveMessage(registered)
 	require.NoError(t, err)
 	require.NotNil(t, reg)

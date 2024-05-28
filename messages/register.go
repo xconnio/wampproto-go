@@ -16,61 +16,61 @@ var registerValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Register interface {
-	Message
-
+type RegisterFields interface {
 	RequestID() int64
 	Options() map[string]any
 	Procedure() string
 }
 
-type register struct {
+type registerFields struct {
 	requestID int64
 	options   map[string]any
 	procedure string
 }
 
-func NewEmptyRegister() Register {
-	return &register{}
-}
-
-func NewRegister(requestID int64, options map[string]any, uri string) Register {
-	return &register{
+func NewRegisterFields(requestID int64, options map[string]any, uri string) RegisterFields {
+	return &registerFields{
 		requestID: requestID,
 		options:   options,
 		procedure: uri,
 	}
 }
 
-func (r *register) Type() int {
+func (r *registerFields) RequestID() int64 {
+	return r.requestID
+}
+
+func (r *registerFields) Options() map[string]any {
+	return r.options
+}
+
+func (r *registerFields) Procedure() string {
+	return r.procedure
+}
+
+type Register struct {
+	RegisterFields
+}
+
+func NewRegister(fields RegisterFields) *Register {
+	return &Register{RegisterFields: fields}
+}
+
+func (r *Register) Type() int {
 	return MessageTypeRegister
 }
 
-func (r *register) Parse(wampMsg []any) error {
+func (r *Register) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, registerValidationSpec)
 	if err != nil {
-		return fmt.Errorf("register: failed to validate message %s: %w", MessageNameRegister, err)
+		return fmt.Errorf("registerFields: failed to validate message %s: %w", MessageNameRegister, err)
 	}
 
-	r.requestID = fields.SessionID
-	r.options = fields.Options
-	r.procedure = fields.URI
+	r.RegisterFields = NewRegisterFields(fields.SessionID, fields.Options, fields.URI)
 
 	return nil
 }
 
-func (r *register) Marshal() []any {
-	return []any{MessageTypeRegister, r.requestID, r.options, r.procedure}
-}
-
-func (r *register) RequestID() int64 {
-	return r.requestID
-}
-
-func (r *register) Options() map[string]any {
-	return r.options
-}
-
-func (r *register) Procedure() string {
-	return r.procedure
+func (r *Register) Marshal() []any {
+	return []any{MessageTypeRegister, r.RequestID(), r.Options(), r.Procedure()}
 }

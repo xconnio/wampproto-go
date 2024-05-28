@@ -27,19 +27,19 @@ func registerProc(t *testing.T, callee *wampproto.Session, uri string) {
 func callProc(t *testing.T, caller, callee *wampproto.Session, uri string) {
 	callRequest := int64(2)
 
-	call := messages.NewCall(callRequest, nil, uri, nil, nil)
+	call := messages.NewCall(messages.NewCallFields(callRequest, nil, uri, nil, nil))
 	payload, err := caller.SendMessage(call)
 	require.NoError(t, err)
 	require.NotNil(t, payload)
 
 	// send invocation to the callee
-	invocation := messages.NewInvocation(callRequest, 1, nil, nil, nil)
+	invocation := messages.NewInvocation(messages.NewInvocationFields(callRequest, 1, nil, nil, nil))
 	toSend, err := callee.ReceiveMessage(invocation)
 	require.NoError(t, err)
 	require.NotNil(t, toSend)
 
 	// send yield to the caller
-	result := messages.NewResult(callRequest, nil, nil, nil)
+	result := messages.NewResult(messages.NewResultFields(callRequest, nil, nil, nil))
 	rslt, err := caller.ReceiveMessage(result)
 	require.NoError(t, err)
 	require.NotNil(t, rslt)

@@ -15,53 +15,54 @@ var registeredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Registered interface {
-	Message
-
+type RegisteredFields interface {
 	RequestID() int64
 	RegistrationID() int64
 }
 
-type registered struct {
+type registeredFields struct {
 	requestID      int64
 	registrationID int64
 }
 
-func NewEmptyRegistered() Registered {
-	return &registered{}
-}
-
-func NewRegistered(requestID, registrationID int64) Registered {
-	return &registered{
+func NewRegisteredFields(requestID, registrationID int64) RegisteredFields {
+	return &registeredFields{
 		requestID:      requestID,
 		registrationID: registrationID,
 	}
 }
 
-func (r *registered) Type() int {
+func (r *registeredFields) RequestID() int64 {
+	return r.requestID
+}
+
+func (r *registeredFields) RegistrationID() int64 {
+	return r.registrationID
+}
+
+type Registered struct {
+	RegisteredFields
+}
+
+func NewRegistered(fields RegisteredFields) *Registered {
+	return &Registered{RegisteredFields: fields}
+}
+
+func (r *Registered) Type() int {
 	return MessageTypeRegistered
 }
 
-func (r *registered) Parse(wampMsg []any) error {
+func (r *Registered) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, registeredValidationSpec)
 	if err != nil {
 		return fmt.Errorf("registered: failed to validate message %s: %w", MessageNameRegistered, err)
 	}
 
-	r.requestID = fields.RequestID
-	r.registrationID = fields.RegistrationID
+	r.RegisteredFields = NewRegisteredFields(fields.RequestID, fields.RegistrationID)
 
 	return nil
 }
 
-func (r *registered) Marshal() []any {
-	return []any{MessageTypeRegistered, r.requestID, r.registrationID}
-}
-
-func (r *registered) RequestID() int64 {
-	return r.requestID
-}
-
-func (r *registered) RegistrationID() int64 {
-	return r.registrationID
+func (r *Registered) Marshal() []any {
+	return []any{MessageTypeRegistered, r.RequestID(), r.RegistrationID()}
 }

@@ -44,10 +44,12 @@ type Published struct {
 	PublishedFields
 }
 
-func NewPublished(fields PublishedFields) *Published {
-	return &Published{
-		PublishedFields: fields,
-	}
+func NewPublishedWithFields(fields PublishedFields) *Published {
+	return &Published{PublishedFields: fields}
+}
+
+func NewPublished(requestID, publicationID int64) *Published {
+	return &Published{PublishedFields: NewPublishedFields(requestID, publicationID)}
 }
 
 func (p *Published) Type() int {

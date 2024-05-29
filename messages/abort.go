@@ -60,11 +60,11 @@ type Abort struct {
 	AbortFields
 }
 
-func NewAbort(fields AbortFields) *Abort {
-	return &Abort{
-		AbortFields: fields,
-	}
+func NewAbort(details map[string]any, reason string, args []any, KwArgs map[string]any) *Abort {
+	return &Abort{AbortFields: NewAbortFields(details, reason, args, KwArgs)}
 }
+
+func NewAbortWithFields(fields AbortFields) *Abort { return &Abort{AbortFields: fields} }
 
 func (a *Abort) Type() int {
 	return MessageTypeAbort

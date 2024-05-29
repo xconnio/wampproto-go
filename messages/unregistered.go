@@ -36,10 +36,12 @@ type UnRegistered struct {
 	UnRegisteredFields
 }
 
-func NewUnRegistered(fields UnRegisteredFields) *UnRegistered {
-	return &UnRegistered{
-		UnRegisteredFields: fields,
-	}
+func NewUnRegistered(requestID int64) *UnRegistered {
+	return &UnRegistered{UnRegisteredFields: NewUnRegisteredFields(requestID)}
+}
+
+func NewUnRegisteredWithFields(fields UnRegisteredFields) *UnRegistered {
+	return &UnRegistered{UnRegisteredFields: fields}
 }
 
 func (ur *UnRegistered) Type() int {

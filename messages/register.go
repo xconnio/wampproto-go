@@ -52,7 +52,11 @@ type Register struct {
 	RegisterFields
 }
 
-func NewRegister(fields RegisterFields) *Register {
+func NewRegister(requestID int64, options map[string]any, uri string) *Register {
+	return &Register{RegisterFields: NewRegisterFields(requestID, options, uri)}
+}
+
+func NewRegisterWithFields(fields RegisterFields) *Register {
 	return &Register{RegisterFields: fields}
 }
 

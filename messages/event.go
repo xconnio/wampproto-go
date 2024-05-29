@@ -69,10 +69,10 @@ type Event struct {
 	EventFields
 }
 
-func NewEvent(fields EventFields) *Event {
-	return &Event{
-		EventFields: fields,
-	}
+func NewEventWithFields(fields EventFields) *Event { return &Event{EventFields: fields} }
+
+func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) *Event {
+	return &Event{EventFields: NewEventFields(subscriptionID, publicationID, details, args, kwArgs)}
 }
 
 func (e *Event) Type() int {

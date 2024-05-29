@@ -12,13 +12,13 @@ import (
 
 func registerProc(t *testing.T, callee *wampproto.Session, uri string) {
 	// send register message
-	register := messages.NewRegister(messages.NewRegisterFields(1, nil, uri))
+	register := messages.NewRegister(1, nil, uri)
 	payload, err := callee.SendMessage(register)
 	require.NoError(t, err)
 	require.NotNil(t, payload)
 
 	// confirm registration
-	registered := messages.NewRegistered(messages.NewRegisteredFields(1, 1))
+	registered := messages.NewRegistered(1, 1)
 	reg, err := callee.ReceiveMessage(registered)
 	require.NoError(t, err)
 	require.NotNil(t, reg)
@@ -27,19 +27,19 @@ func registerProc(t *testing.T, callee *wampproto.Session, uri string) {
 func callProc(t *testing.T, caller, callee *wampproto.Session, uri string) {
 	callRequest := int64(2)
 
-	call := messages.NewCall(messages.NewCallFields(callRequest, nil, uri, nil, nil))
+	call := messages.NewCall(callRequest, nil, uri, nil, nil)
 	payload, err := caller.SendMessage(call)
 	require.NoError(t, err)
 	require.NotNil(t, payload)
 
 	// send invocation to the callee
-	invocation := messages.NewInvocation(messages.NewInvocationFields(callRequest, 1, nil, nil, nil))
+	invocation := messages.NewInvocation(callRequest, 1, nil, nil, nil)
 	toSend, err := callee.ReceiveMessage(invocation)
 	require.NoError(t, err)
 	require.NotNil(t, toSend)
 
 	// send yield to the caller
-	result := messages.NewResult(messages.NewResultFields(callRequest, nil, nil, nil))
+	result := messages.NewResult(callRequest, nil, nil, nil)
 	rslt, err := caller.ReceiveMessage(result)
 	require.NoError(t, err)
 	require.NotNil(t, rslt)
@@ -74,22 +74,22 @@ func TestSessionCall(t *testing.T) {
 
 func subscribeTopic(t *testing.T, subscriber *wampproto.Session, uri string) {
 	subscribeID := int64(1)
-	subscribe := messages.NewSubscribe(messages.NewSubscribeFields(subscribeID, nil, uri))
+	subscribe := messages.NewSubscribe(subscribeID, nil, uri)
 	payload, err := subscriber.SendMessage(subscribe)
 	require.NoError(t, err)
 	require.NotNil(t, payload)
 
-	subscribed := messages.NewSubscribed(messages.NewSubscribedFields(subscribeID, 1))
+	subscribed := messages.NewSubscribed(subscribeID, 1)
 	_, err = subscriber.ReceiveMessage(subscribed)
 	require.NoError(t, err)
 }
 
 func publishTopic(t *testing.T, publisher, subscriber *wampproto.Session, uri string) {
-	publish := messages.NewPublish(messages.NewPublishFields(2, uri, nil, nil))
+	publish := messages.NewPublish(2, uri, nil, nil)
 	_, err := publisher.SendMessage(publish)
 	require.NoError(t, err)
 
-	event := messages.NewEvent(messages.NewEventFields(1, 2, nil, nil, nil))
+	event := messages.NewEvent(1, 2, nil, nil, nil)
 	_, err = subscriber.ReceiveMessage(event)
 	require.NoError(t, err)
 }

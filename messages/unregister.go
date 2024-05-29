@@ -44,10 +44,12 @@ type UnRegister struct {
 	UnRegisterFields
 }
 
-func NewUnRegister(fields UnRegisterFields) *UnRegister {
-	return &UnRegister{
-		UnRegisterFields: fields,
-	}
+func NewUnRegister(requestID, registrationID int64) *UnRegister {
+	return &UnRegister{UnRegisterFields: NewUnRegisterFields(requestID, registrationID)}
+}
+
+func NewUnRegisterWithFields(fields UnRegisterFields) *UnRegister {
+	return &UnRegister{UnRegisterFields: fields}
 }
 
 func (ur *UnRegister) Type() int {

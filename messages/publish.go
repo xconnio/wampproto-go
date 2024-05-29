@@ -67,10 +67,10 @@ type Publish struct {
 	PublishFields
 }
 
-func NewPublish(fields PublishFields) *Publish {
-	return &Publish{
-		PublishFields: fields,
-	}
+func NewPublishWithFields(fields PublishFields) *Publish { return &Publish{PublishFields: fields} }
+
+func NewPublish(requestID int64, uri string, args []any, kwArgs map[string]any) *Publish {
+	return &Publish{PublishFields: NewPublishFields(requestID, uri, args, kwArgs)}
 }
 
 func (e *Publish) Type() int {

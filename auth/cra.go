@@ -60,7 +60,7 @@ func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (*messages
 	}
 
 	challengeStr := SignCRAChallenge(ch, rawSecret)
-	return messages.NewAuthenticate(messages.NewAuthenticateFields(challengeStr, map[string]any{})), nil
+	return messages.NewAuthenticate(challengeStr, map[string]any{}), nil
 }
 
 // SignCRAChallengeBytes computes the HMAC-SHA256, using the given key, over the

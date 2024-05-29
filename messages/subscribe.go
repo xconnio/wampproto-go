@@ -56,10 +56,12 @@ type Subscribe struct {
 	SubscribeFields
 }
 
-func NewSubscribe(fields SubscribeFields) *Subscribe {
-	return &Subscribe{
-		SubscribeFields: fields,
-	}
+func NewSubscribe(requestID int64, options map[string]any, uri string) *Subscribe {
+	return &Subscribe{SubscribeFields: NewSubscribeFields(requestID, options, uri)}
+}
+
+func NewSubscribeWithFields(fields SubscribeFields) *Subscribe {
+	return &Subscribe{SubscribeFields: fields}
 }
 
 func (s *Subscribe) Type() int {

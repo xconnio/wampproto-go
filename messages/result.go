@@ -60,7 +60,11 @@ type Result struct {
 	ResultFields
 }
 
-func NewResult(field ResultFields) *Result {
+func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[string]any) *Result {
+	return &Result{ResultFields: NewResultFields(requestID, details, args, kwArgs)}
+}
+
+func NewResultWithFields(field ResultFields) *Result {
 	return &Result{ResultFields: field}
 }
 

@@ -44,10 +44,12 @@ type Interrupt struct {
 	InterruptFields
 }
 
-func NewInterrupt(fields InterruptFields) *Interrupt {
-	return &Interrupt{
-		InterruptFields: fields,
-	}
+func NewInterruptWithFields(fields InterruptFields) *Interrupt {
+	return &Interrupt{InterruptFields: fields}
+}
+
+func NewInterrupt(requestID int64, options map[string]any) *Interrupt {
+	return &Interrupt{InterruptFields: NewInterruptFields(requestID, options)}
 }
 
 func (c *Interrupt) Type() int {

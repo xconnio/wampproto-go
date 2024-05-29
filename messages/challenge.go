@@ -44,10 +44,12 @@ type Challenge struct {
 	ChallengeFields
 }
 
-func NewChallenge(fields ChallengeFields) *Challenge {
-	return &Challenge{
-		ChallengeFields: fields,
-	}
+func NewChallengeWithFields(fields ChallengeFields) *Challenge {
+	return &Challenge{ChallengeFields: fields}
+}
+
+func NewChallenge(authMethod string, extra map[string]any) *Challenge {
+	return &Challenge{ChallengeFields: NewChallengeFields(authMethod, extra)}
 }
 
 func (c *Challenge) Type() int {

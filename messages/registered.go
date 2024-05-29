@@ -44,7 +44,11 @@ type Registered struct {
 	RegisteredFields
 }
 
-func NewRegistered(fields RegisteredFields) *Registered {
+func NewRegistered(requestID, registrationID int64) *Registered {
+	return &Registered{RegisteredFields: NewRegisteredFields(requestID, registrationID)}
+}
+
+func NewRegisteredWithFields(fields RegisteredFields) *Registered {
 	return &Registered{RegisteredFields: fields}
 }
 

@@ -67,10 +67,10 @@ type Hello struct {
 	HelloFields
 }
 
-func NewHello(fields HelloFields) *Hello {
-	return &Hello{
-		HelloFields: fields,
-	}
+func NewHelloWithFields(fields HelloFields) *Hello { return &Hello{HelloFields: fields} }
+
+func NewHello(realm, authID string, authExtra, roles map[string]any, authMethods []string) *Hello {
+	return &Hello{HelloFields: NewHelloFields(realm, authID, authExtra, roles, authMethods)}
 }
 
 func (h *Hello) Type() int {

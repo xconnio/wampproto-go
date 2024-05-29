@@ -44,10 +44,12 @@ type Cancel struct {
 	CancelFields
 }
 
-func NewCancel(fields CancelFields) *Cancel {
-	return &Cancel{
-		CancelFields: fields,
-	}
+func NewCancelWithFields(fields CancelFields) *Cancel {
+	return &Cancel{CancelFields: fields}
+}
+
+func NewCancel(requestID int64, options map[string]any) *Cancel {
+	return &Cancel{CancelFields: NewCancelFields(requestID, options)}
 }
 
 func (c *Cancel) Type() int {

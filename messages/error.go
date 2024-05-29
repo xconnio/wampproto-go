@@ -75,10 +75,10 @@ type Error struct {
 	ErrorFields
 }
 
-func NewError(fields ErrorFields) *Error {
-	return &Error{
-		ErrorFields: fields,
-	}
+func NewErrorWithFields(fields ErrorFields) *Error { return &Error{ErrorFields: fields} }
+
+func NewError(messageType, requestID int64, uri string, args []any, kwArgs map[string]any) *Error {
+	return &Error{ErrorFields: NewErrorFields(messageType, requestID, uri, args, kwArgs)}
 }
 
 func (e *Error) Type() int {

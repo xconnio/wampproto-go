@@ -44,11 +44,11 @@ type Welcome struct {
 	WelcomeFields
 }
 
-func NewWelcome(fields WelcomeFields) *Welcome {
-	return &Welcome{
-		WelcomeFields: fields,
-	}
+func NewWelcome(sessionID int64, details map[string]any) *Welcome {
+	return &Welcome{WelcomeFields: NewWelcomeFields(sessionID, details)}
 }
+
+func NewWelcomeWithFields(fields WelcomeFields) *Welcome { return &Welcome{WelcomeFields: fields} }
 
 func (w *Welcome) Type() int {
 	return MessageTypeWelcome

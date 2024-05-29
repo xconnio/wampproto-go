@@ -71,7 +71,12 @@ type Invocation struct {
 	InvocationFields
 }
 
-func NewInvocation(fields InvocationFields) *Invocation {
+func NewInvocation(requestID, registrationID int64, details map[string]any, args []any,
+	kwArgs map[string]any) *Invocation {
+	return &Invocation{InvocationFields: NewInvocationFields(requestID, registrationID, details, args, kwArgs)}
+}
+
+func NewInvocationWithFields(fields InvocationFields) *Invocation {
 	return &Invocation{InvocationFields: fields}
 }
 

@@ -44,10 +44,12 @@ type Subscribed struct {
 	SubscribedFields
 }
 
-func NewSubscribed(fields SubscribedFields) *Subscribed {
-	return &Subscribed{
-		SubscribedFields: fields,
-	}
+func NewSubscribed(requestID, subscriptionID int64) *Subscribed {
+	return &Subscribed{SubscribedFields: NewSubscribedFields(requestID, subscriptionID)}
+}
+
+func NewSubscribedWithFields(fields SubscribedFields) *Subscribed {
+	return &Subscribed{SubscribedFields: fields}
 }
 
 func (s *Subscribed) Type() int {

@@ -60,13 +60,13 @@ func NewJoiner(realm string, serializer serializers.Serializer, authenticator au
 }
 
 func (j *Joiner) SendHello() ([]byte, error) {
-	hello := messages.NewHello(messages.NewHelloFields(
+	hello := messages.NewHello(
 		j.realm,
 		j.authenticator.AuthID(),
 		j.authenticator.AuthExtra(),
 		ClientRoles,
 		[]string{j.authenticator.AuthMethod()},
-	))
+	)
 
 	rawBytes, err := j.serializer.Serialize(hello)
 	if err != nil {

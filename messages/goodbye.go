@@ -44,10 +44,10 @@ type GoodBye struct {
 	GoodByeFields
 }
 
-func NewGoodBye(fields GoodByeFields) *GoodBye {
-	return &GoodBye{
-		GoodByeFields: fields,
-	}
+func NewGoodByeWithFields(fields GoodByeFields) *GoodBye { return &GoodBye{GoodByeFields: fields} }
+
+func NewGoodBye(reason string, details map[string]any) *GoodBye {
+	return &GoodBye{GoodByeFields: NewGoodByeFields(reason, details)}
 }
 
 func (g *GoodBye) Type() int {

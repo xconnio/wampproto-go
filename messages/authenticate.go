@@ -1,6 +1,8 @@
 package messages
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const MessageTypeAuthenticate = 5
 const MessageNameAuthenticate = "AUTHENTICATE"
@@ -44,10 +46,12 @@ type Authenticate struct {
 	AuthenticateFields
 }
 
-func NewAuthenticate(fields AuthenticateFields) *Authenticate {
-	return &Authenticate{
-		AuthenticateFields: fields,
-	}
+func NewAuthenticateWithFields(fields AuthenticateFields) *Authenticate {
+	return &Authenticate{AuthenticateFields: fields}
+}
+
+func NewAuthenticate(signature string, extra map[string]any) *Authenticate {
+	return &Authenticate{AuthenticateFields: &authenticateFields{signature: signature, extra: extra}}
 }
 
 func (a *Authenticate) Type() int {

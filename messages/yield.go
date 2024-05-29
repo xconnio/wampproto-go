@@ -60,7 +60,11 @@ type Yield struct {
 	YieldFields
 }
 
-func NewYield(fields YieldFields) *Yield {
+func NewYield(requestID int64, options map[string]any, args []any, kwArgs map[string]any) *Yield {
+	return &Yield{YieldFields: NewYieldFields(requestID, options, args, kwArgs)}
+}
+
+func NewYieldWithFields(fields YieldFields) *Yield {
 	return &Yield{YieldFields: fields}
 }
 

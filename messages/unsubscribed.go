@@ -36,10 +36,12 @@ type UnSubscribed struct {
 	UnSubscribedFields
 }
 
-func NewUnSubscribed(fields UnSubscribedFields) *UnSubscribed {
-	return &UnSubscribed{
-		UnSubscribedFields: fields,
-	}
+func NewUnSubscribed(requestID int64) *UnSubscribed {
+	return &UnSubscribed{UnSubscribedFields: NewUnSubscribedFields(requestID)}
+}
+
+func NewUnSubscribedWithFields(fields UnSubscribedFields) *UnSubscribed {
+	return &UnSubscribed{UnSubscribedFields: fields}
 }
 
 func (us *UnSubscribed) Type() int {

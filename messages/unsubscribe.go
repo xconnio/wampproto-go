@@ -25,13 +25,6 @@ type unSubscribeFields struct {
 	subscriptionID int64
 }
 
-func NewUnSubscribeFields(requestID, subscriptionID int64) UnSubscribeFields {
-	return &unSubscribeFields{
-		requestID:      requestID,
-		subscriptionID: subscriptionID,
-	}
-}
-
 func (us *unSubscribeFields) RequestID() int64 {
 	return us.requestID
 }
@@ -45,7 +38,7 @@ type UnSubscribe struct {
 }
 
 func NewUnSubscribe(requestID, subscriptionID int64) *UnSubscribe {
-	return &UnSubscribe{UnSubscribeFields: NewUnSubscribeFields(requestID, subscriptionID)}
+	return &UnSubscribe{UnSubscribeFields: &unSubscribeFields{requestID: requestID, subscriptionID: subscriptionID}}
 }
 
 func NewUnSubscribeWithFields(fields UnSubscribeFields) *UnSubscribe {
@@ -62,7 +55,7 @@ func (us *UnSubscribe) Parse(wampMsg []any) error {
 		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnSubscribe, err)
 	}
 
-	us.UnSubscribeFields = NewUnSubscribeFields(fields.RequestID, fields.SubscriptionID)
+	us.UnSubscribeFields = &unSubscribeFields{requestID: fields.RequestID, subscriptionID: fields.SubscriptionID}
 
 	return nil
 }

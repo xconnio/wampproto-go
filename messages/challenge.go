@@ -25,13 +25,6 @@ type challengeFields struct {
 	extra      map[string]any
 }
 
-func NewChallengeFields(authMethod string, extra map[string]any) ChallengeFields {
-	return &challengeFields{
-		authMethod: authMethod,
-		extra:      extra,
-	}
-}
-
 func (c *challengeFields) AuthMethod() string {
 	return c.authMethod
 }
@@ -44,12 +37,8 @@ type Challenge struct {
 	ChallengeFields
 }
 
-func NewChallengeWithFields(fields ChallengeFields) *Challenge {
-	return &Challenge{ChallengeFields: fields}
-}
-
 func NewChallenge(authMethod string, extra map[string]any) *Challenge {
-	return &Challenge{ChallengeFields: NewChallengeFields(authMethod, extra)}
+	return &Challenge{ChallengeFields: &challengeFields{authMethod: authMethod, extra: extra}}
 }
 
 func (c *Challenge) Type() int {
@@ -62,7 +51,7 @@ func (c *Challenge) Parse(wampMsg []any) error {
 		return fmt.Errorf("challenge: failed to validate message %s: %w", MessageNameChallenge, err)
 	}
 
-	c.ChallengeFields = NewChallengeFields(fields.AuthMethod, fields.Extra)
+	c.ChallengeFields = &challengeFields{fields.AuthMethod, fields.Extra}
 
 	return nil
 }

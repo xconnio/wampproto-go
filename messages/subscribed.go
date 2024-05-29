@@ -25,13 +25,6 @@ type subscribedFields struct {
 	subscriptionID int64
 }
 
-func NewSubscribedFields(requestID, subscriptionID int64) SubscribedFields {
-	return &subscribedFields{
-		requestID:      requestID,
-		subscriptionID: subscriptionID,
-	}
-}
-
 func (s *subscribedFields) RequestID() int64 {
 	return s.requestID
 }
@@ -45,7 +38,7 @@ type Subscribed struct {
 }
 
 func NewSubscribed(requestID, subscriptionID int64) *Subscribed {
-	return &Subscribed{SubscribedFields: NewSubscribedFields(requestID, subscriptionID)}
+	return &Subscribed{SubscribedFields: &subscribedFields{requestID: requestID, subscriptionID: subscriptionID}}
 }
 
 func NewSubscribedWithFields(fields SubscribedFields) *Subscribed {
@@ -62,7 +55,7 @@ func (s *Subscribed) Parse(wampMsg []any) error {
 		return fmt.Errorf("subscribed: failed to validate message %s: %w", MessageNameSubscribed, err)
 	}
 
-	s.SubscribedFields = NewSubscribedFields(fields.RequestID, fields.SubscriptionID)
+	s.SubscribedFields = &subscribedFields{requestID: fields.RequestID, subscriptionID: fields.SubscriptionID}
 
 	return nil
 }

@@ -33,16 +33,6 @@ type helloFields struct {
 	roles       map[string]any
 }
 
-func NewHelloFields(realm, authID string, authExtra, roles map[string]any, authMethods []string) HelloFields {
-	return &helloFields{
-		realm:       realm,
-		authID:      authID,
-		authMethods: authMethods,
-		authExtra:   authExtra,
-		roles:       roles,
-	}
-}
-
 func (h *helloFields) Realm() string {
 	return h.realm
 }
@@ -70,7 +60,13 @@ type Hello struct {
 func NewHelloWithFields(fields HelloFields) *Hello { return &Hello{HelloFields: fields} }
 
 func NewHello(realm, authID string, authExtra, roles map[string]any, authMethods []string) *Hello {
-	return &Hello{HelloFields: NewHelloFields(realm, authID, authExtra, roles, authMethods)}
+	return &Hello{HelloFields: &helloFields{
+		realm:       realm,
+		authID:      authID,
+		authMethods: authMethods,
+		authExtra:   authExtra,
+		roles:       roles,
+	}}
 }
 
 func (h *Hello) Type() int {
@@ -83,7 +79,13 @@ func (h *Hello) Parse(wampMsg []any) error {
 		return fmt.Errorf("hello: failed to validate message %s: %w", MessageNameHello, err)
 	}
 
-	h.HelloFields = NewHelloFields(fields.Realm, fields.AuthID, fields.AuthExtra, fields.Roles, fields.AuthMethods)
+	h.HelloFields = &helloFields{
+		realm:       fields.Realm,
+		authID:      fields.AuthID,
+		authMethods: fields.AuthMethods,
+		authExtra:   fields.AuthExtra,
+		roles:       fields.Roles,
+	}
 
 	return nil
 }

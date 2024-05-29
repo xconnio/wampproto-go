@@ -25,13 +25,6 @@ type publishedFields struct {
 	publicationID int64
 }
 
-func NewPublishedFields(requestID, publicationID int64) PublishedFields {
-	return &publishedFields{
-		requestID:     requestID,
-		publicationID: publicationID,
-	}
-}
-
 func (p *publishedFields) RequestID() int64 {
 	return p.requestID
 }
@@ -44,12 +37,12 @@ type Published struct {
 	PublishedFields
 }
 
-func NewPublishedWithFields(fields PublishedFields) *Published {
-	return &Published{PublishedFields: fields}
+func NewPublished(requestID, publicationID int64) *Published {
+	return &Published{PublishedFields: &publishedFields{requestID: requestID, publicationID: publicationID}}
 }
 
-func NewPublished(requestID, publicationID int64) *Published {
-	return &Published{PublishedFields: NewPublishedFields(requestID, publicationID)}
+func NewPublishedWithFields(fields PublishedFields) *Published {
+	return &Published{PublishedFields: fields}
 }
 
 func (p *Published) Type() int {
@@ -62,7 +55,10 @@ func (p *Published) Parse(wampMsg []any) error {
 		return fmt.Errorf("published: failed to validate message %s: %w", MessageNamePublished, err)
 	}
 
-	p.PublishedFields = NewPublishedFields(fields.RequestID, fields.PublicationID)
+	p.PublishedFields = &publishedFields{
+		requestID:     fields.RequestID,
+		publicationID: fields.PublicationID,
+	}
 
 	return nil
 }

@@ -25,13 +25,6 @@ type cancelFields struct {
 	options   map[string]any
 }
 
-func NewCancelFields(requestID int64, options map[string]any) CancelFields {
-	return &cancelFields{
-		requestID: requestID,
-		options:   options,
-	}
-}
-
 func (c *cancelFields) RequestID() int64 {
 	return c.requestID
 }
@@ -44,12 +37,8 @@ type Cancel struct {
 	CancelFields
 }
 
-func NewCancelWithFields(fields CancelFields) *Cancel {
-	return &Cancel{CancelFields: fields}
-}
-
 func NewCancel(requestID int64, options map[string]any) *Cancel {
-	return &Cancel{CancelFields: NewCancelFields(requestID, options)}
+	return &Cancel{CancelFields: &cancelFields{requestID: requestID, options: options}}
 }
 
 func (c *Cancel) Type() int {
@@ -62,7 +51,10 @@ func (c *Cancel) Parse(wampMsg []any) error {
 		return fmt.Errorf("cancel: failed to validate message %s: %w", MessageNameCancel, err)
 	}
 
-	c.CancelFields = NewCancelFields(fields.RequestID, fields.Options)
+	c.CancelFields = &cancelFields{
+		requestID: fields.RequestID,
+		options:   fields.Options,
+	}
 
 	return nil
 }

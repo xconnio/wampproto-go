@@ -27,13 +27,6 @@ type authenticateFields struct {
 	extra     map[string]any
 }
 
-func NewAuthenticateFields(signature string, extra map[string]any) AuthenticateFields {
-	return &authenticateFields{
-		signature: signature,
-		extra:     extra,
-	}
-}
-
 func (a *authenticateFields) Signature() string {
 	return a.signature
 }
@@ -64,7 +57,10 @@ func (a *Authenticate) Parse(wampMsg []any) error {
 		return fmt.Errorf("authenticate: failed to validate message %s: %w", MessageNameAuthenticate, err)
 	}
 
-	a.AuthenticateFields = NewAuthenticateFields(fields.Signature, fields.Extra)
+	a.AuthenticateFields = &authenticateFields{
+		signature: fields.Signature,
+		extra:     fields.Extra,
+	}
 
 	return nil
 }

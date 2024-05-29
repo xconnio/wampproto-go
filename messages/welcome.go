@@ -25,13 +25,6 @@ type welcomeFields struct {
 	details   map[string]any
 }
 
-func NewWelcomeFields(sessionID int64, details map[string]any) WelcomeFields {
-	return &welcomeFields{
-		sessionID: sessionID,
-		details:   details,
-	}
-}
-
 func (w *welcomeFields) SessionID() int64 {
 	return w.sessionID
 }
@@ -45,7 +38,7 @@ type Welcome struct {
 }
 
 func NewWelcome(sessionID int64, details map[string]any) *Welcome {
-	return &Welcome{WelcomeFields: NewWelcomeFields(sessionID, details)}
+	return &Welcome{WelcomeFields: &welcomeFields{sessionID: sessionID, details: details}}
 }
 
 func NewWelcomeWithFields(fields WelcomeFields) *Welcome { return &Welcome{WelcomeFields: fields} }
@@ -60,7 +53,7 @@ func (w *Welcome) Parse(wampMsg []any) error {
 		return fmt.Errorf("welcome: failed to validate message %s: %w", MessageNameWelcome, err)
 	}
 
-	w.WelcomeFields = NewWelcomeFields(fields.SessionID, fields.Details)
+	w.WelcomeFields = &welcomeFields{sessionID: fields.SessionID, details: fields.Details}
 
 	return nil
 }

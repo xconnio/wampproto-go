@@ -36,17 +36,6 @@ type invocationFields struct {
 	kwArgs         map[string]any
 }
 
-func NewInvocationFields(requestID, registrationID int64, details map[string]any, args []any,
-	kwArgs map[string]any) InvocationFields {
-	return &invocationFields{
-		requestID:      requestID,
-		registrationID: registrationID,
-		details:        details,
-		args:           args,
-		kwArgs:         kwArgs,
-	}
-}
-
 func (e *invocationFields) RequestID() int64 {
 	return e.requestID
 }
@@ -73,7 +62,13 @@ type Invocation struct {
 
 func NewInvocation(requestID, registrationID int64, details map[string]any, args []any,
 	kwArgs map[string]any) *Invocation {
-	return &Invocation{InvocationFields: NewInvocationFields(requestID, registrationID, details, args, kwArgs)}
+	return &Invocation{InvocationFields: &invocationFields{
+		requestID:      requestID,
+		registrationID: registrationID,
+		details:        details,
+		args:           args,
+		kwArgs:         kwArgs,
+	}}
 }
 
 func NewInvocationWithFields(fields InvocationFields) *Invocation {
@@ -90,8 +85,13 @@ func (e *Invocation) Parse(wampMsg []any) error {
 		return fmt.Errorf("invocationFields: failed to validate message %s: %w", MessageNameInvocation, err)
 	}
 
-	e.InvocationFields = NewInvocationFields(fields.RequestID, fields.RegistrationID, fields.Details, fields.Args,
-		fields.KwArgs)
+	e.InvocationFields = &invocationFields{
+		requestID:      fields.RequestID,
+		registrationID: fields.RegistrationID,
+		details:        fields.Details,
+		args:           fields.Args,
+		kwArgs:         fields.KwArgs,
+	}
 
 	return nil
 }

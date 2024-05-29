@@ -25,13 +25,6 @@ type unRegisterFields struct {
 	registrationID int64
 }
 
-func NewUnRegisterFields(requestID, registrationID int64) UnRegisterFields {
-	return &unRegisterFields{
-		requestID:      requestID,
-		registrationID: registrationID,
-	}
-}
-
 func (ur *unRegisterFields) RequestID() int64 {
 	return ur.requestID
 }
@@ -45,7 +38,7 @@ type UnRegister struct {
 }
 
 func NewUnRegister(requestID, registrationID int64) *UnRegister {
-	return &UnRegister{UnRegisterFields: NewUnRegisterFields(requestID, registrationID)}
+	return &UnRegister{UnRegisterFields: &unRegisterFields{requestID: requestID, registrationID: registrationID}}
 }
 
 func NewUnRegisterWithFields(fields UnRegisterFields) *UnRegister {
@@ -62,7 +55,7 @@ func (ur *UnRegister) Parse(wampMsg []any) error {
 		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnRegister, err)
 	}
 
-	ur.UnRegisterFields = NewUnRegisterFields(fields.RequestID, fields.RegistrationID)
+	ur.UnRegisterFields = &unRegisterFields{requestID: fields.RequestID, registrationID: fields.RegistrationID}
 
 	return nil
 }

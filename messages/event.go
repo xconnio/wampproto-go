@@ -34,17 +34,6 @@ type eventFields struct {
 	kwArgs         map[string]any
 }
 
-func NewEventFields(subscriptionID, publicationID int64, details map[string]any, args []any,
-	kwArgs map[string]any) EventFields {
-	return &eventFields{
-		subscriptionID: subscriptionID,
-		publicationID:  publicationID,
-		details:        details,
-		args:           args,
-		kwArgs:         kwArgs,
-	}
-}
-
 func (e *eventFields) SubscriptionID() int64 {
 	return e.subscriptionID
 }
@@ -72,7 +61,13 @@ type Event struct {
 func NewEventWithFields(fields EventFields) *Event { return &Event{EventFields: fields} }
 
 func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) *Event {
-	return &Event{EventFields: NewEventFields(subscriptionID, publicationID, details, args, kwArgs)}
+	return &Event{EventFields: &eventFields{
+		subscriptionID: subscriptionID,
+		publicationID:  publicationID,
+		details:        details,
+		args:           args,
+		kwArgs:         kwArgs,
+	}}
 }
 
 func (e *Event) Type() int {
@@ -85,7 +80,13 @@ func (e *Event) Parse(wampMsg []any) error {
 		return fmt.Errorf("event: failed to validate message %s: %w", MessageNameEvent, err)
 	}
 
-	e.EventFields = NewEventFields(fields.SubscriptionID, fields.PublicationID, fields.Details, fields.Args, fields.KwArgs)
+	e.EventFields = &eventFields{
+		subscriptionID: fields.SubscriptionID,
+		publicationID:  fields.PublicationID,
+		details:        fields.Details,
+		args:           fields.Args,
+		kwArgs:         fields.KwArgs,
+	}
 
 	return nil
 }

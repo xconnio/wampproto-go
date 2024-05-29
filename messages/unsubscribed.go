@@ -22,12 +22,6 @@ type unSubscribedFields struct {
 	requestID int64
 }
 
-func NewUnSubscribedFields(requestID int64) UnSubscribedFields {
-	return &unSubscribedFields{
-		requestID: requestID,
-	}
-}
-
 func (us *unSubscribedFields) RequestID() int64 {
 	return us.requestID
 }
@@ -37,7 +31,7 @@ type UnSubscribed struct {
 }
 
 func NewUnSubscribed(requestID int64) *UnSubscribed {
-	return &UnSubscribed{UnSubscribedFields: NewUnSubscribedFields(requestID)}
+	return &UnSubscribed{UnSubscribedFields: &unSubscribedFields{requestID: requestID}}
 }
 
 func NewUnSubscribedWithFields(fields UnSubscribedFields) *UnSubscribed {
@@ -54,7 +48,7 @@ func (us *UnSubscribed) Parse(wampMsg []any) error {
 		return fmt.Errorf("unsubscribed: failed to validate message %s: %w", MessageNameUnSubscribed, err)
 	}
 
-	us.UnSubscribedFields = NewUnSubscribedFields(fields.RequestID)
+	us.UnSubscribedFields = &unSubscribedFields{requestID: fields.RequestID}
 
 	return nil
 }

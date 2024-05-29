@@ -31,15 +31,6 @@ type yieldFields struct {
 	kwArgs    map[string]any
 }
 
-func NewYieldFields(requestID int64, options map[string]any, args []any, kwArgs map[string]any) YieldFields {
-	return &yieldFields{
-		requestID: requestID,
-		options:   options,
-		args:      args,
-		kwArgs:    kwArgs,
-	}
-}
-
 func (e *yieldFields) RequestID() int64 {
 	return e.requestID
 }
@@ -61,7 +52,7 @@ type Yield struct {
 }
 
 func NewYield(requestID int64, options map[string]any, args []any, kwArgs map[string]any) *Yield {
-	return &Yield{YieldFields: NewYieldFields(requestID, options, args, kwArgs)}
+	return &Yield{YieldFields: &yieldFields{requestID: requestID, options: options, args: args, kwArgs: kwArgs}}
 }
 
 func NewYieldWithFields(fields YieldFields) *Yield {
@@ -78,7 +69,12 @@ func (e *Yield) Parse(wampMsg []any) error {
 		return fmt.Errorf("yield: failed to validate message %s: %w", MessageNameYield, err)
 	}
 
-	e.YieldFields = NewYieldFields(fields.RequestID, fields.Options, fields.Args, fields.KwArgs)
+	e.YieldFields = &yieldFields{
+		requestID: fields.RequestID,
+		options:   fields.Options,
+		args:      fields.Args,
+		kwArgs:    fields.KwArgs,
+	}
 
 	return nil
 }

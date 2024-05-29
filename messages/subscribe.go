@@ -28,14 +28,6 @@ type subscribeFields struct {
 	topic     string
 }
 
-func NewSubscribeFields(requestID int64, options map[string]any, uri string) SubscribeFields {
-	return &subscribeFields{
-		requestID: requestID,
-		options:   options,
-		topic:     uri,
-	}
-}
-
 func (s *subscribeFields) Marshal() []any {
 	return []any{MessageTypeSubscribe, s.requestID, s.options, s.topic}
 }
@@ -57,7 +49,7 @@ type Subscribe struct {
 }
 
 func NewSubscribe(requestID int64, options map[string]any, uri string) *Subscribe {
-	return &Subscribe{SubscribeFields: NewSubscribeFields(requestID, options, uri)}
+	return &Subscribe{SubscribeFields: &subscribeFields{requestID: requestID, options: options, topic: uri}}
 }
 
 func NewSubscribeWithFields(fields SubscribeFields) *Subscribe {
@@ -74,7 +66,7 @@ func (s *Subscribe) Parse(wampMsg []any) error {
 		return fmt.Errorf("subscribe: failed to validate message %s: %w", MessageNameSubscribe, err)
 	}
 
-	s.SubscribeFields = NewSubscribeFields(fields.RequestID, fields.Options, fields.URI)
+	s.SubscribeFields = &subscribeFields{requestID: fields.RequestID, options: fields.Options, topic: fields.Topic}
 
 	return nil
 }

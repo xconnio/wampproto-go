@@ -25,13 +25,6 @@ type interruptFields struct {
 	options   map[string]any
 }
 
-func NewInterruptFields(requestID int64, options map[string]any) InterruptFields {
-	return &interruptFields{
-		requestID: requestID,
-		options:   options,
-	}
-}
-
 func (c *interruptFields) RequestID() int64 {
 	return c.requestID
 }
@@ -49,7 +42,7 @@ func NewInterruptWithFields(fields InterruptFields) *Interrupt {
 }
 
 func NewInterrupt(requestID int64, options map[string]any) *Interrupt {
-	return &Interrupt{InterruptFields: NewInterruptFields(requestID, options)}
+	return &Interrupt{InterruptFields: &interruptFields{requestID: requestID, options: options}}
 }
 
 func (c *Interrupt) Type() int {
@@ -62,7 +55,7 @@ func (c *Interrupt) Parse(wampMsg []any) error {
 		return fmt.Errorf("interrupt: failed to validate message %s: %w", MessageNameInterrupt, err)
 	}
 
-	c.InterruptFields = NewInterruptFields(fields.RequestID, fields.Options)
+	c.InterruptFields = &interruptFields{requestID: fields.RequestID, options: fields.Options}
 
 	return nil
 }

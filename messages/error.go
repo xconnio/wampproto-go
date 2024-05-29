@@ -37,16 +37,6 @@ type errorFields struct {
 	kwArgs      map[string]any
 }
 
-func NewErrorFields(messageType, requestID int64, uri string, args []any, kwArgs map[string]any) ErrorFields {
-	return &errorFields{
-		messageType: messageType,
-		requestID:   requestID,
-		uri:         uri,
-		args:        args,
-		kwArgs:      kwArgs,
-	}
-}
-
 func (e *errorFields) MessageType() int64 {
 	return e.messageType
 }
@@ -78,7 +68,13 @@ type Error struct {
 func NewErrorWithFields(fields ErrorFields) *Error { return &Error{ErrorFields: fields} }
 
 func NewError(messageType, requestID int64, uri string, args []any, kwArgs map[string]any) *Error {
-	return &Error{ErrorFields: NewErrorFields(messageType, requestID, uri, args, kwArgs)}
+	return &Error{ErrorFields: &errorFields{
+		messageType: messageType,
+		requestID:   requestID,
+		uri:         uri,
+		args:        args,
+		kwArgs:      kwArgs,
+	}}
 }
 
 func (e *Error) Type() int {
@@ -91,7 +87,14 @@ func (e *Error) Parse(wampMsg []any) error {
 		return fmt.Errorf("error: failed to validate message %s: %w", MessageNameError, err)
 	}
 
-	e.ErrorFields = NewErrorFields(fields.MessageType, fields.RequestID, fields.URI, fields.Args, fields.KwArgs)
+	e.ErrorFields = &errorFields{
+		messageType: fields.MessageType,
+		requestID:   fields.RequestID,
+		details:     fields.Details,
+		uri:         fields.URI,
+		args:        fields.Args,
+		kwArgs:      fields.KwArgs,
+	}
 
 	return nil
 }

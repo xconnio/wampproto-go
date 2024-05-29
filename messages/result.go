@@ -31,15 +31,6 @@ type resultFields struct {
 	kwArgs    map[string]any
 }
 
-func NewResultFields(requestID int64, details map[string]any, args []any, kwArgs map[string]any) ResultFields {
-	return &resultFields{
-		requestID: requestID,
-		details:   details,
-		args:      args,
-		kwArgs:    kwArgs,
-	}
-}
-
 func (e *resultFields) RequestID() int64 {
 	return e.requestID
 }
@@ -61,7 +52,7 @@ type Result struct {
 }
 
 func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[string]any) *Result {
-	return &Result{ResultFields: NewResultFields(requestID, details, args, kwArgs)}
+	return &Result{ResultFields: &resultFields{requestID: requestID, details: details, args: args, kwArgs: kwArgs}}
 }
 
 func NewResultWithFields(field ResultFields) *Result {
@@ -78,7 +69,12 @@ func (e *Result) Parse(wampMsg []any) error {
 		return fmt.Errorf("result: failed to validate message %s: %w", MessageNameResult, err)
 	}
 
-	e.ResultFields = NewResultFields(fields.RequestID, fields.Details, fields.Args, fields.KwArgs)
+	e.ResultFields = &resultFields{
+		requestID: fields.RequestID,
+		details:   fields.Details,
+		args:      fields.Args,
+		kwArgs:    fields.KwArgs,
+	}
 
 	return nil
 }

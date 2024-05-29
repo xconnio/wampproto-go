@@ -34,15 +34,6 @@ type publishFields struct {
 	kwArgs    map[string]any
 }
 
-func NewPublishFields(requestID int64, uri string, args []any, kwArgs map[string]any) PublishFields {
-	return &publishFields{
-		requestID: requestID,
-		topic:     uri,
-		args:      args,
-		kwArgs:    kwArgs,
-	}
-}
-
 func (e *publishFields) RequestID() int64 {
 	return e.requestID
 }
@@ -67,11 +58,16 @@ type Publish struct {
 	PublishFields
 }
 
-func NewPublishWithFields(fields PublishFields) *Publish { return &Publish{PublishFields: fields} }
-
 func NewPublish(requestID int64, uri string, args []any, kwArgs map[string]any) *Publish {
-	return &Publish{PublishFields: NewPublishFields(requestID, uri, args, kwArgs)}
+	return &Publish{PublishFields: &publishFields{
+		requestID: requestID,
+		topic:     uri,
+		args:      args,
+		kwArgs:    kwArgs,
+	}}
 }
+
+func NewPublishWithFields(fields PublishFields) *Publish { return &Publish{PublishFields: fields} }
 
 func (e *Publish) Type() int {
 	return MessageTypePublish
@@ -83,7 +79,12 @@ func (e *Publish) Parse(wampMsg []any) error {
 		return fmt.Errorf("publish: failed to validate message %s: %w", MessageNamePublish, err)
 	}
 
-	e.PublishFields = NewPublishFields(fields.RequestID, fields.URI, fields.Args, fields.KwArgs)
+	e.PublishFields = &publishFields{
+		requestID: fields.RequestID,
+		topic:     fields.Topic,
+		args:      fields.Args,
+		kwArgs:    fields.KwArgs,
+	}
 
 	return nil
 }

@@ -52,6 +52,10 @@ type Result struct {
 }
 
 func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[string]any) *Result {
+	if details == nil {
+		details = make(map[string]any)
+	}
+
 	return &Result{ResultFields: &resultFields{requestID: requestID, details: details, args: args, kwArgs: kwArgs}}
 }
 

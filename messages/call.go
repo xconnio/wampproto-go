@@ -59,6 +59,10 @@ type Call struct {
 }
 
 func NewCall(requestID int64, options map[string]any, procedure string, args []any, kwArgs map[string]any) *Call {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
 	return &Call{CallFields: &callFields{requestID, options, procedure, args, kwArgs}}
 }
 

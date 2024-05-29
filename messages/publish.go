@@ -58,9 +58,14 @@ type Publish struct {
 	PublishFields
 }
 
-func NewPublish(requestID int64, uri string, args []any, kwArgs map[string]any) *Publish {
+func NewPublish(requestID int64, option map[string]any, uri string, args []any, kwArgs map[string]any) *Publish {
+	if option == nil {
+		option = make(map[string]any)
+	}
+
 	return &Publish{PublishFields: &publishFields{
 		requestID: requestID,
+		options:   option,
 		topic:     uri,
 		args:      args,
 		kwArgs:    kwArgs,

@@ -57,7 +57,7 @@ func (a *cryptoSignAuthenticator) AuthExtra() map[string]any {
 	return a.authExtra
 }
 
-func (a *cryptoSignAuthenticator) Authenticate(challenge messages.Challenge) (messages.Authenticate, error) {
+func (a *cryptoSignAuthenticator) Authenticate(challenge messages.Challenge) (*messages.Authenticate, error) {
 	challengeHex, _ := challenge.Extra()["challenge"].(string)
 	result, err := SignCryptoSignChallenge(challengeHex, a.privateKey)
 	if err != nil {

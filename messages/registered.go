@@ -25,13 +25,6 @@ type registeredFields struct {
 	registrationID int64
 }
 
-func NewRegisteredFields(requestID, registrationID int64) RegisteredFields {
-	return &registeredFields{
-		requestID:      requestID,
-		registrationID: registrationID,
-	}
-}
-
 func (r *registeredFields) RequestID() int64 {
 	return r.requestID
 }
@@ -44,7 +37,11 @@ type Registered struct {
 	RegisteredFields
 }
 
-func NewRegistered(fields RegisteredFields) *Registered {
+func NewRegistered(requestID, registrationID int64) *Registered {
+	return &Registered{RegisteredFields: &registeredFields{requestID: requestID, registrationID: registrationID}}
+}
+
+func NewRegisteredWithFields(fields RegisteredFields) *Registered {
 	return &Registered{RegisteredFields: fields}
 }
 
@@ -58,7 +55,7 @@ func (r *Registered) Parse(wampMsg []any) error {
 		return fmt.Errorf("registered: failed to validate message %s: %w", MessageNameRegistered, err)
 	}
 
-	r.RegisteredFields = NewRegisteredFields(fields.RequestID, fields.RegistrationID)
+	r.RegisteredFields = &registeredFields{requestID: fields.RequestID, registrationID: fields.RegistrationID}
 
 	return nil
 }

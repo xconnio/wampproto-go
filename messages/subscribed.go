@@ -15,53 +15,51 @@ var subscribedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Subscribed interface {
-	Message
-
+type SubscribedFields interface {
 	RequestID() int64
 	SubscriptionID() int64
 }
 
-type subscribed struct {
+type subscribedFields struct {
 	requestID      int64
 	subscriptionID int64
 }
 
-func NewEmptySubscribed() Subscribed {
-	return &subscribed{}
+func (s *subscribedFields) RequestID() int64 {
+	return s.requestID
 }
 
-func NewSubscribed(requestID, subscriptionID int64) Subscribed {
-	return &subscribed{
-		requestID:      requestID,
-		subscriptionID: subscriptionID,
-	}
+func (s *subscribedFields) SubscriptionID() int64 {
+	return s.subscriptionID
 }
 
-func (r *subscribed) Type() int {
+type Subscribed struct {
+	SubscribedFields
+}
+
+func NewSubscribed(requestID, subscriptionID int64) *Subscribed {
+	return &Subscribed{SubscribedFields: &subscribedFields{requestID: requestID, subscriptionID: subscriptionID}}
+}
+
+func NewSubscribedWithFields(fields SubscribedFields) *Subscribed {
+	return &Subscribed{SubscribedFields: fields}
+}
+
+func (s *Subscribed) Type() int {
 	return MessageTypeSubscribed
 }
 
-func (r *subscribed) Parse(wampMsg []any) error {
+func (s *Subscribed) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, subscribedValidationSpec)
 	if err != nil {
 		return fmt.Errorf("subscribed: failed to validate message %s: %w", MessageNameSubscribed, err)
 	}
 
-	r.requestID = fields.RequestID
-	r.subscriptionID = fields.SubscriptionID
+	s.SubscribedFields = &subscribedFields{requestID: fields.RequestID, subscriptionID: fields.SubscriptionID}
 
 	return nil
 }
 
-func (r *subscribed) Marshal() []any {
-	return []any{MessageTypeSubscribed, r.requestID, r.subscriptionID}
-}
-
-func (r *subscribed) RequestID() int64 {
-	return r.requestID
-}
-
-func (r *subscribed) SubscriptionID() int64 {
-	return r.subscriptionID
+func (s *Subscribed) Marshal() []any {
+	return []any{MessageTypeSubscribed, s.RequestID(), s.SubscriptionID()}
 }

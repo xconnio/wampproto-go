@@ -15,53 +15,51 @@ var unRegisterValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type UnRegister interface {
-	Message
-
+type UnRegisterFields interface {
 	RequestID() int64
 	RegistrationID() int64
 }
 
-type unRegister struct {
+type unRegisterFields struct {
 	requestID      int64
 	registrationID int64
 }
 
-func NewEmptyUnRegister() UnRegister {
-	return &unRegister{}
+func (ur *unRegisterFields) RequestID() int64 {
+	return ur.requestID
 }
 
-func NewUnRegister(requestID, registrationID int64) UnRegister {
-	return &unRegister{
-		requestID:      requestID,
-		registrationID: registrationID,
-	}
+func (ur *unRegisterFields) RegistrationID() int64 {
+	return ur.registrationID
 }
 
-func (r *unRegister) Type() int {
+type UnRegister struct {
+	UnRegisterFields
+}
+
+func NewUnRegister(requestID, registrationID int64) *UnRegister {
+	return &UnRegister{UnRegisterFields: &unRegisterFields{requestID: requestID, registrationID: registrationID}}
+}
+
+func NewUnRegisterWithFields(fields UnRegisterFields) *UnRegister {
+	return &UnRegister{UnRegisterFields: fields}
+}
+
+func (ur *UnRegister) Type() int {
 	return MessageTypeUnRegister
 }
 
-func (r *unRegister) Parse(wampMsg []any) error {
+func (ur *UnRegister) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, unRegisterValidationSpec)
 	if err != nil {
 		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnRegister, err)
 	}
 
-	r.requestID = fields.RequestID
-	r.registrationID = fields.RegistrationID
+	ur.UnRegisterFields = &unRegisterFields{requestID: fields.RequestID, registrationID: fields.RegistrationID}
 
 	return nil
 }
 
-func (r *unRegister) Marshal() []any {
-	return []any{MessageTypeUnRegister, r.requestID, r.registrationID}
-}
-
-func (r *unRegister) RequestID() int64 {
-	return r.requestID
-}
-
-func (r *unRegister) RegistrationID() int64 {
-	return r.registrationID
+func (ur *UnRegister) Marshal() []any {
+	return []any{MessageTypeUnRegister, ur.RequestID(), ur.RegistrationID()}
 }

@@ -15,53 +15,49 @@ var welcomeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Welcome interface {
-	Message
-
+type WelcomeFields interface {
 	SessionID() int64
 	Details() map[string]any
 }
 
-type welcome struct {
+type welcomeFields struct {
 	sessionID int64
 	details   map[string]any
 }
 
-func NewEmptyWelcome() Welcome {
-	return &welcome{}
+func (w *welcomeFields) SessionID() int64 {
+	return w.sessionID
 }
 
-func NewWelcome(sessionID int64, details map[string]any) Welcome {
-	return &welcome{
-		sessionID: sessionID,
-		details:   details,
-	}
+func (w *welcomeFields) Details() map[string]any {
+	return w.details
 }
 
-func (w *welcome) Type() int {
+type Welcome struct {
+	WelcomeFields
+}
+
+func NewWelcome(sessionID int64, details map[string]any) *Welcome {
+	return &Welcome{WelcomeFields: &welcomeFields{sessionID: sessionID, details: details}}
+}
+
+func NewWelcomeWithFields(fields WelcomeFields) *Welcome { return &Welcome{WelcomeFields: fields} }
+
+func (w *Welcome) Type() int {
 	return MessageTypeWelcome
 }
 
-func (w *welcome) Parse(wampMsg []any) error {
+func (w *Welcome) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, welcomeValidationSpec)
 	if err != nil {
 		return fmt.Errorf("welcome: failed to validate message %s: %w", MessageNameWelcome, err)
 	}
 
-	w.sessionID = fields.SessionID
-	w.details = fields.Details
+	w.WelcomeFields = &welcomeFields{sessionID: fields.SessionID, details: fields.Details}
 
 	return nil
 }
 
-func (w *welcome) Marshal() []any {
-	return []any{MessageTypeWelcome, w.sessionID, w.details}
-}
-
-func (w *welcome) SessionID() int64 {
-	return w.sessionID
-}
-
-func (w *welcome) Details() map[string]any {
-	return w.details
+func (w *Welcome) Marshal() []any {
+	return []any{MessageTypeWelcome, w.SessionID(), w.Details()}
 }

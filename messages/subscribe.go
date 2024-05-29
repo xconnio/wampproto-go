@@ -16,61 +16,61 @@ var subscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Subscribe interface {
-	Message
-
+type SubscribeFields interface {
 	RequestID() int64
 	Options() map[string]any
 	Topic() string
 }
 
-type subscribe struct {
+type subscribeFields struct {
 	requestID int64
 	options   map[string]any
 	topic     string
 }
 
-func NewEmptySubscribe() Subscribe {
-	return &subscribe{}
+func (s *subscribeFields) Marshal() []any {
+	return []any{MessageTypeSubscribe, s.requestID, s.options, s.topic}
 }
 
-func NewSubscribe(requestID int64, options map[string]any, uri string) Subscribe {
-	return &subscribe{
-		requestID: requestID,
-		options:   options,
-		topic:     uri,
-	}
+func (s *subscribeFields) RequestID() int64 {
+	return s.requestID
 }
 
-func (r *subscribe) Type() int {
+func (s *subscribeFields) Options() map[string]any {
+	return s.options
+}
+
+func (s *subscribeFields) Topic() string {
+	return s.topic
+}
+
+type Subscribe struct {
+	SubscribeFields
+}
+
+func NewSubscribe(requestID int64, options map[string]any, uri string) *Subscribe {
+	return &Subscribe{SubscribeFields: &subscribeFields{requestID: requestID, options: options, topic: uri}}
+}
+
+func NewSubscribeWithFields(fields SubscribeFields) *Subscribe {
+	return &Subscribe{SubscribeFields: fields}
+}
+
+func (s *Subscribe) Type() int {
 	return MessageTypeSubscribe
 }
 
-func (r *subscribe) Parse(wampMsg []any) error {
+func (s *Subscribe) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, subscribeValidationSpec)
 	if err != nil {
 		return fmt.Errorf("subscribe: failed to validate message %s: %w", MessageNameSubscribe, err)
 	}
 
-	r.requestID = fields.SessionID
-	r.options = fields.Options
-	r.topic = fields.URI
+	s.SubscribeFields = &subscribeFields{requestID: fields.RequestID, options: fields.Options, topic: fields.Topic}
 
 	return nil
 }
 
-func (r *subscribe) Marshal() []any {
-	return []any{MessageTypeSubscribe, r.requestID, r.options, r.topic}
-}
-
-func (r *subscribe) RequestID() int64 {
-	return r.requestID
-}
-
-func (r *subscribe) Options() map[string]any {
-	return r.options
-}
-
-func (r *subscribe) Topic() string {
-	return r.topic
+func (s *Subscribe) Marshal() []any {
+	return []any{MessageTypeSubscribe, s.RequestID(), s.Options(), s.Topic()}
 }

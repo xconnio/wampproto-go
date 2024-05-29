@@ -28,14 +28,6 @@ type registerFields struct {
 	procedure string
 }
 
-func NewRegisterFields(requestID int64, options map[string]any, uri string) RegisterFields {
-	return &registerFields{
-		requestID: requestID,
-		options:   options,
-		procedure: uri,
-	}
-}
-
 func (r *registerFields) RequestID() int64 {
 	return r.requestID
 }
@@ -52,7 +44,11 @@ type Register struct {
 	RegisterFields
 }
 
-func NewRegister(fields RegisterFields) *Register {
+func NewRegister(requestID int64, options map[string]any, uri string) *Register {
+	return &Register{RegisterFields: &registerFields{requestID: requestID, options: options, procedure: uri}}
+}
+
+func NewRegisterWithFields(fields RegisterFields) *Register {
 	return &Register{RegisterFields: fields}
 }
 
@@ -66,7 +62,7 @@ func (r *Register) Parse(wampMsg []any) error {
 		return fmt.Errorf("registerFields: failed to validate message %s: %w", MessageNameRegister, err)
 	}
 
-	r.RegisterFields = NewRegisterFields(fields.SessionID, fields.Options, fields.URI)
+	r.RegisterFields = &registerFields{requestID: fields.RequestID, options: fields.Options, procedure: fields.URI}
 
 	return nil
 }

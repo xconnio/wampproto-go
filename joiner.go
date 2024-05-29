@@ -65,7 +65,7 @@ func (j *Joiner) SendHello() ([]byte, error) {
 		j.authenticator.AuthID(),
 		j.authenticator.AuthExtra(),
 		ClientRoles,
-		[]any{j.authenticator.AuthMethod()},
+		[]string{j.authenticator.AuthMethod()},
 	)
 
 	rawBytes, err := j.serializer.Serialize(hello)
@@ -110,7 +110,7 @@ func (j *Joiner) ReceiveMessage(msg messages.Message) (messages.Message, error) 
 			return nil, errors.New("received WELCOME when it was not expected")
 		}
 
-		welcome := msg.(messages.Welcome)
+		welcome := msg.(*messages.Welcome)
 		j.sessionDetails = NewSessionDetails(welcome.SessionID(), j.realm, welcome.Details()["authid"].(string),
 			welcome.Details()["authrole"].(string))
 		j.state = joinerStateJoined
@@ -121,8 +121,8 @@ func (j *Joiner) ReceiveMessage(msg messages.Message) (messages.Message, error) 
 			return nil, errors.New("received CHALLENGE when it was not expected")
 		}
 
-		challenge := msg.(messages.Challenge)
-		authenticate, err := j.authenticator.Authenticate(challenge)
+		challenge := msg.(*messages.Challenge)
+		authenticate, err := j.authenticator.Authenticate(*challenge)
 		if err != nil {
 			return nil, err
 		}

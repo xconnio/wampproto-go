@@ -18,9 +18,7 @@ var publishValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Publish interface {
-	Message
-
+type PublishFields interface {
 	RequestID() int64
 	Options() map[string]any
 	Topic() string
@@ -28,7 +26,7 @@ type Publish interface {
 	KwArgs() map[string]any
 }
 
-type publish struct {
+type publishFields struct {
 	requestID int64
 	options   map[string]any
 	topic     string
@@ -36,71 +34,74 @@ type publish struct {
 	kwArgs    map[string]any
 }
 
-func NewEmptyPublish() Publish {
-	return &publish{}
+func (e *publishFields) RequestID() int64 {
+	return e.requestID
 }
 
-func NewPublish(requestID int64, uri string, args []any, kwArgs map[string]any) Publish {
-	return &publish{
+func (e *publishFields) Options() map[string]any {
+	return e.options
+}
+
+func (e *publishFields) Topic() string {
+	return e.topic
+}
+
+func (e *publishFields) Args() []any {
+	return e.args
+}
+
+func (e *publishFields) KwArgs() map[string]any {
+	return e.kwArgs
+}
+
+type Publish struct {
+	PublishFields
+}
+
+func NewPublish(requestID int64, uri string, args []any, kwArgs map[string]any) *Publish {
+	return &Publish{PublishFields: &publishFields{
 		requestID: requestID,
 		topic:     uri,
 		args:      args,
 		kwArgs:    kwArgs,
-	}
+	}}
 }
 
-func (e *publish) RequestID() int64 {
-	return e.requestID
-}
+func NewPublishWithFields(fields PublishFields) *Publish { return &Publish{PublishFields: fields} }
 
-func (e *publish) Options() map[string]any {
-	return e.options
-}
-
-func (e *publish) Topic() string {
-	return e.topic
-}
-
-func (e *publish) Args() []any {
-	return e.args
-}
-
-func (e *publish) KwArgs() map[string]any {
-	return e.kwArgs
-}
-
-func (e *publish) Type() int {
+func (e *Publish) Type() int {
 	return MessageTypePublish
 }
 
-func (e *publish) Parse(wampMsg []any) error {
+func (e *Publish) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, publishValidationSpec)
 	if err != nil {
 		return fmt.Errorf("publish: failed to validate message %s: %w", MessageNamePublish, err)
 	}
 
-	e.requestID = fields.RequestID
-	e.options = fields.Options
-	e.topic = fields.URI
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.PublishFields = &publishFields{
+		requestID: fields.RequestID,
+		topic:     fields.Topic,
+		args:      fields.Args,
+		kwArgs:    fields.KwArgs,
+	}
 
 	return nil
 }
 
-func (e *publish) Marshal() []any {
-	result := []any{MessageTypePublish, e.requestID, e.options, e.topic}
+func (e *Publish) Marshal() []any {
+	result := []any{MessageTypePublish, e.RequestID(), e.Options(), e.Topic()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

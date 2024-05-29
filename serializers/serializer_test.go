@@ -14,7 +14,7 @@ func serializeDeserialize(t *testing.T, serializer serializers.Serializer) {
 	reason := "hello"
 	args := []any{}
 	kwArgs := map[string]any{}
-	message := messages.NewAbort(messages.NewAbortFields(details, reason, args, kwArgs))
+	message := messages.NewAbort(details, reason, args, kwArgs)
 
 	data, err := serializer.Serialize(message)
 	require.NoError(t, err)

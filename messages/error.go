@@ -19,9 +19,7 @@ var errorValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Error interface {
-	Message
-
+type ErrorFields interface {
 	MessageType() int64
 	RequestID() int64
 	Details() map[string]any
@@ -30,7 +28,7 @@ type Error interface {
 	KwArgs() map[string]any
 }
 
-type err struct {
+type errorFields struct {
 	messageType int64
 	requestID   int64
 	details     map[string]any
@@ -39,77 +37,81 @@ type err struct {
 	kwArgs      map[string]any
 }
 
-func NewEmptyError() Error {
-	return &err{}
+func (e *errorFields) MessageType() int64 {
+	return e.messageType
 }
 
-func NewError(messageType, requestID int64, uri string, args []any, kwArgs map[string]any) Error {
-	return &err{
+func (e *errorFields) RequestID() int64 {
+	return e.requestID
+}
+
+func (e *errorFields) Details() map[string]any {
+	return e.details
+}
+
+func (e *errorFields) URI() string {
+	return e.uri
+}
+
+func (e *errorFields) Args() []any {
+	return e.args
+}
+
+func (e *errorFields) KwArgs() map[string]any {
+	return e.kwArgs
+}
+
+type Error struct {
+	ErrorFields
+}
+
+func NewErrorWithFields(fields ErrorFields) *Error { return &Error{ErrorFields: fields} }
+
+func NewError(messageType, requestID int64, uri string, args []any, kwArgs map[string]any) *Error {
+	return &Error{ErrorFields: &errorFields{
 		messageType: messageType,
 		requestID:   requestID,
 		uri:         uri,
 		args:        args,
 		kwArgs:      kwArgs,
-	}
+	}}
 }
 
-func (e *err) MessageType() int64 {
-	return e.messageType
-}
-
-func (e *err) RequestID() int64 {
-	return e.requestID
-}
-
-func (e *err) Details() map[string]any {
-	return e.details
-}
-
-func (e *err) URI() string {
-	return e.uri
-}
-
-func (e *err) Args() []any {
-	return e.args
-}
-
-func (e *err) KwArgs() map[string]any {
-	return e.kwArgs
-}
-
-func (e *err) Type() int {
+func (e *Error) Type() int {
 	return MessageTypeError
 }
 
-func (e *err) Parse(wampMsg []any) error {
+func (e *Error) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, errorValidationSpec)
 	if err != nil {
 		return fmt.Errorf("error: failed to validate message %s: %w", MessageNameError, err)
 	}
 
-	e.messageType = fields.MessageType
-	e.requestID = fields.RequestID
-	e.details = fields.Details
-	e.uri = fields.URI
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.ErrorFields = &errorFields{
+		messageType: fields.MessageType,
+		requestID:   fields.RequestID,
+		details:     fields.Details,
+		uri:         fields.URI,
+		args:        fields.Args,
+		kwArgs:      fields.KwArgs,
+	}
 
 	return nil
 }
 
-func (e *err) Marshal() []any {
-	result := []any{MessageTypeError, e.messageType, e.requestID, e.uri}
+func (e *Error) Marshal() []any {
+	result := []any{MessageTypeError, e.MessageType(), e.RequestID(), e.URI()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

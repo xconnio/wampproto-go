@@ -18,9 +18,7 @@ var eventValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Event interface {
-	Message
-
+type EventFields interface {
 	SubscriptionID() int64
 	PublicationID() int64
 	Details() map[string]any
@@ -28,7 +26,7 @@ type Event interface {
 	KwArgs() map[string]any
 }
 
-type event struct {
+type eventFields struct {
 	subscriptionID int64
 	publicationID  int64
 	details        map[string]any
@@ -36,72 +34,76 @@ type event struct {
 	kwArgs         map[string]any
 }
 
-func NewEmptyEvent() Event {
-	return &event{}
+func (e *eventFields) SubscriptionID() int64 {
+	return e.subscriptionID
 }
 
-func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) Event {
-	return &event{
+func (e *eventFields) PublicationID() int64 {
+	return e.publicationID
+}
+
+func (e *eventFields) Details() map[string]any {
+	return e.details
+}
+
+func (e *eventFields) Args() []any {
+	return e.args
+}
+
+func (e *eventFields) KwArgs() map[string]any {
+	return e.kwArgs
+}
+
+type Event struct {
+	EventFields
+}
+
+func NewEventWithFields(fields EventFields) *Event { return &Event{EventFields: fields} }
+
+func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) *Event {
+	return &Event{EventFields: &eventFields{
 		subscriptionID: subscriptionID,
 		publicationID:  publicationID,
 		details:        details,
 		args:           args,
 		kwArgs:         kwArgs,
-	}
+	}}
 }
 
-func (e *event) SubscriptionID() int64 {
-	return e.subscriptionID
-}
-
-func (e *event) PublicationID() int64 {
-	return e.publicationID
-}
-
-func (e *event) Details() map[string]any {
-	return e.details
-}
-
-func (e *event) Args() []any {
-	return e.args
-}
-
-func (e *event) KwArgs() map[string]any {
-	return e.kwArgs
-}
-
-func (e *event) Type() int {
+func (e *Event) Type() int {
 	return MessageTypeEvent
 }
 
-func (e *event) Parse(wampMsg []any) error {
+func (e *Event) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, eventValidationSpec)
 	if err != nil {
 		return fmt.Errorf("event: failed to validate message %s: %w", MessageNameEvent, err)
 	}
 
-	e.subscriptionID = fields.SubscriptionID
-	e.publicationID = fields.PublicationID
-	e.details = fields.Details
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.EventFields = &eventFields{
+		subscriptionID: fields.SubscriptionID,
+		publicationID:  fields.PublicationID,
+		details:        fields.Details,
+		args:           fields.Args,
+		kwArgs:         fields.KwArgs,
+	}
 
 	return nil
 }
 
-func (e *event) Marshal() []any {
-	result := []any{MessageTypeEvent, e.subscriptionID, e.publicationID, e.details}
+func (e *Event) Marshal() []any {
+	result := []any{MessageTypeEvent, e.SubscriptionID(), e.PublicationID(), e.Details()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

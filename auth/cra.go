@@ -39,7 +39,7 @@ func (a *craAuthenticator) AuthExtra() map[string]any {
 	return a.authExtra
 }
 
-func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (messages.Authenticate, error) {
+func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (*messages.Authenticate, error) {
 	ch, _ := challenge.Extra()["challenge"].(string)
 	// If the client needed to look up a user's key, this would require decoding
 	// the JSON-encoded challenge string and getting the authid.  For this

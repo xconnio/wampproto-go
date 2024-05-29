@@ -15,53 +15,47 @@ var challengeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Challenge interface {
-	Message
-
+type ChallengeFields interface {
 	AuthMethod() string
 	Extra() map[string]any
 }
 
-type challenge struct {
+type challengeFields struct {
 	authMethod string
 	extra      map[string]any
 }
 
-func NewEmptyChallenge() Challenge {
-	return &challenge{}
+func (c *challengeFields) AuthMethod() string {
+	return c.authMethod
 }
 
-func NewChallenge(authMethod string, extra map[string]any) Challenge {
-	return &challenge{
-		authMethod: authMethod,
-		extra:      extra,
-	}
+func (c *challengeFields) Extra() map[string]any {
+	return c.extra
 }
 
-func (c *challenge) Type() int {
+type Challenge struct {
+	ChallengeFields
+}
+
+func NewChallenge(authMethod string, extra map[string]any) *Challenge {
+	return &Challenge{ChallengeFields: &challengeFields{authMethod: authMethod, extra: extra}}
+}
+
+func (c *Challenge) Type() int {
 	return MessageTypeChallenge
 }
 
-func (c *challenge) Parse(wampMsg []any) error {
+func (c *Challenge) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, challengeValidationSpec)
 	if err != nil {
 		return fmt.Errorf("challenge: failed to validate message %s: %w", MessageNameChallenge, err)
 	}
 
-	c.authMethod = fields.AuthMethod
-	c.extra = fields.Extra
+	c.ChallengeFields = &challengeFields{fields.AuthMethod, fields.Extra}
 
 	return nil
 }
 
-func (c *challenge) Marshal() []any {
-	return []any{MessageTypeChallenge, c.authMethod, c.extra}
-}
-
-func (c *challenge) AuthMethod() string {
-	return c.authMethod
-}
-
-func (c *challenge) Extra() map[string]any {
-	return c.extra
+func (c *Challenge) Marshal() []any {
+	return []any{MessageTypeChallenge, c.AuthMethod(), c.Extra()}
 }

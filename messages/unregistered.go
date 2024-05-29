@@ -14,45 +14,45 @@ var unRegisteredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type UnRegistered interface {
-	Message
-
+type UnRegisteredFields interface {
 	RequestID() int64
 }
 
-type unRegistered struct {
+type unRegisteredFields struct {
 	requestID int64
 }
 
-func NewEmptyUnRegistered() UnRegistered {
-	return &unRegistered{}
+func (ur *unRegisteredFields) RequestID() int64 {
+	return ur.requestID
 }
 
-func NewUnRegistered(requestID int64) UnRegistered {
-	return &unRegistered{
-		requestID: requestID,
-	}
+type UnRegistered struct {
+	UnRegisteredFields
 }
 
-func (r *unRegistered) Type() int {
+func NewUnRegistered(requestID int64) *UnRegistered {
+	return &UnRegistered{UnRegisteredFields: &unRegisteredFields{requestID: requestID}}
+}
+
+func NewUnRegisteredWithFields(fields UnRegisteredFields) *UnRegistered {
+	return &UnRegistered{UnRegisteredFields: fields}
+}
+
+func (ur *UnRegistered) Type() int {
 	return MessageTypeUnRegistered
 }
 
-func (r *unRegistered) Parse(wampMsg []any) error {
+func (ur *UnRegistered) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, unRegisteredValidationSpec)
 	if err != nil {
 		return fmt.Errorf("unregistered: failed to validate message %s: %w", MessageNameUnRegistered, err)
 	}
 
-	r.requestID = fields.RequestID
+	ur.UnRegisteredFields = &unRegisteredFields{requestID: fields.RequestID}
 
 	return nil
 }
 
-func (r *unRegistered) Marshal() []any {
-	return []any{MessageTypeUnRegistered, r.requestID}
-}
-
-func (r *unRegistered) RequestID() int64 {
-	return r.requestID
+func (ur *UnRegistered) Marshal() []any {
+	return []any{MessageTypeUnRegistered, ur.RequestID()}
 }

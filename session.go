@@ -68,12 +68,12 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 
 		return data, nil
 	case messages.MessageTypeUnRegister:
-		unregister := msg.(messages.UnRegister)
+		unregister := msg.(*messages.UnRegister)
 		w.unregisterRequests[unregister.RequestID()] = unregister.RequestID()
 
 		return data, nil
 	case messages.MessageTypePublish:
-		publish := msg.(messages.Publish)
+		publish := msg.(*messages.Publish)
 		acknowledge, ok := publish.Options()["acknowledge"].(bool)
 		if ok && acknowledge {
 			w.publishRequests[publish.RequestID()] = publish.RequestID()
@@ -81,12 +81,12 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 
 		return data, nil
 	case messages.MessageTypeSubscribe:
-		subscribe := msg.(messages.Subscribe)
+		subscribe := msg.(*messages.Subscribe)
 		w.subscribeRequests[subscribe.RequestID()] = subscribe.RequestID()
 
 		return data, nil
 	case messages.MessageTypeUnSubscribe:
-		unsubscribe := msg.(messages.UnSubscribe)
+		unsubscribe := msg.(*messages.UnSubscribe)
 		_, exists := w.subscriptions[unsubscribe.SubscriptionID()]
 		if !exists {
 			return nil, fmt.Errorf("unsubscribe request for non existent subscription %d",
@@ -97,7 +97,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 
 		return data, nil
 	case messages.MessageTypeError:
-		errorMsg := msg.(messages.Error)
+		errorMsg := msg.(*messages.Error)
 		if errorMsg.MessageType() != messages.MessageTypeInvocation {
 			return nil, fmt.Errorf("send only supported for invocation error")
 		}
@@ -140,7 +140,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		w.registrations[registered.RegistrationID()] = registered.RegistrationID()
 		return registered, nil
 	case messages.MessageTypeUnRegistered:
-		unregistered := msg.(messages.UnRegistered)
+		unregistered := msg.(*messages.UnRegistered)
 		registrationID, exists := w.unregisterRequests[unregistered.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received UNREGISTERED for invalid requestID")
@@ -164,7 +164,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 
 		return invocation, nil
 	case messages.MessageTypePublished:
-		published := msg.(messages.Published)
+		published := msg.(*messages.Published)
 		_, exists := w.publishRequests[published.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received PUBLISHED for invalid requestID")
@@ -174,7 +174,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 
 		return published, nil
 	case messages.MessageTypeSubscribed:
-		subscribed := msg.(messages.Subscribed)
+		subscribed := msg.(*messages.Subscribed)
 		_, exists := w.subscribeRequests[subscribed.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received SUBSCRIBED for invalid requestID")
@@ -184,7 +184,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 
 		return subscribed, nil
 	case messages.MessageTypeUnSubscribed:
-		unsubscribed := msg.(messages.UnSubscribed)
+		unsubscribed := msg.(*messages.UnSubscribed)
 		subscriptionID, exists := w.unsubscribeRequests[unsubscribed.RequestID()]
 		if !exists {
 			return nil, fmt.Errorf("received UNSUBSCRIBED for invalid requestID")
@@ -199,7 +199,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 
 		return unsubscribed, nil
 	case messages.MessageTypeEvent:
-		event := msg.(messages.Event)
+		event := msg.(*messages.Event)
 		_, exists := w.subscriptions[event.SubscriptionID()]
 		if !exists {
 			return nil, fmt.Errorf("received EVENT for invalid subscriptionID")
@@ -207,7 +207,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 
 		return event, nil
 	case messages.MessageTypeError:
-		errorMsg := msg.(messages.Error)
+		errorMsg := msg.(*messages.Error)
 		switch errorMsg.MessageType() {
 		case messages.MessageTypeCall:
 			_, exists := w.callRequests[errorMsg.RequestID()]

@@ -17,88 +17,91 @@ var helloValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Hello interface {
-	Message
-
+type HelloFields interface {
 	Realm() string
 	AuthID() string
-	AuthMethods() []any
+	AuthMethods() []string
 	AuthExtra() map[string]any
 	Roles() map[string]any
 }
 
-type hello struct {
+type helloFields struct {
 	realm       string
 	authID      string
-	authMethods []any
+	authMethods []string
 	authExtra   map[string]any
 	roles       map[string]any
 }
 
-func NewEmptyHello() Hello {
-	return &hello{}
+func (h *helloFields) Realm() string {
+	return h.realm
 }
 
-func NewHello(realm, authID string, authExtra, roles map[string]any, authMethods []any) Hello {
-	return &hello{
+func (h *helloFields) AuthID() string {
+	return h.authID
+}
+
+func (h *helloFields) AuthMethods() []string {
+	return h.authMethods
+}
+
+func (h *helloFields) AuthExtra() map[string]any {
+	return h.authExtra
+}
+
+func (h *helloFields) Roles() map[string]any {
+	return h.roles
+}
+
+type Hello struct {
+	HelloFields
+}
+
+func NewHelloWithFields(fields HelloFields) *Hello { return &Hello{HelloFields: fields} }
+
+func NewHello(realm, authID string, authExtra, roles map[string]any, authMethods []string) *Hello {
+	return &Hello{HelloFields: &helloFields{
 		realm:       realm,
 		authID:      authID,
 		authMethods: authMethods,
 		authExtra:   authExtra,
 		roles:       roles,
-	}
+	}}
 }
 
-func (h *hello) Realm() string {
-	return h.realm
-}
-
-func (h *hello) AuthID() string {
-	return h.authID
-}
-
-func (h *hello) AuthMethods() []any {
-	return h.authMethods
-}
-
-func (h *hello) AuthExtra() map[string]any {
-	return h.authExtra
-}
-
-func (h *hello) Roles() map[string]any {
-	return h.roles
-}
-
-func (h *hello) Type() int {
+func (h *Hello) Type() int {
 	return MessageTypeHello
 }
 
-func (h *hello) Parse(wampMsg []any) error {
+func (h *Hello) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, helloValidationSpec)
 	if err != nil {
 		return fmt.Errorf("hello: failed to validate message %s: %w", MessageNameHello, err)
 	}
 
-	h.realm = fields.Realm
-	h.authID = fields.Details["authid"].(string)
-	h.authExtra = fields.Details["authextra"].(map[string]any)
-	h.roles = fields.Details["roles"].(map[string]any)
-	h.authMethods = fields.Details["authmethods"].([]any)
+	h.HelloFields = &helloFields{
+		realm:       fields.Realm,
+		authID:      fields.AuthID,
+		authMethods: fields.AuthMethods,
+		authExtra:   fields.AuthExtra,
+		roles:       fields.Roles,
+	}
 
 	return nil
 }
 
-func (h *hello) Marshal() []any {
-	if h.authExtra == nil {
-		h.authExtra = map[string]any{}
+func (h *Hello) Marshal() []any {
+	authExtra := map[string]any{}
+	if h.AuthExtra() != nil {
+		authExtra = h.AuthExtra()
 	}
 
 	details := map[string]any{
-		"authid":      h.authID,
-		"authmethods": h.authMethods,
-		"authextra":   h.authExtra,
-		"roles":       h.roles,
+		"authid":      h.AuthID(),
+		"authmethods": h.AuthMethods(),
+		"authextra":   authExtra,
+		"roles":       h.Roles(),
 	}
 
-	return []any{MessageTypeHello, h.realm, details}
+	return []any{MessageTypeHello, h.Realm(), details}
 }

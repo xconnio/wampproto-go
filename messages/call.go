@@ -34,17 +34,6 @@ type callFields struct {
 	kwArgs    map[string]any
 }
 
-func NewCallFields(requestID int64, options map[string]any, procedure string, args []any,
-	kwArgs map[string]any) CallFields {
-	return &callFields{
-		requestID: requestID,
-		options:   options,
-		procedure: procedure,
-		args:      args,
-		kwArgs:    kwArgs,
-	}
-}
-
 func (e *callFields) RequestID() int64 {
 	return e.requestID
 }
@@ -69,8 +58,8 @@ type Call struct {
 	CallFields
 }
 
-func NewCall(fields CallFields) *Call {
-	return &Call{CallFields: fields}
+func NewCall(requestID int64, options map[string]any, procedure string, args []any, kwArgs map[string]any) *Call {
+	return &Call{CallFields: &callFields{requestID, options, procedure, args, kwArgs}}
 }
 
 func (e *Call) Type() int {
@@ -83,7 +72,13 @@ func (e *Call) Parse(wampMsg []any) error {
 		return fmt.Errorf("call: failed to validate message %s: %w", MessageNameCall, err)
 	}
 
-	e.CallFields = NewCallFields(fields.RequestID, fields.Options, fields.URI, fields.Args, fields.KwArgs)
+	e.CallFields = &callFields{
+		requestID: fields.RequestID,
+		options:   fields.Options,
+		procedure: fields.URI,
+		args:      fields.Args,
+		kwArgs:    fields.KwArgs,
+	}
 
 	return nil
 }

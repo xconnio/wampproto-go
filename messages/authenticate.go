@@ -1,6 +1,8 @@
 package messages
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const MessageTypeAuthenticate = 5
 const MessageNameAuthenticate = "AUTHENTICATE"
@@ -15,53 +17,54 @@ var authenticateValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Authenticate interface {
-	Message
-
+type AuthenticateFields interface {
 	Signature() string
 	Extra() map[string]any
 }
 
-type authenticate struct {
+type authenticateFields struct {
 	signature string
 	extra     map[string]any
 }
 
-func NewEmptyAuthenticate() Authenticate {
-	return &authenticate{}
+func (a *authenticateFields) Signature() string {
+	return a.signature
 }
 
-func NewAuthenticate(signature string, extra map[string]any) Authenticate {
-	return &authenticate{
-		signature: signature,
-		extra:     extra,
-	}
+func (a *authenticateFields) Extra() map[string]any {
+	return a.extra
 }
 
-func (a *authenticate) Type() int {
+type Authenticate struct {
+	AuthenticateFields
+}
+
+func NewAuthenticateWithFields(fields AuthenticateFields) *Authenticate {
+	return &Authenticate{AuthenticateFields: fields}
+}
+
+func NewAuthenticate(signature string, extra map[string]any) *Authenticate {
+	return &Authenticate{AuthenticateFields: &authenticateFields{signature: signature, extra: extra}}
+}
+
+func (a *Authenticate) Type() int {
 	return MessageTypeAuthenticate
 }
 
-func (a *authenticate) Parse(wampMsg []any) error {
+func (a *Authenticate) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, authenticateValidationSpec)
 	if err != nil {
 		return fmt.Errorf("authenticate: failed to validate message %s: %w", MessageNameAuthenticate, err)
 	}
 
-	a.signature = fields.Signature
-	a.extra = fields.Extra
+	a.AuthenticateFields = &authenticateFields{
+		signature: fields.Signature,
+		extra:     fields.Extra,
+	}
 
 	return nil
 }
 
-func (a *authenticate) Marshal() []any {
-	return []any{MessageTypeAuthenticate, a.signature, a.extra}
-}
-
-func (a *authenticate) Signature() string {
-	return a.signature
-}
-
-func (a *authenticate) Extra() map[string]any {
-	return a.extra
+func (a *Authenticate) Marshal() []any {
+	return []any{MessageTypeAuthenticate, a.Signature(), a.Extra()}
 }

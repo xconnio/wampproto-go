@@ -31,15 +31,6 @@ type abortFields struct {
 	kwArgs  map[string]any
 }
 
-func NewAbortFields(details map[string]any, reason string, args []any, KwArgs map[string]any) AbortFields {
-	return &abortFields{
-		details: details,
-		reason:  reason,
-		args:    args,
-		kwArgs:  KwArgs,
-	}
-}
-
 func (a *abortFields) Details() map[string]any {
 	return a.details
 }
@@ -60,11 +51,16 @@ type Abort struct {
 	AbortFields
 }
 
-func NewAbort(fields AbortFields) *Abort {
-	return &Abort{
-		AbortFields: fields,
-	}
+func NewAbort(details map[string]any, reason string, args []any, KwArgs map[string]any) *Abort {
+	return &Abort{AbortFields: &abortFields{
+		details: details,
+		reason:  reason,
+		args:    args,
+		kwArgs:  KwArgs,
+	}}
 }
+
+func NewAbortWithFields(fields AbortFields) *Abort { return &Abort{AbortFields: fields} }
 
 func (a *Abort) Type() int {
 	return MessageTypeAbort
@@ -76,7 +72,12 @@ func (a *Abort) Parse(wampMsg []any) error {
 		return fmt.Errorf("abort: failed to validate message %s: %w", MessageNameAbort, err)
 	}
 
-	a.AbortFields = NewAbortFields(fields.Details, fields.Reason, fields.Args, fields.KwArgs)
+	a.AbortFields = &abortFields{
+		details: fields.Details,
+		reason:  fields.Reason,
+		args:    fields.Args,
+		kwArgs:  fields.KwArgs,
+	}
 
 	return nil
 }

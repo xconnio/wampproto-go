@@ -52,6 +52,10 @@ type Yield struct {
 }
 
 func NewYield(requestID int64, options map[string]any, args []any, kwArgs map[string]any) *Yield {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
 	return &Yield{YieldFields: &yieldFields{requestID: requestID, options: options, args: args, kwArgs: kwArgs}}
 }
 

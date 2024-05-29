@@ -61,6 +61,10 @@ type Event struct {
 func NewEventWithFields(fields EventFields) *Event { return &Event{EventFields: fields} }
 
 func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) *Event {
+	if details == nil {
+		details = make(map[string]any)
+	}
+
 	return &Event{EventFields: &eventFields{
 		subscriptionID: subscriptionID,
 		publicationID:  publicationID,

@@ -85,7 +85,7 @@ func subscribeTopic(t *testing.T, subscriber *wampproto.Session, uri string) {
 }
 
 func publishTopic(t *testing.T, publisher, subscriber *wampproto.Session, uri string) {
-	publish := messages.NewPublish(2, uri, nil, nil)
+	publish := messages.NewPublish(2, nil, uri, nil, nil)
 	_, err := publisher.SendMessage(publish)
 	require.NoError(t, err)
 

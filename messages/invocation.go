@@ -62,6 +62,11 @@ type Invocation struct {
 
 func NewInvocation(requestID, registrationID int64, details map[string]any, args []any,
 	kwArgs map[string]any) *Invocation {
+
+	if details == nil {
+		details = make(map[string]any)
+	}
+
 	return &Invocation{InvocationFields: &invocationFields{
 		requestID:      requestID,
 		registrationID: registrationID,

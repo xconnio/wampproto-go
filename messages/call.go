@@ -62,6 +62,8 @@ func NewCall(requestID int64, options map[string]any, procedure string, args []a
 	return &Call{CallFields: &callFields{requestID, options, procedure, args, kwArgs}}
 }
 
+func NewCallWithFields(fields CallFields) *Call { return &Call{CallFields: fields} }
+
 func (e *Call) Type() int {
 	return MessageTypeCall
 }

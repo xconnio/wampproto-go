@@ -6,5 +6,5 @@ type ClientAuthenticator interface {
 	AuthMethod() string
 	AuthID() string
 	AuthExtra() map[string]any
-	Authenticate(challenge messages.Challenge) (messages.Authenticate, error)
+	Authenticate(challenge messages.Challenge) (*messages.Authenticate, error)
 }

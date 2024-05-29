@@ -36,6 +36,6 @@ func (a *anonymousAuthenticator) AuthExtra() map[string]any {
 	return a.authExtra
 }
 
-func (a *anonymousAuthenticator) Authenticate(_ messages.Challenge) (messages.Authenticate, error) {
+func (a *anonymousAuthenticator) Authenticate(_ messages.Challenge) (*messages.Authenticate, error) {
 	return nil, errors.New("func Authenticate() must not be called for anonymous authentication")
 }

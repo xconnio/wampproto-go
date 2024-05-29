@@ -57,14 +57,14 @@ func (a *cryptoSignAuthenticator) AuthExtra() map[string]any {
 	return a.authExtra
 }
 
-func (a *cryptoSignAuthenticator) Authenticate(challenge messages.Challenge) (messages.Authenticate, error) {
+func (a *cryptoSignAuthenticator) Authenticate(challenge messages.Challenge) (*messages.Authenticate, error) {
 	challengeHex, _ := challenge.Extra()["challenge"].(string)
 	result, err := SignCryptoSignChallenge(challengeHex, a.privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign challenge")
 	}
 
-	return messages.NewAuthenticate(result, map[string]any{}), nil
+	return messages.NewAuthenticate(messages.NewAuthenticateFields(result, map[string]any{})), nil
 }
 
 func SignCryptoSignChallenge(challenge string, privateKey ed25519.PrivateKey) (string, error) {

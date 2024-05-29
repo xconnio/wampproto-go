@@ -15,53 +15,56 @@ var interruptValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Interrupt interface {
-	Message
-
+type InterruptFields interface {
 	RequestID() int64
 	Options() map[string]any
 }
 
-type interrupt struct {
+type interruptFields struct {
 	requestID int64
 	options   map[string]any
 }
 
-func NewEmptyInterrupt() Interrupt {
-	return &interrupt{}
-}
-
-func NewInterrupt(requestID int64, options map[string]any) Interrupt {
-	return &interrupt{
+func NewInterruptFields(requestID int64, options map[string]any) InterruptFields {
+	return &interruptFields{
 		requestID: requestID,
 		options:   options,
 	}
 }
 
-func (c *interrupt) RequestID() int64 {
+func (c *interruptFields) RequestID() int64 {
 	return c.requestID
 }
 
-func (c *interrupt) Options() map[string]any {
+func (c *interruptFields) Options() map[string]any {
 	return c.options
 }
 
-func (c *interrupt) Type() int {
+type Interrupt struct {
+	InterruptFields
+}
+
+func NewInterrupt(fields InterruptFields) *Interrupt {
+	return &Interrupt{
+		InterruptFields: fields,
+	}
+}
+
+func (c *Interrupt) Type() int {
 	return MessageTypeInterrupt
 }
 
-func (c *interrupt) Parse(wampMsg []any) error {
+func (c *Interrupt) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, interruptValidationSpec)
 	if err != nil {
 		return fmt.Errorf("interrupt: failed to validate message %s: %w", MessageNameInterrupt, err)
 	}
 
-	c.requestID = fields.RequestID
-	c.options = fields.Options
+	c.InterruptFields = NewInterruptFields(fields.RequestID, fields.Options)
 
 	return nil
 }
 
-func (c *interrupt) Marshal() []any {
-	return []any{MessageTypeInterrupt, c.requestID, c.options}
+func (c *Interrupt) Marshal() []any {
+	return []any{MessageTypeInterrupt, c.RequestID(), c.Options()}
 }

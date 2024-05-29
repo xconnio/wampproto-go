@@ -18,9 +18,7 @@ var eventValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Event interface {
-	Message
-
+type EventFields interface {
 	SubscriptionID() int64
 	PublicationID() int64
 	Details() map[string]any
@@ -28,7 +26,7 @@ type Event interface {
 	KwArgs() map[string]any
 }
 
-type event struct {
+type eventFields struct {
 	subscriptionID int64
 	publicationID  int64
 	details        map[string]any
@@ -36,12 +34,9 @@ type event struct {
 	kwArgs         map[string]any
 }
 
-func NewEmptyEvent() Event {
-	return &event{}
-}
-
-func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) Event {
-	return &event{
+func NewEventFields(subscriptionID, publicationID int64, details map[string]any, args []any,
+	kwArgs map[string]any) EventFields {
+	return &eventFields{
 		subscriptionID: subscriptionID,
 		publicationID:  publicationID,
 		details:        details,
@@ -50,58 +45,64 @@ func NewEvent(subscriptionID, publicationID int64, details map[string]any, args 
 	}
 }
 
-func (e *event) SubscriptionID() int64 {
+func (e *eventFields) SubscriptionID() int64 {
 	return e.subscriptionID
 }
 
-func (e *event) PublicationID() int64 {
+func (e *eventFields) PublicationID() int64 {
 	return e.publicationID
 }
 
-func (e *event) Details() map[string]any {
+func (e *eventFields) Details() map[string]any {
 	return e.details
 }
 
-func (e *event) Args() []any {
+func (e *eventFields) Args() []any {
 	return e.args
 }
 
-func (e *event) KwArgs() map[string]any {
+func (e *eventFields) KwArgs() map[string]any {
 	return e.kwArgs
 }
 
-func (e *event) Type() int {
+type Event struct {
+	EventFields
+}
+
+func NewEvent(fields EventFields) *Event {
+	return &Event{
+		EventFields: fields,
+	}
+}
+
+func (e *Event) Type() int {
 	return MessageTypeEvent
 }
 
-func (e *event) Parse(wampMsg []any) error {
+func (e *Event) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, eventValidationSpec)
 	if err != nil {
 		return fmt.Errorf("event: failed to validate message %s: %w", MessageNameEvent, err)
 	}
 
-	e.subscriptionID = fields.SubscriptionID
-	e.publicationID = fields.PublicationID
-	e.details = fields.Details
-	e.args = fields.Args
-	e.kwArgs = fields.KwArgs
+	e.EventFields = NewEventFields(fields.SubscriptionID, fields.PublicationID, fields.Details, fields.Args, fields.KwArgs)
 
 	return nil
 }
 
-func (e *event) Marshal() []any {
-	result := []any{MessageTypeEvent, e.subscriptionID, e.publicationID, e.details}
+func (e *Event) Marshal() []any {
+	result := []any{MessageTypeEvent, e.SubscriptionID(), e.PublicationID(), e.Details()}
 
-	if e.args != nil {
-		result = append(result, e.args)
+	if e.Args() != nil {
+		result = append(result, e.Args())
 	}
 
-	if e.kwArgs != nil {
-		if e.args == nil {
+	if e.KwArgs() != nil {
+		if e.Args() == nil {
 			result = append(result, []any{})
 		}
 
-		result = append(result, e.kwArgs)
+		result = append(result, e.KwArgs())
 	}
 
 	return result

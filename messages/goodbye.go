@@ -15,53 +15,56 @@ var goodByeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type GoodBye interface {
-	Message
-
+type GoodByeFields interface {
 	Details() map[string]any
 	Reason() string
 }
 
-type goodBye struct {
+type goodByeFields struct {
 	details map[string]any
 	reason  string
 }
 
-func NewEmptyGoodBye() GoodBye {
-	return &goodBye{}
-}
-
-func NewGoodBye(reason string, details map[string]any) GoodBye {
-	return &goodBye{
+func NewGoodByeFields(reason string, details map[string]any) GoodByeFields {
+	return &goodByeFields{
 		reason:  reason,
 		details: details,
 	}
 }
 
-func (g *goodBye) Reason() string {
+func (g *goodByeFields) Reason() string {
 	return g.reason
 }
 
-func (g *goodBye) Details() map[string]any {
+func (g *goodByeFields) Details() map[string]any {
 	return g.details
 }
 
-func (g *goodBye) Type() int {
+type GoodBye struct {
+	GoodByeFields
+}
+
+func NewGoodBye(fields GoodByeFields) *GoodBye {
+	return &GoodBye{
+		GoodByeFields: fields,
+	}
+}
+
+func (g *GoodBye) Type() int {
 	return MessageTypeGoodbye
 }
 
-func (g *goodBye) Parse(wampMsg []any) error {
+func (g *GoodBye) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, goodByeValidationSpec)
 	if err != nil {
 		return fmt.Errorf("goodbye: failed to validate message %s: %w", MessageNameGoodbye, err)
 	}
 
-	g.details = fields.Details
-	g.reason = fields.Reason
+	g.GoodByeFields = NewGoodByeFields(fields.Reason, fields.Details)
 
 	return nil
 }
 
-func (g *goodBye) Marshal() []any {
-	return []any{MessageTypeGoodbye, g.details, g.reason}
+func (g *GoodBye) Marshal() []any {
+	return []any{MessageTypeGoodbye, g.Details(), g.Reason()}
 }

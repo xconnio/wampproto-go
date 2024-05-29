@@ -15,53 +15,56 @@ var publishedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type Published interface {
-	Message
-
+type PublishedFields interface {
 	RequestID() int64
 	PublicationID() int64
 }
 
-type published struct {
+type publishedFields struct {
 	requestID     int64
 	publicationID int64
 }
 
-func NewEmptyPublished() Published {
-	return &published{}
-}
-
-func NewPublished(requestID, publicationID int64) Published {
-	return &published{
+func NewPublishedFields(requestID, publicationID int64) PublishedFields {
+	return &publishedFields{
 		requestID:     requestID,
 		publicationID: publicationID,
 	}
 }
 
-func (r *published) RequestID() int64 {
-	return r.requestID
+func (p *publishedFields) RequestID() int64 {
+	return p.requestID
 }
 
-func (r *published) PublicationID() int64 {
-	return r.publicationID
+func (p *publishedFields) PublicationID() int64 {
+	return p.publicationID
 }
 
-func (r *published) Type() int {
+type Published struct {
+	PublishedFields
+}
+
+func NewPublished(fields PublishedFields) *Published {
+	return &Published{
+		PublishedFields: fields,
+	}
+}
+
+func (p *Published) Type() int {
 	return MessageTypePublished
 }
 
-func (r *published) Parse(wampMsg []any) error {
+func (p *Published) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, publishedValidationSpec)
 	if err != nil {
 		return fmt.Errorf("published: failed to validate message %s: %w", MessageNamePublished, err)
 	}
 
-	r.requestID = fields.RequestID
-	r.publicationID = fields.PublicationID
+	p.PublishedFields = NewPublishedFields(fields.RequestID, fields.PublicationID)
 
 	return nil
 }
 
-func (r *published) Marshal() []any {
-	return []any{MessageTypePublished, r.requestID, r.publicationID}
+func (p *Published) Marshal() []any {
+	return []any{MessageTypePublished, p.RequestID(), p.PublicationID()}
 }

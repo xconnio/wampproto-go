@@ -74,22 +74,22 @@ func TestSessionCall(t *testing.T) {
 
 func subscribeTopic(t *testing.T, subscriber *wampproto.Session, uri string) {
 	subscribeID := int64(1)
-	subscribe := messages.NewSubscribe(subscribeID, nil, uri)
+	subscribe := messages.NewSubscribe(messages.NewSubscribeFields(subscribeID, nil, uri))
 	payload, err := subscriber.SendMessage(subscribe)
 	require.NoError(t, err)
 	require.NotNil(t, payload)
 
-	subscribed := messages.NewSubscribed(subscribeID, 1)
+	subscribed := messages.NewSubscribed(messages.NewSubscribedFields(subscribeID, 1))
 	_, err = subscriber.ReceiveMessage(subscribed)
 	require.NoError(t, err)
 }
 
 func publishTopic(t *testing.T, publisher, subscriber *wampproto.Session, uri string) {
-	publish := messages.NewPublish(2, uri, nil, nil)
+	publish := messages.NewPublish(messages.NewPublishFields(2, uri, nil, nil))
 	_, err := publisher.SendMessage(publish)
 	require.NoError(t, err)
 
-	event := messages.NewEvent(1, 2, nil, nil, nil)
+	event := messages.NewEvent(messages.NewEventFields(1, 2, nil, nil, nil))
 	_, err = subscriber.ReceiveMessage(event)
 	require.NoError(t, err)
 }

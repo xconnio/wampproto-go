@@ -15,53 +15,56 @@ var unSubscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	},
 }
 
-type UnSubscribe interface {
-	Message
-
+type UnSubscribeFields interface {
 	RequestID() int64
 	SubscriptionID() int64
 }
 
-type unSubscribe struct {
+type unSubscribeFields struct {
 	requestID      int64
 	subscriptionID int64
 }
 
-func NewEmptyUnSubscribe() UnSubscribe {
-	return &unSubscribe{}
-}
-
-func NewUnSubscribe(requestID, subscriptionID int64) UnSubscribe {
-	return &unSubscribe{
+func NewUnSubscribeFields(requestID, subscriptionID int64) UnSubscribeFields {
+	return &unSubscribeFields{
 		requestID:      requestID,
 		subscriptionID: subscriptionID,
 	}
 }
 
-func (r *unSubscribe) Type() int {
+func (us *unSubscribeFields) RequestID() int64 {
+	return us.requestID
+}
+
+func (us *unSubscribeFields) SubscriptionID() int64 {
+	return us.subscriptionID
+}
+
+type UnSubscribe struct {
+	UnSubscribeFields
+}
+
+func NewUnSubscribe(fields UnSubscribeFields) *UnSubscribe {
+	return &UnSubscribe{
+		UnSubscribeFields: fields,
+	}
+}
+
+func (us *UnSubscribe) Type() int {
 	return MessageTypeUnSubscribe
 }
 
-func (r *unSubscribe) Parse(wampMsg []any) error {
+func (us *UnSubscribe) Parse(wampMsg []any) error {
 	fields, err := ValidateMessage(wampMsg, unSubscribeValidationSpec)
 	if err != nil {
 		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnSubscribe, err)
 	}
 
-	r.requestID = fields.RequestID
-	r.subscriptionID = fields.SubscriptionID
+	us.UnSubscribeFields = NewUnSubscribeFields(fields.RequestID, fields.SubscriptionID)
 
 	return nil
 }
 
-func (r *unSubscribe) Marshal() []any {
-	return []any{MessageTypeUnSubscribe, r.requestID, r.subscriptionID}
-}
-
-func (r *unSubscribe) RequestID() int64 {
-	return r.requestID
-}
-
-func (r *unSubscribe) SubscriptionID() int64 {
-	return r.subscriptionID
+func (us *UnSubscribe) Marshal() []any {
+	return []any{MessageTypeUnSubscribe, us.RequestID(), us.SubscriptionID()}
 }

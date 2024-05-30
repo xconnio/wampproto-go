@@ -304,6 +304,8 @@ func AsInt64(i interface{}) (int64, bool) {
 		return int64(v), true
 	case uint:
 		return int64(v), true
+	case uint16:
+		return int64(v), true
 	case uint32:
 		return int64(v), true
 	case float64:

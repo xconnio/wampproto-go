@@ -45,6 +45,10 @@ type Register struct {
 }
 
 func NewRegister(requestID int64, options map[string]any, uri string) *Register {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
 	return &Register{RegisterFields: &registerFields{requestID: requestID, options: options, procedure: uri}}
 }
 

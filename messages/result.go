@@ -6,14 +6,14 @@ const MessageTypeResult = 50
 const MessageNameResult = "RESULT"
 
 var resultValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
-	MinLength: 4,
-	MaxLength: 6,
+	MinLength: 3,
+	MaxLength: 5,
 	Message:   MessageNameResult,
 	Spec: Spec{
 		1: ValidateRequestID,
 		2: ValidateDetails,
-		4: ValidateArgs,
-		5: ValidateKwArgs,
+		3: ValidateArgs,
+		4: ValidateKwArgs,
 	},
 }
 

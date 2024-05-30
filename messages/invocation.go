@@ -13,8 +13,8 @@ var invocationValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	Message:   MessageNameInvocation,
 	Spec: Spec{
 		1: ValidateRequestID,
-		2: ValidateDetails,
-		3: ValidateURI,
+		2: ValidateRegistrationID,
+		3: ValidateDetails,
 		4: ValidateArgs,
 		5: ValidateKwArgs,
 	},

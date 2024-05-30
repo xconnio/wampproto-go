@@ -2,6 +2,7 @@ package wampproto
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/xconnio/wampproto-go/messages"
 	"github.com/xconnio/wampproto-go/serializers"
@@ -11,17 +12,17 @@ type Session struct {
 	serializer serializers.Serializer
 
 	// data structures for RPC
-	callRequests       map[int64]int64
-	registerRequests   map[int64]int64
-	registrations      map[int64]int64
-	invocationRequests map[int64]int64
-	unregisterRequests map[int64]int64
+	callRequests       sync.Map
+	registerRequests   sync.Map
+	registrations      sync.Map
+	invocationRequests sync.Map
+	unregisterRequests sync.Map
 
 	// data structures for PubSub
-	publishRequests     map[int64]int64
-	subscribeRequests   map[int64]int64
-	subscriptions       map[int64]int64
-	unsubscribeRequests map[int64]int64
+	publishRequests     sync.Map
+	subscribeRequests   sync.Map
+	subscriptions       sync.Map
+	unsubscribeRequests sync.Map
 }
 
 func NewSession(serializer serializers.Serializer) *Session {
@@ -32,16 +33,16 @@ func NewSession(serializer serializers.Serializer) *Session {
 	return &Session{
 		serializer: serializer,
 
-		callRequests:       make(map[int64]int64),
-		registerRequests:   make(map[int64]int64),
-		registrations:      make(map[int64]int64),
-		invocationRequests: make(map[int64]int64),
-		unregisterRequests: make(map[int64]int64),
+		callRequests:       sync.Map{},
+		registerRequests:   sync.Map{},
+		registrations:      sync.Map{},
+		invocationRequests: sync.Map{},
+		unregisterRequests: sync.Map{},
 
-		publishRequests:     make(map[int64]int64),
-		subscribeRequests:   make(map[int64]int64),
-		subscriptions:       make(map[int64]int64),
-		unsubscribeRequests: make(map[int64]int64),
+		publishRequests:     sync.Map{},
+		subscribeRequests:   sync.Map{},
+		subscriptions:       sync.Map{},
+		unsubscribeRequests: sync.Map{},
 	}
 }
 
@@ -54,46 +55,46 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 	switch msg.Type() {
 	case messages.MessageTypeCall:
 		call := msg.(*messages.Call)
-		w.callRequests[call.RequestID()] = call.RequestID()
+		w.callRequests.Store(call.RequestID(), call.RequestID())
 
 		return data, nil
 	case messages.MessageTypeYield:
 		yield := msg.(*messages.Yield)
-		delete(w.invocationRequests, yield.RequestID())
+		w.invocationRequests.Delete(yield.RequestID())
 
 		return data, nil
 	case messages.MessageTypeRegister:
 		register := msg.(*messages.Register)
-		w.registerRequests[register.RequestID()] = register.RequestID()
+		w.registerRequests.Store(register.RequestID(), register.RequestID())
 
 		return data, nil
 	case messages.MessageTypeUnRegister:
 		unregister := msg.(*messages.UnRegister)
-		w.unregisterRequests[unregister.RequestID()] = unregister.RequestID()
+		w.unregisterRequests.Store(unregister.RequestID(), unregister.RequestID())
 
 		return data, nil
 	case messages.MessageTypePublish:
 		publish := msg.(*messages.Publish)
 		acknowledge, ok := publish.Options()["acknowledge"].(bool)
 		if ok && acknowledge {
-			w.publishRequests[publish.RequestID()] = publish.RequestID()
+			w.publishRequests.Store(publish.RequestID(), publish.RequestID())
 		}
 
 		return data, nil
 	case messages.MessageTypeSubscribe:
 		subscribe := msg.(*messages.Subscribe)
-		w.subscribeRequests[subscribe.RequestID()] = subscribe.RequestID()
+		w.subscribeRequests.Store(subscribe.RequestID(), subscribe.RequestID())
 
 		return data, nil
 	case messages.MessageTypeUnSubscribe:
 		unsubscribe := msg.(*messages.UnSubscribe)
-		_, exists := w.subscriptions[unsubscribe.SubscriptionID()]
+		_, exists := w.subscriptions.Load(unsubscribe.SubscriptionID())
 		if !exists {
 			return nil, fmt.Errorf("unsubscribe request for non existent subscription %d",
 				unsubscribe.SubscriptionID())
 		}
 
-		w.unsubscribeRequests[unsubscribe.RequestID()] = unsubscribe.RequestID()
+		w.unsubscribeRequests.Store(unsubscribe.RequestID(), unsubscribe.RequestID())
 
 		return data, nil
 	case messages.MessageTypeError:
@@ -102,7 +103,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 			return nil, fmt.Errorf("send only supported for invocation error")
 		}
 
-		delete(w.invocationRequests, errorMsg.RequestID())
+		w.invocationRequests.Delete(errorMsg.RequestID())
 		return data, nil
 	default:
 		return nil, fmt.Errorf("send not supported for message of type %T", msg)
@@ -122,85 +123,78 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 	switch msg.Type() {
 	case messages.MessageTypeResult:
 		result := msg.(*messages.Result)
-		_, exists := w.callRequests[result.RequestID()]
+		_, exists := w.callRequests.LoadAndDelete(result.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received RESULT for invalid requestID")
 		}
 
-		delete(w.callRequests, result.RequestID())
 		return result, nil
 	case messages.MessageTypeRegistered:
 		registered := msg.(*messages.Registered)
-		_, exists := w.registerRequests[registered.RequestID()]
+		_, exists := w.registerRequests.LoadAndDelete(registered.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received REGISTERED for invalid requestID")
 		}
 
-		delete(w.registerRequests, registered.RequestID())
-		w.registrations[registered.RegistrationID()] = registered.RegistrationID()
+		w.registrations.Store(registered.RegistrationID(), registered.RegistrationID())
 		return registered, nil
 	case messages.MessageTypeUnRegistered:
 		unregistered := msg.(*messages.UnRegistered)
-		registrationID, exists := w.unregisterRequests[unregistered.RequestID()]
+		registrationID, exists := w.unregisterRequests.Load(unregistered.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received UNREGISTERED for invalid requestID")
 		}
 
-		_, exists = w.registrations[registrationID]
+		_, exists = w.registrations.LoadAndDelete(registrationID)
 		if !exists {
 			return nil, fmt.Errorf("received UNREGISTERED for invalid registrationID")
 		}
 
-		delete(w.registrations, registrationID)
 		return unregistered, nil
 	case messages.MessageTypeInvocation:
 		invocation := msg.(*messages.Invocation)
-		_, exists := w.registrations[invocation.RegistrationID()]
+		_, exists := w.registrations.Load(invocation.RegistrationID())
 		if !exists {
 			return nil, fmt.Errorf("received INVOCATION for invalid registrationID")
 		}
 
-		w.invocationRequests[invocation.RequestID()] = invocation.RequestID()
+		w.invocationRequests.Store(invocation.RequestID(), invocation.RequestID())
 
 		return invocation, nil
 	case messages.MessageTypePublished:
 		published := msg.(*messages.Published)
-		_, exists := w.publishRequests[published.RequestID()]
+		_, exists := w.publishRequests.LoadAndDelete(published.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received PUBLISHED for invalid requestID")
 		}
 
-		delete(w.publishRequests, published.RequestID())
-
 		return published, nil
 	case messages.MessageTypeSubscribed:
 		subscribed := msg.(*messages.Subscribed)
-		_, exists := w.subscribeRequests[subscribed.RequestID()]
+		_, exists := w.subscribeRequests.Load(subscribed.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received SUBSCRIBED for invalid requestID")
 		}
 
-		w.subscriptions[subscribed.SubscriptionID()] = subscribed.SubscriptionID()
+		w.subscriptions.Store(subscribed.SubscriptionID(), subscribed.SubscriptionID())
 
 		return subscribed, nil
 	case messages.MessageTypeUnSubscribed:
 		unsubscribed := msg.(*messages.UnSubscribed)
-		subscriptionID, exists := w.unsubscribeRequests[unsubscribed.RequestID()]
+		subscriptionID, exists := w.unsubscribeRequests.Load(unsubscribed.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received UNSUBSCRIBED for invalid requestID")
 		}
 
-		_, exists = w.subscriptions[subscriptionID]
+		_, exists = w.subscriptions.LoadAndDelete(subscriptionID)
 		if !exists {
 			return nil, fmt.Errorf("received UNSUBSCRIBED for invalid subscriptionID")
 		}
 
-		delete(w.subscriptions, subscriptionID)
-
 		return unsubscribed, nil
 	case messages.MessageTypeEvent:
 		event := msg.(*messages.Event)
-		_, exists := w.subscriptions[event.SubscriptionID()]
+		_, exists := w.subscriptions.Load(event.SubscriptionID())
 		if !exists {
 			return nil, fmt.Errorf("received EVENT for invalid subscriptionID")
 		}
@@ -210,52 +204,46 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		errorMsg := msg.(*messages.Error)
 		switch errorMsg.MessageType() {
 		case messages.MessageTypeCall:
-			_, exists := w.callRequests[errorMsg.RequestID()]
+			_, exists := w.callRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid call request")
 			}
 
-			delete(w.callRequests, errorMsg.RequestID())
 			return errorMsg, nil
 		case messages.MessageTypeRegister:
-			_, exists := w.registerRequests[errorMsg.RequestID()]
+			_, exists := w.registerRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid register request")
 			}
 
-			delete(w.registerRequests, errorMsg.RequestID())
 			return errorMsg, nil
 		case messages.MessageTypeUnRegister:
-			_, exists := w.unregisterRequests[errorMsg.RequestID()]
+			_, exists := w.unregisterRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid unregister request")
 			}
 
-			delete(w.unregisterRequests, errorMsg.RequestID())
 			return errorMsg, nil
 		case messages.MessageTypeSubscribe:
-			_, exists := w.subscribeRequests[errorMsg.RequestID()]
+			_, exists := w.subscribeRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid subscribe request")
 			}
 
-			delete(w.subscribeRequests, errorMsg.RequestID())
 			return errorMsg, nil
 		case messages.MessageTypeUnSubscribe:
-			_, exists := w.unsubscribeRequests[errorMsg.RequestID()]
+			_, exists := w.unsubscribeRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid unsubscribe request")
 			}
 
-			delete(w.unsubscribeRequests, errorMsg.RequestID())
 			return errorMsg, nil
 		case messages.MessageTypePublish:
-			_, exists := w.publishRequests[errorMsg.RequestID()]
+			_, exists := w.publishRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid publish request")
 			}
 
-			delete(w.publishRequests, errorMsg.RequestID())
 			return errorMsg, nil
 		default:
 			return nil, fmt.Errorf("unknown error message type %T", msg)

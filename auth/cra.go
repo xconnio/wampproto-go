@@ -2,8 +2,11 @@ package auth
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 
 	"golang.org/x/crypto/pbkdf2"
 
@@ -94,4 +97,52 @@ func DeriveCRAKey(saltStr string, secret string, iterations int, keyLength int) 
 	derivedKey := []byte(base64.StdEncoding.EncodeToString(dk))
 
 	return derivedKey
+}
+
+// VerifyCRASignature compares a signature to a signature that the computed over
+// the given challenge string using the key.  The signature is a base64-encoded
+// string, generally presented by a client, and the challenge string and key
+// are used to compute the expected HMAC signature.  If these are the same,
+// then true is returned.
+func VerifyCRASignature(sig, chal string, key []byte) bool {
+	sigBytes, err := base64.StdEncoding.DecodeString(sig)
+	if err != nil {
+		return false
+	}
+
+	return hmac.Equal(sigBytes, SignCRAChallengeBytes(chal, key))
+}
+
+func GenerateCRAChallenge(session int64, authid, authrole, provider string) (string, error) {
+	nonce, err := makeNonce()
+	if err != nil {
+		return "", fmt.Errorf("failed to get nonce: %w", err)
+	}
+
+	data := map[string]any{
+		"nonce":        nonce,
+		"authprovider": provider,
+		"authid":       authid,
+		"timestamp":    NowISO8601(),
+		"authrole":     authrole,
+		"authmethod":   MethodCRA,
+		"session":      int(session),
+	}
+
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	return string(raw), nil
+}
+
+// makeNonce generates 16 random bytes as a base64 encoded string.
+func makeNonce() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(b), nil
 }

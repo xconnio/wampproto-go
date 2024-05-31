@@ -9,6 +9,11 @@ import (
 func SelectAuthMethod(allowedMethods []Method, proposedMethods []string) (Method, error) {
 	var unsupported []string
 	var method Method
+
+	if len(proposedMethods) == 0 {
+		return Anonymous, nil
+	}
+
 	for _, proposed := range proposedMethods {
 		if slices.Contains(allowedMethods, Method(proposed)) {
 			method = Method(proposed)

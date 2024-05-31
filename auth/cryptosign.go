@@ -2,9 +2,12 @@ package auth
 
 import (
 	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
+
+	"golang.org/x/crypto/nacl/sign"
 
 	"github.com/xconnio/wampproto-go/messages"
 )
@@ -77,4 +80,48 @@ func SignCryptoSignChallenge(challenge string, privateKey ed25519.PrivateKey) (s
 	signedHex := hex.EncodeToString(signedRaw)
 
 	return signedHex + challenge, nil
+}
+
+func VerifyCryptoSignSignature(signature string, publicKey []byte) (bool, error) {
+	signatureBytes, err := hex.DecodeString(signature)
+	if err != nil {
+		return false, err
+	}
+
+	if len(signatureBytes) != 96 {
+		return false, fmt.Errorf("signed message has invalid length (was %v, but should have been 96", len(signatureBytes))
+	}
+
+	signedOut := make([]byte, 32)
+	var pubkey [32]byte
+	copy(pubkey[:], publicKey)
+	_, verify := sign.Open(signedOut, signatureBytes, &pubkey)
+
+	return verify, nil
+}
+
+func GenerateCryptoSignChallenge() (string, error) {
+	challenge := make([]byte, 32)
+	_, err := rand.Read(challenge)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(challenge), nil
+}
+
+func GenerateCryptoSignKeyPair() (publicKey string, privateKey string, err error) {
+	seed := make([]byte, 32)
+	_, err = rand.Read(seed)
+	if err != nil {
+		return "", "", err
+	}
+
+	sk := ed25519.NewKeyFromSeed(seed)
+	pk := sk.Public().(ed25519.PublicKey)
+
+	publicKey = hex.EncodeToString(pk)
+	privateKey = hex.EncodeToString(seed)
+
+	return publicKey, privateKey, nil
 }

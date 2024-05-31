@@ -1,5 +1,7 @@
 package wampproto
 
+import "github.com/xconnio/wampproto-go/messages"
+
 type SessionDetails struct {
 	id       int64
 	realm    string
@@ -30,4 +32,9 @@ func (s *SessionDetails) AuthID() string {
 
 func (s *SessionDetails) AuthRole() string {
 	return s.authRole
+}
+
+type MessageWithRecipient struct {
+	Message   messages.Message
+	Recipient int64
 }

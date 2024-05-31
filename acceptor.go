@@ -246,7 +246,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 
 func (a *Acceptor) sendWelcome(sessionID int64, response auth.Response) *messages.Welcome {
 	welcome := messages.NewWelcome(sessionID, map[string]any{
-		"realm":      a.hello.Realm,
+		"realm":      a.hello.Realm(),
 		"roles":      RouterRoles,
 		"authid":     response.AuthID(),
 		"authrole":   response.AuthRole(),

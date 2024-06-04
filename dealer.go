@@ -46,7 +46,7 @@ func (d *Dealer) AddSession(details *SessionDetails) error {
 	d.Lock()
 	defer d.Unlock()
 
-	_, exists := d.registrationsBySession[details.ID()]
+	_, exists := d.sessions[details.ID()]
 	if exists {
 		return fmt.Errorf("cannot attach an already attached client %d", details.ID())
 	}
@@ -60,11 +60,12 @@ func (d *Dealer) RemoveSession(id int64) error {
 	d.Lock()
 	defer d.Unlock()
 
-	registrations, exists := d.registrationsBySession[id]
+	_, exists := d.sessions[id]
 	if !exists {
-		return fmt.Errorf("cannot detach non-existing client %d", id)
+		return fmt.Errorf("cannot remove client with id %d not attached", id)
 	}
 
+	registrations := d.registrationsBySession[id]
 	for _, registration := range registrations {
 		registration = d.registrationsByProcedure[registration.Procedure]
 		delete(registration.Registrants, id)
@@ -96,7 +97,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		call := msg.(*messages.Call)
 		regs, exists := d.registrationsByProcedure[call.Procedure()]
 		if !exists || len(regs.Registrants) == 0 {
-			return nil, fmt.Errorf("call: procedure %s has no registration", call.Procedure())
+			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), "wamp.error.no_such_procedure",
+				nil, nil)
+			return &MessageWithRecipient{Message: callErr, Recipient: sessionID}, nil
 		}
 
 		var callee int64

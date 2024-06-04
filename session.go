@@ -2,8 +2,8 @@ package wampproto
 
 import (
 	"fmt"
-	"sync"
 
+	"github.com/xconnio/wampproto-go/internal"
 	"github.com/xconnio/wampproto-go/messages"
 	"github.com/xconnio/wampproto-go/serializers"
 )
@@ -12,17 +12,17 @@ type Session struct {
 	serializer serializers.Serializer
 
 	// data structures for RPC
-	callRequests       sync.Map
-	registerRequests   sync.Map
-	registrations      sync.Map
-	invocationRequests sync.Map
-	unregisterRequests sync.Map
+	callRequests       internal.Map[int64, int64]
+	registerRequests   internal.Map[int64, int64]
+	registrations      internal.Map[int64, int64]
+	invocationRequests internal.Map[int64, int64]
+	unregisterRequests internal.Map[int64, int64]
 
 	// data structures for PubSub
-	publishRequests     sync.Map
-	subscribeRequests   sync.Map
-	subscriptions       sync.Map
-	unsubscribeRequests sync.Map
+	publishRequests     internal.Map[int64, int64]
+	subscribeRequests   internal.Map[int64, int64]
+	subscriptions       internal.Map[int64, int64]
+	unsubscribeRequests internal.Map[int64, int64]
 }
 
 func NewSession(serializer serializers.Serializer) *Session {
@@ -33,16 +33,16 @@ func NewSession(serializer serializers.Serializer) *Session {
 	return &Session{
 		serializer: serializer,
 
-		callRequests:       sync.Map{},
-		registerRequests:   sync.Map{},
-		registrations:      sync.Map{},
-		invocationRequests: sync.Map{},
-		unregisterRequests: sync.Map{},
+		callRequests:       internal.Map[int64, int64]{},
+		registerRequests:   internal.Map[int64, int64]{},
+		registrations:      internal.Map[int64, int64]{},
+		invocationRequests: internal.Map[int64, int64]{},
+		unregisterRequests: internal.Map[int64, int64]{},
 
-		publishRequests:     sync.Map{},
-		subscribeRequests:   sync.Map{},
-		subscriptions:       sync.Map{},
-		unsubscribeRequests: sync.Map{},
+		publishRequests:     internal.Map[int64, int64]{},
+		subscribeRequests:   internal.Map[int64, int64]{},
+		subscriptions:       internal.Map[int64, int64]{},
+		unsubscribeRequests: internal.Map[int64, int64]{},
 	}
 }
 

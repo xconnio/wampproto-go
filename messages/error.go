@@ -100,7 +100,7 @@ func (e *Error) Parse(wampMsg []any) error {
 }
 
 func (e *Error) Marshal() []any {
-	result := []any{MessageTypeError, e.MessageType(), e.RequestID(), e.URI()}
+	result := []any{MessageTypeError, e.MessageType(), e.RequestID(), e.Details(), e.URI()}
 
 	if e.Args() != nil {
 		result = append(result, e.Args())

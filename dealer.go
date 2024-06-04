@@ -96,7 +96,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		call := msg.(*messages.Call)
 		regs, exists := d.registrationsByProcedure[call.Procedure()]
 		if !exists || len(regs.Registrants) == 0 {
-			return nil, fmt.Errorf("unregister: procedure %s has no registration", call.Procedure())
+			return nil, fmt.Errorf("call: procedure %s has no registration", call.Procedure())
 		}
 
 		var callee int64
@@ -140,8 +140,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			return &MessageWithRecipient{Message: err, Recipient: sessionID}, nil
 		} else {
 			registration = &Registration{
-				ID:        d.idGen.NextID(),
-				Procedure: register.Procedure(),
+				ID:          d.idGen.NextID(),
+				Procedure:   register.Procedure(),
+				Registrants: map[int64]int64{sessionID: sessionID},
 			}
 		}
 

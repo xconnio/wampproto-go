@@ -34,6 +34,9 @@ type callFields struct {
 	procedure string
 	args      []any
 	kwArgs    map[string]any
+
+	serializer int
+	payload    []byte
 }
 
 func (e *callFields) RequestID() int64 {
@@ -57,15 +60,15 @@ func (e *callFields) KwArgs() map[string]any {
 }
 
 func (e *callFields) PayloadIsBinary() bool {
-	return false
+	return e.serializer != 0
 }
 
 func (e *callFields) Payload() []byte {
-	return nil
+	return e.payload
 }
 
 func (e *callFields) PayloadSerializer() int {
-	return 0
+	return e.serializer
 }
 
 type Call struct {
@@ -77,10 +80,30 @@ func NewCall(requestID int64, options map[string]any, procedure string, args []a
 		options = make(map[string]any)
 	}
 
-	return &Call{CallFields: &callFields{requestID, options, procedure, args, kwArgs}}
+	return &Call{CallFields: &callFields{
+		requestID: requestID,
+		options:   options,
+		procedure: procedure,
+		args:      args,
+		kwArgs:    kwArgs,
+	}}
 }
 
 func NewCallWithFields(fields CallFields) *Call { return &Call{CallFields: fields} }
+
+func NewCallBinary(requestID int64, options map[string]any, procedure string, payload []byte, serializer int) *Call {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
+	return &Call{CallFields: &callFields{
+		requestID:  requestID,
+		options:    options,
+		procedure:  procedure,
+		payload:    payload,
+		serializer: serializer,
+	}}
+}
 
 func (e *Call) Type() int {
 	return MessageTypeCall

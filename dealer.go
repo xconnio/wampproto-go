@@ -115,7 +115,14 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			CalleeID:  callee,
 		}
 
-		invocation := messages.NewInvocation(invocationID, regs.ID, nil, call.Args(), call.KwArgs())
+		var invocation *messages.Invocation
+		if call.PayloadIsBinary() {
+			invocation = messages.NewInvocationBinary(invocationID, regs.ID, nil, call.Payload(),
+				call.PayloadSerializer())
+		} else {
+			invocation = messages.NewInvocation(invocationID, regs.ID, nil, call.Args(), call.KwArgs())
+		}
+
 		return &MessageWithRecipient{Message: invocation, Recipient: callee}, nil
 	case messages.MessageTypeYield:
 		yield := msg.(*messages.Yield)

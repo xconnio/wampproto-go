@@ -22,6 +22,8 @@ type ResultFields interface {
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type resultFields struct {
@@ -45,6 +47,18 @@ func (e *resultFields) Args() []any {
 
 func (e *resultFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *resultFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *resultFields) Payload() []byte {
+	return nil
+}
+
+func (e *resultFields) PayloadSerializer() int {
+	return 0
 }
 
 type Result struct {

@@ -24,6 +24,8 @@ type PublishFields interface {
 	Topic() string
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type publishFields struct {
@@ -52,6 +54,18 @@ func (e *publishFields) Args() []any {
 
 func (e *publishFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *publishFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *publishFields) Payload() []byte {
+	return nil
+}
+
+func (e *publishFields) PayloadSerializer() int {
+	return 0
 }
 
 type Publish struct {

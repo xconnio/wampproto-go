@@ -26,6 +26,8 @@ type InvocationFields interface {
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type invocationFields struct {
@@ -54,6 +56,18 @@ func (e *invocationFields) Args() []any {
 
 func (e *invocationFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *invocationFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *invocationFields) Payload() []byte {
+	return nil
+}
+
+func (e *invocationFields) PayloadSerializer() int {
+	return 0
 }
 
 type Invocation struct {

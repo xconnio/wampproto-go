@@ -22,6 +22,10 @@ type YieldFields interface {
 	Options() map[string]any
 	Args() []any
 	KwArgs() map[string]any
+
+	PayloadIsBinary() bool
+	Payload() []byte
+	PayloadSerializer() int
 }
 
 type yieldFields struct {
@@ -45,6 +49,18 @@ func (e *yieldFields) Args() []any {
 
 func (e *yieldFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *yieldFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *yieldFields) Payload() []byte {
+	return nil
+}
+
+func (e *yieldFields) PayloadSerializer() int {
+	return 0
 }
 
 type Yield struct {

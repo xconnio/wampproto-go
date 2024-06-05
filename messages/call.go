@@ -24,6 +24,8 @@ type CallFields interface {
 	Procedure() string
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type callFields struct {
@@ -52,6 +54,18 @@ func (e *callFields) Args() []any {
 
 func (e *callFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *callFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *callFields) Payload() []byte {
+	return nil
+}
+
+func (e *callFields) PayloadSerializer() int {
+	return 0
 }
 
 type Call struct {

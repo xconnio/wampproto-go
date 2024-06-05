@@ -24,6 +24,8 @@ type EventFields interface {
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type eventFields struct {
@@ -52,6 +54,18 @@ func (e *eventFields) Args() []any {
 
 func (e *eventFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *eventFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *eventFields) Payload() []byte {
+	return nil
+}
+
+func (e *eventFields) PayloadSerializer() int {
+	return 0
 }
 
 type Event struct {

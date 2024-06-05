@@ -5,3 +5,9 @@ type Message interface {
 	Parse([]any) error
 	Marshal() []any
 }
+
+type BinaryPayload interface {
+	PayloadIsBinary() bool
+	Payload() []byte
+	PayloadSerializer() int
+}

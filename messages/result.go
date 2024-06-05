@@ -22,6 +22,8 @@ type ResultFields interface {
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type resultFields struct {
@@ -29,6 +31,9 @@ type resultFields struct {
 	details   map[string]any
 	args      []any
 	kwArgs    map[string]any
+
+	serializer int
+	payload    []byte
 }
 
 func (e *resultFields) RequestID() int64 {
@@ -47,6 +52,18 @@ func (e *resultFields) KwArgs() map[string]any {
 	return e.kwArgs
 }
 
+func (e *resultFields) PayloadIsBinary() bool {
+	return e.serializer != 0
+}
+
+func (e *resultFields) Payload() []byte {
+	return e.payload
+}
+
+func (e *resultFields) PayloadSerializer() int {
+	return e.serializer
+}
+
 type Result struct {
 	ResultFields
 }
@@ -61,6 +78,19 @@ func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[s
 
 func NewResultWithFields(field ResultFields) *Result {
 	return &Result{ResultFields: field}
+}
+
+func NewResultBinary(requestID int64, details map[string]any, payload []byte, serializer int) *Result {
+	if details == nil {
+		details = make(map[string]any)
+	}
+
+	return &Result{ResultFields: &resultFields{
+		requestID:  requestID,
+		details:    details,
+		serializer: serializer,
+		payload:    payload,
+	}}
 }
 
 func (e *Result) Type() int {

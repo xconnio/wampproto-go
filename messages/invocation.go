@@ -26,6 +26,8 @@ type InvocationFields interface {
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type invocationFields struct {
@@ -34,6 +36,9 @@ type invocationFields struct {
 	details        map[string]any
 	args           []any
 	kwArgs         map[string]any
+
+	serializer int
+	payload    []byte
 }
 
 func (e *invocationFields) RequestID() int64 {
@@ -54,6 +59,18 @@ func (e *invocationFields) Args() []any {
 
 func (e *invocationFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *invocationFields) PayloadIsBinary() bool {
+	return e.serializer != 0
+}
+
+func (e *invocationFields) Payload() []byte {
+	return e.payload
+}
+
+func (e *invocationFields) PayloadSerializer() int {
+	return e.serializer
 }
 
 type Invocation struct {
@@ -78,6 +95,22 @@ func NewInvocation(requestID, registrationID int64, details map[string]any, args
 
 func NewInvocationWithFields(fields InvocationFields) *Invocation {
 	return &Invocation{InvocationFields: fields}
+}
+
+func NewInvocationBinary(requestID, registrationID int64, details map[string]any, payload []byte,
+	serializer int) *Invocation {
+
+	if details == nil {
+		details = make(map[string]any)
+	}
+
+	return &Invocation{InvocationFields: &invocationFields{
+		requestID:      requestID,
+		registrationID: registrationID,
+		details:        details,
+		serializer:     serializer,
+		payload:        payload,
+	}}
 }
 
 func (e *Invocation) Type() int {

@@ -26,6 +26,8 @@ type ErrorFields interface {
 	URI() string
 	Args() []any
 	KwArgs() map[string]any
+
+	BinaryPayload
 }
 
 type errorFields struct {
@@ -59,6 +61,18 @@ func (e *errorFields) Args() []any {
 
 func (e *errorFields) KwArgs() map[string]any {
 	return e.kwArgs
+}
+
+func (e *errorFields) PayloadIsBinary() bool {
+	return false
+}
+
+func (e *errorFields) Payload() []byte {
+	return nil
+}
+
+func (e *errorFields) PayloadSerializer() int {
+	return 0
 }
 
 type Error struct {

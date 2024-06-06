@@ -116,9 +116,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		}
 
 		var invocation *messages.Invocation
-		if call.PayloadIsBinary() {
-			// FIXME: If CALL has binary payload, we need to make sure the callee
-			//  also supports binary payloads.
+		if call.PayloadIsBinary() && d.sessions[callee].StaticSerializer() {
 			invocation = messages.NewInvocationBinary(invocationID, regs.ID, nil, call.Payload(),
 				call.PayloadSerializer())
 		} else {
@@ -136,7 +134,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		delete(d.pendingCalls, yield.RequestID())
 
 		var result *messages.Result
-		if yield.PayloadIsBinary() {
+		if yield.PayloadIsBinary() && d.sessions[pending.CallerID].StaticSerializer() {
 			// FIXME: If YIELD has binary payload, we need to make sure the caller
 			//  also supports binary payloads.
 			result = messages.NewResultBinary(pending.RequestID, nil, yield.Payload(), yield.PayloadSerializer())

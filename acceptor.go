@@ -253,7 +253,8 @@ func (a *Acceptor) sendWelcome(sessionID int64, response auth.Response) *message
 		"authmethod": a.authMethod,
 	})
 
-	a.sessionDetails = NewSessionDetails(sessionID, a.hello.Realm(), response.AuthID(), response.AuthRole())
+	a.sessionDetails = NewSessionDetails(sessionID, a.hello.Realm(), response.AuthID(), response.AuthRole(),
+		a.serializer.Static())
 	a.state = AcceptorStateWelcomeSent
 
 	return welcome

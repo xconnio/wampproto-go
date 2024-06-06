@@ -29,3 +29,7 @@ func (m *MsgPackSerializer) Deserialize(payload []byte) (messages.Message, error
 
 	return msg, nil
 }
+
+func (m *MsgPackSerializer) Static() bool {
+	return false
+}

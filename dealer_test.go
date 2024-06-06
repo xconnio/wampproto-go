@@ -18,7 +18,7 @@ func TestDealerAddRemoveSession(t *testing.T) {
 	})
 
 	t.Run("AddRemove", func(t *testing.T) {
-		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous")
+		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
 		err := dealer.AddSession(details)
 		require.NoError(t, err)
 
@@ -34,7 +34,7 @@ func TestDealerRegisterUnRegister(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
 	t.Run("Register", func(t *testing.T) {
-		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous")
+		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
 		err := dealer.AddSession(details)
 		require.NoError(t, err)
 

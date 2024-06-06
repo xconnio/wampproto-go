@@ -29,3 +29,7 @@ func (j *JSONSerializer) Deserialize(payload []byte) (messages.Message, error) {
 
 	return msg, nil
 }
+
+func (j *JSONSerializer) Static() bool {
+	return false
+}

@@ -7,14 +7,17 @@ type SessionDetails struct {
 	realm    string
 	authID   string
 	authRole string
+
+	staticSerializer bool
 }
 
-func NewSessionDetails(id int64, realm, authID, authRole string) *SessionDetails {
+func NewSessionDetails(id int64, realm, authID, authRole string, staticSerializer bool) *SessionDetails {
 	return &SessionDetails{
-		id:       id,
-		realm:    realm,
-		authID:   authID,
-		authRole: authRole,
+		id:               id,
+		realm:            realm,
+		authID:           authID,
+		authRole:         authRole,
+		staticSerializer: staticSerializer,
 	}
 }
 
@@ -32,6 +35,10 @@ func (s *SessionDetails) AuthID() string {
 
 func (s *SessionDetails) AuthRole() string {
 	return s.authRole
+}
+
+func (s *SessionDetails) StaticSerializer() bool {
+	return s.staticSerializer
 }
 
 type MessageWithRecipient struct {

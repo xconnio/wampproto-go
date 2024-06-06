@@ -38,3 +38,7 @@ func (c *CBORSerializer) Deserialize(payload []byte) (messages.Message, error) {
 
 	return msg, nil
 }
+
+func (c *CBORSerializer) Static() bool {
+	return false
+}

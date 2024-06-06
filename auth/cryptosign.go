@@ -89,7 +89,7 @@ func VerifyCryptoSignSignature(signature string, publicKey []byte) (bool, error)
 	}
 
 	if len(signatureBytes) != 96 {
-		return false, fmt.Errorf("signed message has invalid length (was %v, but should have been 96", len(signatureBytes))
+		return false, fmt.Errorf("signed message has invalid length (was %v, but should have been 96)", len(signatureBytes))
 	}
 
 	signedOut := make([]byte, 32)

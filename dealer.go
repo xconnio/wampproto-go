@@ -117,6 +117,8 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		var invocation *messages.Invocation
 		if call.PayloadIsBinary() {
+			// FIXME: If CALL has binary payload, we need to make sure the callee
+			//  also supports binary payloads.
 			invocation = messages.NewInvocationBinary(invocationID, regs.ID, nil, call.Payload(),
 				call.PayloadSerializer())
 		} else {
@@ -133,7 +135,15 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		delete(d.pendingCalls, yield.RequestID())
 
-		result := messages.NewResult(pending.RequestID, nil, yield.Args(), yield.KwArgs())
+		var result *messages.Result
+		if yield.PayloadIsBinary() {
+			// FIXME: If YIELD has binary payload, we need to make sure the caller
+			//  also supports binary payloads.
+			result = messages.NewResultBinary(pending.RequestID, nil, yield.Payload(), yield.PayloadSerializer())
+		} else {
+			result = messages.NewResult(pending.RequestID, nil, yield.Args(), yield.KwArgs())
+		}
+
 		return &MessageWithRecipient{Message: result, Recipient: pending.CallerID}, nil
 	case messages.MessageTypeRegister:
 		register := msg.(*messages.Register)

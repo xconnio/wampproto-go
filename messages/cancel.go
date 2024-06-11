@@ -41,6 +41,10 @@ func NewCancel(requestID int64, options map[string]any) *Cancel {
 	return &Cancel{CancelFields: &cancelFields{requestID: requestID, options: options}}
 }
 
+func NewCancelWithFields(fields CancelFields) *Cancel {
+	return &Cancel{CancelFields: fields}
+}
+
 func (c *Cancel) Type() int {
 	return MessageTypeCancel
 }

@@ -206,7 +206,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 			return a.sendWelcome(GenerateID(), response), nil
 		case auth.WAMPCRA:
 			authenticate := msg.(*messages.Authenticate)
-			response := a.response.(auth.CRAResponse)
+			response := a.response.(*auth.CRAResponse)
 
 			var secret []byte
 			if response.Salt() == "" {

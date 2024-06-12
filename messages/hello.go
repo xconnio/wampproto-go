@@ -79,12 +79,32 @@ func (h *Hello) Parse(wampMsg []any) error {
 		return fmt.Errorf("hello: failed to validate message %s: %w", MessageNameHello, err)
 	}
 
+	authID, _ := fields.Details["authid"].(string)
+
+	authMethods, ok := fields.Details["authmethods"].([]any)
+	if !ok {
+		authMethods = []any{}
+	}
+	authExtra, ok := fields.Details["authextra"].(map[string]any)
+	if !ok {
+		authExtra = map[string]any{}
+	}
+	roles, ok := fields.Details["roles"].(map[string]any)
+	if !ok {
+		roles = map[string]any{}
+	}
+
+	authMethodsStr, err := AnysToStrings(authMethods)
+	if err != nil {
+		return fmt.Errorf("hello: failed to parse auth methods: %w", err)
+	}
+
 	h.HelloFields = &helloFields{
 		realm:       fields.Realm,
-		authID:      fields.AuthID,
-		authMethods: fields.AuthMethods,
-		authExtra:   fields.AuthExtra,
-		roles:       fields.Roles,
+		authID:      authID,
+		authMethods: authMethodsStr,
+		authExtra:   authExtra,
+		roles:       roles,
 	}
 
 	return nil

@@ -315,3 +315,15 @@ func AsInt64(i interface{}) (int64, bool) {
 	}
 	return 0, false
 }
+
+func AnysToStrings(input []any) ([]string, error) {
+	result := make([]string, 0, len(input))
+	for _, item := range input {
+		str, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("element %v is not a string", item)
+		}
+		result = append(result, str)
+	}
+	return result, nil
+}

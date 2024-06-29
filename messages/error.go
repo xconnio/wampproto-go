@@ -81,10 +81,12 @@ type Error struct {
 
 func NewErrorWithFields(fields ErrorFields) *Error { return &Error{ErrorFields: fields} }
 
-func NewError(messageType, requestID int64, uri string, args []any, kwArgs map[string]any) *Error {
+func NewError(messageType, requestID int64, details map[string]any, uri string, args []any,
+	kwArgs map[string]any) *Error {
 	return &Error{ErrorFields: &errorFields{
 		messageType: messageType,
 		requestID:   requestID,
+		details:     details,
 		uri:         uri,
 		args:        args,
 		kwArgs:      kwArgs,

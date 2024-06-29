@@ -97,8 +97,8 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		call := msg.(*messages.Call)
 		regs, exists := d.registrationsByProcedure[call.Procedure()]
 		if !exists || len(regs.Registrants) == 0 {
-			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), "wamp.error.no_such_procedure",
-				nil, nil)
+			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), map[string]any{},
+				"wamp.error.no_such_procedure", nil, nil)
 			return &MessageWithRecipient{Message: callErr, Recipient: sessionID}, nil
 		}
 
@@ -153,7 +153,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		registration, exists := d.registrationsByProcedure[register.Procedure()]
 		if exists {
 			// TODO: implement shared registrations
-			err := messages.NewError(messages.MessageTypeRegister, register.RequestID(),
+			err := messages.NewError(messages.MessageTypeRegister, register.RequestID(), map[string]any{},
 				"wamp.error.procedure_already_exists", nil, nil)
 			return &MessageWithRecipient{Message: err, Recipient: sessionID}, nil
 		} else {
@@ -200,7 +200,8 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		delete(d.pendingCalls, sessionID)
 
-		wErr = messages.NewError(pending.RequestID, messages.MessageTypeCall, wErr.URI(), wErr.Args(), wErr.KwArgs())
+		wErr = messages.NewError(pending.RequestID, messages.MessageTypeCall, map[string]any{}, wErr.URI(),
+			wErr.Args(), wErr.KwArgs())
 		return &MessageWithRecipient{Message: wErr, Recipient: pending.CallerID}, nil
 	default:
 		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)

@@ -45,3 +45,15 @@ type MessageWithRecipient struct {
 	Message   messages.Message
 	Recipient int64
 }
+
+type Subscription struct {
+	ID          int64
+	Topic       string
+	Subscribers map[int64]int64
+}
+
+type Publication struct {
+	Event      *messages.Event
+	recipients []int64
+	Ack        *MessageWithRecipient
+}

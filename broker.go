@@ -152,7 +152,7 @@ func (b *Broker) ReceivePublish(sessionID int64, publish *messages.Publish) (*Pu
 		event := messages.NewEvent(subscription.ID, publicationID, nil, publish.Args(), publish.KwArgs())
 		result.Event = event
 		for _, subscriber := range subscription.Subscribers {
-			result.recipients = append(result.recipients, subscriber)
+			result.Recipients = append(result.Recipients, subscriber)
 		}
 	}
 

@@ -135,8 +135,6 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		var result *messages.Result
 		if yield.PayloadIsBinary() && d.sessions[pending.CallerID].StaticSerializer() {
-			// FIXME: If YIELD has binary payload, we need to make sure the caller
-			//  also supports binary payloads.
 			result = messages.NewResultBinary(pending.RequestID, nil, yield.Payload(), yield.PayloadSerializer())
 		} else {
 			result = messages.NewResult(pending.RequestID, nil, yield.Args(), yield.KwArgs())

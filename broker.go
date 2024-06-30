@@ -85,7 +85,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 	case messages.MessageTypeSubscribe:
 		_, exists := b.subscriptionsBySession[sessionID]
 		if !exists {
-			return nil, fmt.Errorf("dealer: cannot subscribe, session %d doesn't exist", sessionID)
+			return nil, fmt.Errorf("broker: cannot subscribe, session %d doesn't exist", sessionID)
 		}
 
 		subscribe := msg.(*messages.Subscribe)
@@ -98,6 +98,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 				Topic:       subscribe.Topic(),
 				Subscribers: map[int64]int64{sessionID: sessionID},
 			}
+			b.subscriptionsByTopic[subscribe.Topic()] = subscription
 		}
 
 		b.subscriptionsBySession[sessionID][subscription.ID] = subscription
@@ -109,7 +110,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		unsubscribe := msg.(*messages.UnSubscribe)
 		subscriptions, exists := b.subscriptionsBySession[sessionID]
 		if !exists {
-			return nil, fmt.Errorf("dealer: cannot unsubscribe, session %d doesn't exist", sessionID)
+			return nil, fmt.Errorf("broker: cannot unsubscribe, session %d doesn't exist", sessionID)
 		}
 
 		subscription, exists := subscriptions[unsubscribe.SubscriptionID()]
@@ -129,9 +130,9 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		result := &MessageWithRecipient{Message: unsubscribed, Recipient: sessionID}
 		return result, nil
 	case messages.MessageTypeError:
-		return nil, fmt.Errorf("dealer: error handling is not implemented yet")
+		return nil, fmt.Errorf("broker: error handling is not implemented yet")
 	default:
-		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)
+		return nil, fmt.Errorf("broker: received unexpected message of type %T", msg)
 	}
 }
 

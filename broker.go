@@ -98,6 +98,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 				Topic:       subscribe.Topic(),
 				Subscribers: map[int64]int64{sessionID: sessionID},
 			}
+			b.subscriptionsByTopic[subscribe.Topic()] = subscription
 		}
 
 		b.subscriptionsBySession[sessionID][subscription.ID] = subscription

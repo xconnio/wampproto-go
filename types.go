@@ -54,6 +54,6 @@ type Subscription struct {
 
 type Publication struct {
 	Event      *messages.Event
-	recipients []int64
+	Recipients []int64
 	Ack        *MessageWithRecipient
 }

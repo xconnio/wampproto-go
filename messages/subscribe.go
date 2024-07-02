@@ -66,7 +66,7 @@ func (s *Subscribe) Parse(wampMsg []any) error {
 		return fmt.Errorf("subscribe: failed to validate message %s: %w", MessageNameSubscribe, err)
 	}
 
-	s.SubscribeFields = &subscribeFields{requestID: fields.RequestID, options: fields.Options, topic: fields.Topic}
+	s.SubscribeFields = &subscribeFields{requestID: fields.RequestID, options: fields.Options, topic: fields.URI}
 
 	return nil
 }

@@ -100,7 +100,7 @@ func (e *Publish) Parse(wampMsg []any) error {
 
 	e.PublishFields = &publishFields{
 		requestID: fields.RequestID,
-		topic:     fields.Topic,
+		topic:     fields.URI,
 		args:      fields.Args,
 		kwArgs:    fields.KwArgs,
 	}

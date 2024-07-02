@@ -37,7 +37,6 @@ type Fields struct {
 	MessageType int64
 	Signature   string
 	Reason      string
-	Topic       string
 
 	Extra   map[string]any
 	Options map[string]any

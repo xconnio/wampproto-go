@@ -94,7 +94,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 				unsubscribe.SubscriptionID())
 		}
 
-		w.unsubscribeRequests.Store(unsubscribe.RequestID(), unsubscribe.RequestID())
+		w.unsubscribeRequests.Store(unsubscribe.RequestID(), unsubscribe.SubscriptionID())
 
 		return data, nil
 	case messages.MessageTypeError:
@@ -104,6 +104,8 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 		}
 
 		w.invocationRequests.Delete(errorMsg.RequestID())
+		return data, nil
+	case messages.MessageTypeGoodbye:
 		return data, nil
 	default:
 		return nil, fmt.Errorf("send not supported for message of type %T", msg)
@@ -188,7 +190,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 
 		_, exists = w.subscriptions.LoadAndDelete(subscriptionID)
 		if !exists {
-			return nil, fmt.Errorf("received UNSUBSCRIBED for invalid subscriptionID")
+			return nil, fmt.Errorf("received UNSUBSCRIBED for invalid subscriptionID %d", subscriptionID)
 		}
 
 		return unsubscribed, nil
@@ -248,6 +250,8 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		default:
 			return nil, fmt.Errorf("unknown error message type %T", msg)
 		}
+	case messages.MessageTypeGoodbye:
+		return msg, nil
 	default:
 		return nil, fmt.Errorf("unknown message type %T", msg)
 	}

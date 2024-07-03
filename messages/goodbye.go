@@ -40,6 +40,10 @@ type GoodBye struct {
 func NewGoodByeWithFields(fields GoodByeFields) *GoodBye { return &GoodBye{GoodByeFields: fields} }
 
 func NewGoodBye(reason string, details map[string]any) *GoodBye {
+	if details == nil {
+		details = map[string]any{}
+	}
+
 	return &GoodBye{GoodByeFields: &goodByeFields{reason: reason, details: details}}
 }
 

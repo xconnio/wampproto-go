@@ -70,7 +70,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 		return data, nil
 	case messages.MessageTypeUnRegister:
 		unregister := msg.(*messages.UnRegister)
-		w.unregisterRequests.Store(unregister.RequestID(), unregister.RequestID())
+		w.unregisterRequests.Store(unregister.RequestID(), unregister.RegistrationID())
 
 		return data, nil
 	case messages.MessageTypePublish:

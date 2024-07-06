@@ -2,57 +2,57 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnSubscribed = 35
-const MessageNameUnSubscribed = "UNSUBSCRIBED"
+const MessageTypeUnsubscribed = 35
+const MessageNameUnsubscribed = "UNSUBSCRIBED"
 
-var unSubscribedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
+var unsubscribedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	MinLength: 2,
 	MaxLength: 2,
-	Message:   MessageNameUnSubscribed,
+	Message:   MessageNameUnsubscribed,
 	Spec: Spec{
 		1: ValidateRequestID,
 	},
 }
 
-type UnSubscribedFields interface {
+type UnsubscribedFields interface {
 	RequestID() int64
 }
 
-type unSubscribedFields struct {
+type unsubscribedFields struct {
 	requestID int64
 }
 
-func (us *unSubscribedFields) RequestID() int64 {
+func (us *unsubscribedFields) RequestID() int64 {
 	return us.requestID
 }
 
-type UnSubscribed struct {
-	UnSubscribedFields
+type Unsubscribed struct {
+	UnsubscribedFields
 }
 
-func NewUnSubscribed(requestID int64) *UnSubscribed {
-	return &UnSubscribed{UnSubscribedFields: &unSubscribedFields{requestID: requestID}}
+func NewUnsubscribed(requestID int64) *Unsubscribed {
+	return &Unsubscribed{UnsubscribedFields: &unsubscribedFields{requestID: requestID}}
 }
 
-func NewUnSubscribedWithFields(fields UnSubscribedFields) *UnSubscribed {
-	return &UnSubscribed{UnSubscribedFields: fields}
+func NewUnsubscribedWithFields(fields UnsubscribedFields) *Unsubscribed {
+	return &Unsubscribed{UnsubscribedFields: fields}
 }
 
-func (us *UnSubscribed) Type() int {
-	return MessageTypeUnSubscribed
+func (us *Unsubscribed) Type() int {
+	return MessageTypeUnsubscribed
 }
 
-func (us *UnSubscribed) Parse(wampMsg []any) error {
-	fields, err := ValidateMessage(wampMsg, unSubscribedValidationSpec)
+func (us *Unsubscribed) Parse(wampMsg []any) error {
+	fields, err := ValidateMessage(wampMsg, unsubscribedValidationSpec)
 	if err != nil {
-		return fmt.Errorf("unsubscribed: failed to validate message %s: %w", MessageNameUnSubscribed, err)
+		return fmt.Errorf("unsubscribed: failed to validate message %s: %w", MessageNameUnsubscribed, err)
 	}
 
-	us.UnSubscribedFields = &unSubscribedFields{requestID: fields.RequestID}
+	us.UnsubscribedFields = &unsubscribedFields{requestID: fields.RequestID}
 
 	return nil
 }
 
-func (us *UnSubscribed) Marshal() []any {
-	return []any{MessageTypeUnSubscribed, us.RequestID()}
+func (us *Unsubscribed) Marshal() []any {
+	return []any{MessageTypeUnsubscribed, us.RequestID()}
 }

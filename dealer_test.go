@@ -30,7 +30,7 @@ func TestDealerAddRemoveSession(t *testing.T) {
 	})
 }
 
-func TestDealerRegisterUnRegister(t *testing.T) {
+func TestDealerRegisterUnregister(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
 	t.Run("Register", func(t *testing.T) {

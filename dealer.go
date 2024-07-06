@@ -167,8 +167,8 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		registered := messages.NewRegistered(register.RequestID(), registration.ID)
 		return &MessageWithRecipient{Message: registered, Recipient: sessionID}, nil
-	case messages.MessageTypeUnRegister:
-		unregister := msg.(*messages.UnRegister)
+	case messages.MessageTypeUnregister:
+		unregister := msg.(*messages.Unregister)
 		registrations, exists := d.registrationsBySession[sessionID]
 		if !exists || len(registrations) == 0 {
 			return nil, fmt.Errorf("unregister: session %d has no registration %d", sessionID,
@@ -183,7 +183,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			delete(d.registrationsByProcedure, registration.Procedure)
 		}
 
-		unregistered := messages.NewUnRegistered(unregister.RequestID())
+		unregistered := messages.NewUnregistered(unregister.RequestID())
 		return &MessageWithRecipient{Message: unregistered, Recipient: sessionID}, nil
 	case messages.MessageTypeError:
 		wErr := msg.(*messages.Error)

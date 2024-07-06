@@ -2,64 +2,64 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnRegister = 66
-const MessageNameUnRegister = "UNREGISTER"
+const MessageTypeUnregister = 66
+const MessageNameUnregister = "UNREGISTER"
 
-var unRegisterValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
+var unregisterValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	MinLength: 3,
 	MaxLength: 3,
-	Message:   MessageNameUnRegister,
+	Message:   MessageNameUnregister,
 	Spec: Spec{
 		1: ValidateRequestID,
 		2: ValidateRegistrationID,
 	},
 }
 
-type UnRegisterFields interface {
+type UnregisterFields interface {
 	RequestID() int64
 	RegistrationID() int64
 }
 
-type unRegisterFields struct {
+type unregisterFields struct {
 	requestID      int64
 	registrationID int64
 }
 
-func (ur *unRegisterFields) RequestID() int64 {
+func (ur *unregisterFields) RequestID() int64 {
 	return ur.requestID
 }
 
-func (ur *unRegisterFields) RegistrationID() int64 {
+func (ur *unregisterFields) RegistrationID() int64 {
 	return ur.registrationID
 }
 
-type UnRegister struct {
-	UnRegisterFields
+type Unregister struct {
+	UnregisterFields
 }
 
-func NewUnRegister(requestID, registrationID int64) *UnRegister {
-	return &UnRegister{UnRegisterFields: &unRegisterFields{requestID: requestID, registrationID: registrationID}}
+func NewUnregister(requestID, registrationID int64) *Unregister {
+	return &Unregister{UnregisterFields: &unregisterFields{requestID: requestID, registrationID: registrationID}}
 }
 
-func NewUnRegisterWithFields(fields UnRegisterFields) *UnRegister {
-	return &UnRegister{UnRegisterFields: fields}
+func NewUnregisterWithFields(fields UnregisterFields) *Unregister {
+	return &Unregister{UnregisterFields: fields}
 }
 
-func (ur *UnRegister) Type() int {
-	return MessageTypeUnRegister
+func (ur *Unregister) Type() int {
+	return MessageTypeUnregister
 }
 
-func (ur *UnRegister) Parse(wampMsg []any) error {
-	fields, err := ValidateMessage(wampMsg, unRegisterValidationSpec)
+func (ur *Unregister) Parse(wampMsg []any) error {
+	fields, err := ValidateMessage(wampMsg, unregisterValidationSpec)
 	if err != nil {
-		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnRegister, err)
+		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnregister, err)
 	}
 
-	ur.UnRegisterFields = &unRegisterFields{requestID: fields.RequestID, registrationID: fields.RegistrationID}
+	ur.UnregisterFields = &unregisterFields{requestID: fields.RequestID, registrationID: fields.RegistrationID}
 
 	return nil
 }
 
-func (ur *UnRegister) Marshal() []any {
-	return []any{MessageTypeUnRegister, ur.RequestID(), ur.RegistrationID()}
+func (ur *Unregister) Marshal() []any {
+	return []any{MessageTypeUnregister, ur.RequestID(), ur.RegistrationID()}
 }

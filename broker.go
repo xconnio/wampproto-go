@@ -106,8 +106,8 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		subscribed := messages.NewSubscribed(subscribe.RequestID(), subscription.ID)
 		result := &MessageWithRecipient{Message: subscribed, Recipient: sessionID}
 		return result, nil
-	case messages.MessageTypeUnSubscribe:
-		unsubscribe := msg.(*messages.UnSubscribe)
+	case messages.MessageTypeUnsubscribe:
+		unsubscribe := msg.(*messages.Unsubscribe)
 		subscriptions, exists := b.subscriptionsBySession[sessionID]
 		if !exists {
 			return nil, fmt.Errorf("broker: cannot unsubscribe, session %d doesn't exist", sessionID)
@@ -126,7 +126,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		delete(b.subscriptionsBySession[sessionID], subscription.ID)
 
-		unsubscribed := messages.NewUnSubscribed(unsubscribe.RequestID())
+		unsubscribed := messages.NewUnsubscribed(unsubscribe.RequestID())
 		result := &MessageWithRecipient{Message: unsubscribed, Recipient: sessionID}
 		return result, nil
 	case messages.MessageTypeError:

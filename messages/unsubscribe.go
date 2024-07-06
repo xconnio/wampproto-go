@@ -2,64 +2,64 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnSubscribe = 34
-const MessageNameUnSubscribe = "UNSUBSCRIBE"
+const MessageTypeUnsubscribe = 34
+const MessageNameUnsubscribe = "UNSUBSCRIBE"
 
-var unSubscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
+var unsubscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	MinLength: 3,
 	MaxLength: 3,
-	Message:   MessageNameUnSubscribe,
+	Message:   MessageNameUnsubscribe,
 	Spec: Spec{
 		1: ValidateRequestID,
 		2: ValidateSubscriptionID,
 	},
 }
 
-type UnSubscribeFields interface {
+type UnsubscribeFields interface {
 	RequestID() int64
 	SubscriptionID() int64
 }
 
-type unSubscribeFields struct {
+type unsubscribeFields struct {
 	requestID      int64
 	subscriptionID int64
 }
 
-func (us *unSubscribeFields) RequestID() int64 {
+func (us *unsubscribeFields) RequestID() int64 {
 	return us.requestID
 }
 
-func (us *unSubscribeFields) SubscriptionID() int64 {
+func (us *unsubscribeFields) SubscriptionID() int64 {
 	return us.subscriptionID
 }
 
-type UnSubscribe struct {
-	UnSubscribeFields
+type Unsubscribe struct {
+	UnsubscribeFields
 }
 
-func NewUnSubscribe(requestID, subscriptionID int64) *UnSubscribe {
-	return &UnSubscribe{UnSubscribeFields: &unSubscribeFields{requestID: requestID, subscriptionID: subscriptionID}}
+func NewUnsubscribe(requestID, subscriptionID int64) *Unsubscribe {
+	return &Unsubscribe{UnsubscribeFields: &unsubscribeFields{requestID: requestID, subscriptionID: subscriptionID}}
 }
 
-func NewUnSubscribeWithFields(fields UnSubscribeFields) *UnSubscribe {
-	return &UnSubscribe{UnSubscribeFields: fields}
+func NewUnsubscribeWithFields(fields UnsubscribeFields) *Unsubscribe {
+	return &Unsubscribe{UnsubscribeFields: fields}
 }
 
-func (us *UnSubscribe) Type() int {
-	return MessageTypeUnSubscribe
+func (us *Unsubscribe) Type() int {
+	return MessageTypeUnsubscribe
 }
 
-func (us *UnSubscribe) Parse(wampMsg []any) error {
-	fields, err := ValidateMessage(wampMsg, unSubscribeValidationSpec)
+func (us *Unsubscribe) Parse(wampMsg []any) error {
+	fields, err := ValidateMessage(wampMsg, unsubscribeValidationSpec)
 	if err != nil {
-		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnSubscribe, err)
+		return fmt.Errorf("unregister: failed to validate message %s: %w", MessageNameUnsubscribe, err)
 	}
 
-	us.UnSubscribeFields = &unSubscribeFields{requestID: fields.RequestID, subscriptionID: fields.SubscriptionID}
+	us.UnsubscribeFields = &unsubscribeFields{requestID: fields.RequestID, subscriptionID: fields.SubscriptionID}
 
 	return nil
 }
 
-func (us *UnSubscribe) Marshal() []any {
-	return []any{MessageTypeUnSubscribe, us.RequestID(), us.SubscriptionID()}
+func (us *Unsubscribe) Marshal() []any {
+	return []any{MessageTypeUnsubscribe, us.RequestID(), us.SubscriptionID()}
 }

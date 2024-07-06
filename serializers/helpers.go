@@ -46,10 +46,10 @@ func ToMessage(wampMsg []any) (messages.Message, error) {
 		msg = &messages.Subscribe{}
 	case messages.MessageTypeSubscribed:
 		msg = &messages.Subscribed{}
-	case messages.MessageTypeUnSubscribe:
-		msg = &messages.UnSubscribe{}
-	case messages.MessageTypeUnSubscribed:
-		msg = &messages.UnSubscribed{}
+	case messages.MessageTypeUnsubscribe:
+		msg = &messages.Unsubscribe{}
+	case messages.MessageTypeUnsubscribed:
+		msg = &messages.Unsubscribed{}
 	case messages.MessageTypeUnregister:
 		msg = &messages.Unregister{}
 	case messages.MessageTypeUnregistered:

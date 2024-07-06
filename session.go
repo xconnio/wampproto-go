@@ -86,8 +86,8 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 		w.subscribeRequests.Store(subscribe.RequestID(), subscribe.RequestID())
 
 		return data, nil
-	case messages.MessageTypeUnSubscribe:
-		unsubscribe := msg.(*messages.UnSubscribe)
+	case messages.MessageTypeUnsubscribe:
+		unsubscribe := msg.(*messages.Unsubscribe)
 		_, exists := w.subscriptions.Load(unsubscribe.SubscriptionID())
 		if !exists {
 			return nil, fmt.Errorf("unsubscribe request for non existent subscription %d",
@@ -181,8 +181,8 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		w.subscriptions.Store(subscribed.SubscriptionID(), subscribed.SubscriptionID())
 
 		return subscribed, nil
-	case messages.MessageTypeUnSubscribed:
-		unsubscribed := msg.(*messages.UnSubscribed)
+	case messages.MessageTypeUnsubscribed:
+		unsubscribed := msg.(*messages.Unsubscribed)
 		subscriptionID, exists := w.unsubscribeRequests.Load(unsubscribed.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received UNSUBSCRIBED for invalid requestID")
@@ -233,7 +233,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 			}
 
 			return errorMsg, nil
-		case messages.MessageTypeUnSubscribe:
+		case messages.MessageTypeUnsubscribe:
 			_, exists := w.unsubscribeRequests.LoadAndDelete(errorMsg.RequestID())
 			if !exists {
 				return nil, fmt.Errorf("received ERROR for invalid unsubscribe request")

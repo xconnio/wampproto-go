@@ -171,7 +171,8 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 			request := auth.NewCryptoSignRequest(hello, publicKey)
 			response, err := a.authenticator.Authenticate(request)
 			if err != nil {
-				return nil, err
+				abort := messages.NewAbort(map[string]any{}, "wamp.error.authentication_failed", []any{err.Error()}, nil)
+				return abort, nil
 			}
 
 			a.request = request
@@ -200,7 +201,8 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 			request := auth.NewTicketRequest(a.hello, authenticate.Signature())
 			response, err := a.authenticator.Authenticate(request)
 			if err != nil {
-				return nil, err
+				abort := messages.NewAbort(map[string]any{}, "wamp.error.authentication_failed", []any{err.Error()}, nil)
+				return abort, nil
 			}
 
 			return a.sendWelcome(GenerateID(), response), nil

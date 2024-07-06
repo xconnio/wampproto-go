@@ -125,7 +125,8 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 			request := auth.NewRequest(hello, authMethod)
 			response, err := a.authenticator.Authenticate(request)
 			if err != nil {
-				return nil, err
+				abort := messages.NewAbort(map[string]any{}, "wamp.error.authentication_failed", []any{err.Error()}, nil)
+				return abort, nil
 			}
 
 			craResponse, ok := response.(*auth.CRAResponse)

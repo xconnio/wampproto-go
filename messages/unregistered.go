@@ -2,57 +2,57 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnRegistered = 67
-const MessageNameUnRegistered = "UNREGISTERED"
+const MessageTypeUnregistered = 67
+const MessageNameUnregistered = "UNREGISTERED"
 
-var unRegisteredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
+var unregisteredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	MinLength: 2,
 	MaxLength: 2,
-	Message:   MessageNameUnRegistered,
+	Message:   MessageNameUnregistered,
 	Spec: Spec{
 		1: ValidateRequestID,
 	},
 }
 
-type UnRegisteredFields interface {
+type UnregisteredFields interface {
 	RequestID() int64
 }
 
-type unRegisteredFields struct {
+type unregisteredFields struct {
 	requestID int64
 }
 
-func (ur *unRegisteredFields) RequestID() int64 {
+func (ur *unregisteredFields) RequestID() int64 {
 	return ur.requestID
 }
 
-type UnRegistered struct {
-	UnRegisteredFields
+type Unregistered struct {
+	UnregisteredFields
 }
 
-func NewUnRegistered(requestID int64) *UnRegistered {
-	return &UnRegistered{UnRegisteredFields: &unRegisteredFields{requestID: requestID}}
+func NewUnregistered(requestID int64) *Unregistered {
+	return &Unregistered{UnregisteredFields: &unregisteredFields{requestID: requestID}}
 }
 
-func NewUnRegisteredWithFields(fields UnRegisteredFields) *UnRegistered {
-	return &UnRegistered{UnRegisteredFields: fields}
+func NewUnregisteredWithFields(fields UnregisteredFields) *Unregistered {
+	return &Unregistered{UnregisteredFields: fields}
 }
 
-func (ur *UnRegistered) Type() int {
-	return MessageTypeUnRegistered
+func (ur *Unregistered) Type() int {
+	return MessageTypeUnregistered
 }
 
-func (ur *UnRegistered) Parse(wampMsg []any) error {
-	fields, err := ValidateMessage(wampMsg, unRegisteredValidationSpec)
+func (ur *Unregistered) Parse(wampMsg []any) error {
+	fields, err := ValidateMessage(wampMsg, unregisteredValidationSpec)
 	if err != nil {
-		return fmt.Errorf("unregistered: failed to validate message %s: %w", MessageNameUnRegistered, err)
+		return fmt.Errorf("unregistered: failed to validate message %s: %w", MessageNameUnregistered, err)
 	}
 
-	ur.UnRegisteredFields = &unRegisteredFields{requestID: fields.RequestID}
+	ur.UnregisteredFields = &unregisteredFields{requestID: fields.RequestID}
 
 	return nil
 }
 
-func (ur *UnRegistered) Marshal() []any {
-	return []any{MessageTypeUnRegistered, ur.RequestID()}
+func (ur *Unregistered) Marshal() []any {
+	return []any{MessageTypeUnregistered, ur.RequestID()}
 }

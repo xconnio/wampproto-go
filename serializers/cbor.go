@@ -1,6 +1,7 @@
 package serializers
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/fxamacker/cbor/v2"
@@ -41,4 +42,35 @@ func (c *CBORSerializer) Deserialize(payload []byte) (messages.Message, error) {
 
 func (c *CBORSerializer) Static() bool {
 	return false
+}
+
+func EncodeCBOR(args []any, kwargs map[string]any) ([]byte, int, error) {
+	var payload []any
+	payload = append(payload, args)
+	payload = append(payload, kwargs)
+	payloadData, err := cbor.Marshal(payload)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return payloadData, CBORSerializerValue, nil
+}
+
+func DecodeCBOR(data []byte) ([]any, map[string]any, error) {
+	var payload []any
+	if err := cborEncoder.Unmarshal(data, &payload); err != nil {
+		return nil, nil, fmt.Errorf("failed to unmarshal cbor payload: %w", err)
+	}
+
+	args, ok := payload[0].([]any)
+	if !ok {
+		return nil, nil, fmt.Errorf("invalid args type: %T", payload[0])
+	}
+
+	kwargs, ok := payload[1].(map[string]any)
+	if !ok {
+		return nil, nil, fmt.Errorf("invalid kwargs type: %T", payload[1])
+	}
+
+	return args, kwargs, nil
 }

@@ -46,29 +46,40 @@ func callProc(t *testing.T, caller, callee *wampproto.Session, uri string) {
 	require.Equal(t, rslt, result)
 }
 
-func registerAndCall(t *testing.T, procedure string, serializer serializers.Serializer) {
+func unregisterProcedure(t *testing.T, callee *wampproto.Session) {
+	unregister := messages.NewUnregister(3, 1)
+	_, err := callee.SendMessage(unregister)
+	require.NoError(t, err)
+
+	unregistered := messages.NewUnregistered(unregister.RequestID())
+	_, err = callee.ReceiveMessage(unregistered)
+	require.NoError(t, err)
+}
+
+func registerCallAndUnregister(t *testing.T, procedure string, serializer serializers.Serializer) {
 	caller := wampproto.NewSession(serializer)
 	callee := wampproto.NewSession(serializer)
 
 	registerProc(t, callee, procedure)
 	callProc(t, caller, callee, procedure)
+	unregisterProcedure(t, callee)
 }
 
 func TestSessionCall(t *testing.T) {
 	procedure := "foo.bar"
 	t.Run("JSON", func(t *testing.T) {
 		serializer := &serializers.JSONSerializer{}
-		registerAndCall(t, procedure, serializer)
+		registerCallAndUnregister(t, procedure, serializer)
 	})
 
 	t.Run("CBOR", func(t *testing.T) {
 		serializer := &serializers.CBORSerializer{}
-		registerAndCall(t, procedure, serializer)
+		registerCallAndUnregister(t, procedure, serializer)
 	})
 
 	t.Run("MSGPACK", func(t *testing.T) {
 		serializer := &serializers.MsgPackSerializer{}
-		registerAndCall(t, procedure, serializer)
+		registerCallAndUnregister(t, procedure, serializer)
 	})
 }
 
@@ -94,28 +105,39 @@ func publishTopic(t *testing.T, publisher, subscriber *wampproto.Session, uri st
 	require.NoError(t, err)
 }
 
-func subscribeAndPublish(t *testing.T, topic string, serializer serializers.Serializer) {
+func unsubscribeTopic(t *testing.T, subscriber *wampproto.Session) {
+	unsubscribe := messages.NewUnsubscribe(3, 1)
+	_, err := subscriber.SendMessage(unsubscribe)
+	require.NoError(t, err)
+
+	unsubscribed := messages.NewUnsubscribed(unsubscribe.RequestID())
+	_, err = subscriber.ReceiveMessage(unsubscribed)
+	require.NoError(t, err)
+}
+
+func subscribePublishAndUnsubscribe(t *testing.T, topic string, serializer serializers.Serializer) {
 	publisher := wampproto.NewSession(serializer)
 	subscriber := wampproto.NewSession(serializer)
 
 	subscribeTopic(t, subscriber, topic)
 	publishTopic(t, publisher, subscriber, topic)
+	unsubscribeTopic(t, subscriber)
 }
 
 func TestSessionPublish(t *testing.T) {
 	topic := "foo.bar"
 	t.Run("JSON", func(t *testing.T) {
 		serializer := &serializers.JSONSerializer{}
-		subscribeAndPublish(t, topic, serializer)
+		subscribePublishAndUnsubscribe(t, topic, serializer)
 	})
 
 	t.Run("CBOR", func(t *testing.T) {
 		serializer := &serializers.CBORSerializer{}
-		subscribeAndPublish(t, topic, serializer)
+		subscribePublishAndUnsubscribe(t, topic, serializer)
 	})
 
 	t.Run("MSGPACK", func(t *testing.T) {
 		serializer := &serializers.MsgPackSerializer{}
-		subscribeAndPublish(t, topic, serializer)
+		subscribePublishAndUnsubscribe(t, topic, serializer)
 	})
 }

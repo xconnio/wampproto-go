@@ -9,6 +9,8 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const CBORSerializerID = 3
+
 var cborEncoder cbor.DecMode //nolint:gochecknoglobals
 
 type CBORSerializer struct{}

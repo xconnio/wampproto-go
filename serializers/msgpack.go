@@ -6,6 +6,8 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const MsgPackSerializerID = 2
+
 type MsgPackSerializer struct{}
 
 func (m *MsgPackSerializer) Serialize(message messages.Message) ([]byte, error) {

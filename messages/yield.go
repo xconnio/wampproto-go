@@ -12,8 +12,8 @@ var yieldValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 	Spec: Spec{
 		1: ValidateRequestID,
 		2: ValidateOptions,
-		4: ValidateArgs,
-		5: ValidateKwArgs,
+		3: ValidateArgs,
+		4: ValidateKwArgs,
 	},
 }
 

@@ -49,6 +49,9 @@ jobs:
             exit 1;
           fi
 
+      - name: install wampproto-cli
+        run: make install-wampproto
+
       - name: Run unit tests
         run: |
           make test

@@ -101,6 +101,7 @@ func (e *Publish) Parse(wampMsg []any) error {
 	e.PublishFields = &publishFields{
 		requestID: fields.RequestID,
 		topic:     fields.URI,
+		options:   fields.Options,
 		args:      fields.Args,
 		kwArgs:    fields.KwArgs,
 	}

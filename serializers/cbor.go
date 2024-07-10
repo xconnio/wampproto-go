@@ -9,6 +9,8 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const CBORSerializerID = 3
+
 var cborEncoder cbor.DecMode //nolint:gochecknoglobals
 
 type CBORSerializer struct{}
@@ -44,16 +46,16 @@ func (c *CBORSerializer) Static() bool {
 	return false
 }
 
-func EncodeCBOR(args []any, kwargs map[string]any) ([]byte, int, error) {
+func EncodeCBOR(args []any, kwargs map[string]any) ([]byte, error) {
 	var payload []any
 	payload = append(payload, args)
 	payload = append(payload, kwargs)
 	payloadData, err := cbor.Marshal(payload)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return payloadData, CBORSerializerValue, nil
+	return payloadData, nil
 }
 
 func DecodeCBOR(data []byte) ([]any, map[string]any, error) {

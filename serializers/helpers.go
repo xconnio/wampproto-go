@@ -6,13 +6,6 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
-const (
-	JSONSerializerValue     = 1
-	MsgPackSerializerValue  = 2
-	CBORSerializerValue     = 3
-	ProtobufSerializerValue = 16
-)
-
 func ToMessage(wampMsg []any) (messages.Message, error) {
 	messageType, _ := messages.AsInt64(wampMsg[0])
 	var msg messages.Message

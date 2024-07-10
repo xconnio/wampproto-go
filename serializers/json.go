@@ -6,6 +6,8 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const JSONSerializerID = 1
+
 type JSONSerializer struct{}
 
 func (j *JSONSerializer) Serialize(message messages.Message) ([]byte, error) {

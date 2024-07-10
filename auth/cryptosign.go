@@ -33,7 +33,7 @@ func NewCryptoSignAuthenticator(authID string, authExtra map[string]any,
 	publicKey := privateKey.Public().(ed25519.PublicKey)
 	publicKeyHex := hex.EncodeToString(publicKey)
 
-	if authExtra == nil {
+	if authExtra == nil || authExtra["pubkey"] == nil {
 		authExtra = map[string]any{"pubkey": publicKeyHex}
 	} else if val, ok := authExtra["pubkey"].(string); ok {
 		if val != publicKeyHex {

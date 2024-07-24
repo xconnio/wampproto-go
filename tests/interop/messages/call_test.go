@@ -20,31 +20,27 @@ func callsEqual(msg1 *messages.Call, msg2 *messages.Call) bool {
 		reflect.DeepEqual(msg1.KwArgs(), msg2.KwArgs())
 }
 
-func TestCallJSONSerializer(t *testing.T) {
-	var message = messages.NewCall(1, map[string]any{}, "test", nil, nil)
-	command := fmt.Sprintf("message call %v %s --serializer json --output hex", message.RequestID(), message.Procedure())
-	var serializer = &serializers.JSONSerializer{}
+func testCallMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
+	var message = messages.NewCall(1, map[string]any{}, "test", []any{"abc"}, map[string]any{"abc": "xyz"})
+	command := fmt.Sprintf("message call 1 test abc -k abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)
 	require.True(t, callsEqual(message, msg.(*messages.Call)))
 }
 
-func TestCallCBORSerializer(t *testing.T) {
-	var message = messages.NewCall(1, map[string]any{}, "test", []any{"abc"}, map[string]any{"abc": "xyz"})
-	command := fmt.Sprintf("message call %v %s abc -k abc=xyz --serializer cbor --output hex",
-		message.RequestID(), message.Procedure())
-	var serializer = &serializers.CBORSerializer{}
+func TestCallMessage(t *testing.T) {
+	t.Run("JSONSerializer", func(t *testing.T) {
+		serializer := &serializers.JSONSerializer{}
+		testCallMessage(t, "json", serializer)
+	})
 
-	msg := tests.RunCommandAndDeserialize(t, command, serializer)
-	require.True(t, callsEqual(message, msg.(*messages.Call)))
-}
+	t.Run("CBORSerializer", func(t *testing.T) {
+		serializer := &serializers.CBORSerializer{}
+		testCallMessage(t, "cbor", serializer)
+	})
 
-func TestCallMsgPackSerializer(t *testing.T) {
-	var message = messages.NewCall(1, map[string]any{}, "test", []any{"abc"}, map[string]any{"abc": "xyz"})
-	command := fmt.Sprintf("message call %v %s abc -k abc=xyz --serializer msgpack --output hex",
-		message.RequestID(), message.Procedure())
-	var serializer = &serializers.MsgPackSerializer{}
-
-	msg := tests.RunCommandAndDeserialize(t, command, serializer)
-	require.True(t, callsEqual(message, msg.(*messages.Call)))
+	t.Run("MsgPackSerializer", func(t *testing.T) {
+		serializer := &serializers.MsgPackSerializer{}
+		testCallMessage(t, "msgpack", serializer)
+	})
 }

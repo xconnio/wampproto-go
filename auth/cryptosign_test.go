@@ -47,6 +47,15 @@ func TestNewCryptoSignAuthenticator(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 96, len(signed))
 	})
+
+	t.Run("EmptyAuthExtra", func(t *testing.T) {
+		a, err := auth.NewCryptoSignAuthenticator(testAuthID, map[string]any{}, testPrivateKey)
+		require.NoError(t, err)
+
+		require.Equal(t, testAuthID, a.AuthID())
+		require.Equal(t, auth.MethodCryptoSign, a.AuthMethod())
+		require.Equal(t, testPublicKey, a.AuthExtra()["pubkey"])
+	})
 }
 
 func TestSignCryptoSignChallenge(t *testing.T) {

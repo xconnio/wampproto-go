@@ -191,14 +191,14 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			return nil, fmt.Errorf("dealer: only expected to receive error in response to invocation")
 		}
 
-		pending, exists := d.pendingCalls[sessionID]
+		pending, exists := d.pendingCalls[wErr.RequestID()]
 		if !exists {
-			return nil, fmt.Errorf("dealer: no pending calls for session %d", sessionID)
+			return nil, fmt.Errorf("dealer: no pending invocation for %d", wErr.RequestID())
 		}
 
-		delete(d.pendingCalls, sessionID)
+		delete(d.pendingCalls, wErr.RequestID())
 
-		wErr = messages.NewError(pending.RequestID, messages.MessageTypeCall, map[string]any{}, wErr.URI(),
+		wErr = messages.NewError(messages.MessageTypeCall, pending.RequestID, wErr.Details(), wErr.URI(),
 			wErr.Args(), wErr.KwArgs())
 		return &MessageWithRecipient{Message: wErr, Recipient: pending.CallerID}, nil
 	default:

@@ -49,6 +49,10 @@ type Subscribe struct {
 }
 
 func NewSubscribe(requestID int64, options map[string]any, uri string) *Subscribe {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
 	return &Subscribe{SubscribeFields: &subscribeFields{requestID: requestID, options: options, topic: uri}}
 }
 

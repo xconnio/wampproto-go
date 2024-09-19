@@ -292,7 +292,7 @@ func AsInt64(i interface{}) (int64, bool) {
 	case int64:
 		return v, true
 	case uint64:
-		return int64(v), true
+		return int64(v), true // #nosec
 	case uint8:
 		return int64(v), true
 	case int:
@@ -302,7 +302,7 @@ func AsInt64(i interface{}) (int64, bool) {
 	case int32:
 		return int64(v), true
 	case uint:
-		return int64(v), true
+		return int64(v), true // #nosec
 	case uint16:
 		return int64(v), true
 	case uint32:

@@ -10,7 +10,7 @@ import (
 const maxID int64 = 1 << 53
 
 func init() {
-	source := rand.NewSource(uint64(time.Now().UnixNano()))
+	source := rand.NewSource(uint64(time.Now().UnixNano())) // #nosec
 	rand.New(source)
 }
 

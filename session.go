@@ -60,7 +60,10 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 		return data, nil
 	case messages.MessageTypeYield:
 		yield := msg.(*messages.Yield)
-		w.invocationRequests.Delete(yield.RequestID())
+		progress, _ := yield.Options()[OptionProgress].(bool)
+		if !progress {
+			w.invocationRequests.Delete(yield.RequestID())
+		}
 
 		return data, nil
 	case messages.MessageTypeRegister:
@@ -125,9 +128,14 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 	switch msg.Type() {
 	case messages.MessageTypeResult:
 		result := msg.(*messages.Result)
-		_, exists := w.callRequests.LoadAndDelete(result.RequestID())
+		_, exists := w.callRequests.Load(result.RequestID())
 		if !exists {
 			return nil, fmt.Errorf("received RESULT for invalid requestID")
+		}
+
+		progress, _ := result.Details()[OptionProgress].(bool)
+		if !progress {
+			w.callRequests.Delete(result.RequestID())
 		}
 
 		return result, nil

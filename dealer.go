@@ -7,6 +7,11 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const (
+	OptionReceiveProgress = "receive_progress"
+	OptionProgress        = "progress"
+)
+
 type PendingInvocation struct {
 	RequestID       int64
 	CallerID        int64
@@ -107,12 +112,14 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			callee = session
 			break
 		}
+		receiveProgress, _ := call.Options()[OptionReceiveProgress].(bool)
 
 		invocationID := d.idGen.NextID()
 		d.pendingCalls[invocationID] = &PendingInvocation{
-			RequestID: call.RequestID(),
-			CallerID:  sessionID,
-			CalleeID:  callee,
+			RequestID:       call.RequestID(),
+			CallerID:        sessionID,
+			CalleeID:        callee,
+			ReceiveProgress: receiveProgress,
 		}
 
 		var invocation *messages.Invocation
@@ -120,7 +127,8 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			invocation = messages.NewInvocationBinary(invocationID, regs.ID, nil, call.Payload(),
 				call.PayloadSerializer())
 		} else {
-			invocation = messages.NewInvocation(invocationID, regs.ID, nil, call.Args(), call.KwArgs())
+			details := map[string]any{OptionReceiveProgress: receiveProgress}
+			invocation = messages.NewInvocation(invocationID, regs.ID, details, call.Args(), call.KwArgs())
 		}
 
 		return &MessageWithRecipient{Message: invocation, Recipient: callee}, nil
@@ -131,13 +139,19 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			return nil, fmt.Errorf("yield: not pending calls for session %d", sessionID)
 		}
 
-		delete(d.pendingCalls, yield.RequestID())
+		progress, _ := yield.Options()[OptionProgress].(bool)
+		var details map[string]any
+		if pending.ReceiveProgress && progress {
+			details = map[string]any{OptionProgress: progress}
+		} else {
+			delete(d.pendingCalls, yield.RequestID())
+		}
 
 		var result *messages.Result
 		if yield.PayloadIsBinary() && d.sessions[pending.CallerID].StaticSerializer() {
 			result = messages.NewResultBinary(pending.RequestID, nil, yield.Payload(), yield.PayloadSerializer())
 		} else {
-			result = messages.NewResult(pending.RequestID, nil, yield.Args(), yield.KwArgs())
+			result = messages.NewResult(pending.RequestID, details, yield.Args(), yield.KwArgs())
 		}
 
 		return &MessageWithRecipient{Message: result, Recipient: pending.CallerID}, nil

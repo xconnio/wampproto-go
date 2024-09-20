@@ -123,3 +123,45 @@ func TestDealerRegisterUnregister(t *testing.T) {
 		})
 	})
 }
+
+func TestProgressiveCallResults(t *testing.T) {
+	dealer := wampproto.NewDealer()
+
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+
+	err := dealer.AddSession(callee)
+	require.NoError(t, err)
+	err = dealer.AddSession(caller)
+	require.NoError(t, err)
+
+	register := messages.NewRegister(1, nil, "foo.bar")
+	_, err = dealer.ReceiveMessage(callee.ID(), register)
+	require.NoError(t, err)
+
+	call := messages.NewCall(caller.ID(), map[string]any{wampproto.OptionReceiveProgress: true}, "foo.bar", []any{}, nil)
+	messageWithRecipient, err := dealer.ReceiveMessage(callee.ID(), call)
+	require.NoError(t, err)
+	require.Equal(t, callee.ID(), messageWithRecipient.Recipient)
+	invocation := messageWithRecipient.Message.(*messages.Invocation)
+	require.True(t, invocation.Details()[wampproto.OptionReceiveProgress].(bool))
+
+	for i := 0; i < 10; i++ {
+		yield := messages.NewYield(invocation.RequestID(), map[string]any{wampproto.OptionProgress: true}, []any{}, nil)
+		messageWithRecipient, err = dealer.ReceiveMessage(callee.ID(), yield)
+		require.NoError(t, err)
+		require.Equal(t, callee.ID(), messageWithRecipient.Recipient)
+		result := messageWithRecipient.Message.(*messages.Result)
+		require.Equal(t, call.RequestID(), result.RequestID())
+		require.True(t, result.Details()[wampproto.OptionProgress].(bool))
+	}
+
+	yield := messages.NewYield(invocation.RequestID(), map[string]any{}, []any{}, nil)
+	messageWithRecipient, err = dealer.ReceiveMessage(callee.ID(), yield)
+	require.NoError(t, err)
+	require.Equal(t, callee.ID(), messageWithRecipient.Recipient)
+	result := messageWithRecipient.Message.(*messages.Result)
+	require.Equal(t, call.RequestID(), result.RequestID())
+	progress, _ := result.Details()[wampproto.OptionReceiveProgress].(bool)
+	require.False(t, progress)
+}

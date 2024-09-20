@@ -405,8 +405,12 @@ func TestValidateMessage(t *testing.T) {
 		wampMsg := []any{1, "io.xconn.test", map[string]any{}, "invalidType", "extra"}
 		_, err := messages.ValidateMessage(wampMsg, spec)
 
-		require.EqualError(t, err, `item at index 3 must be of type []any but was string
-item at index 4 must be of type map[string]any but was string`)
+		require.Contains(t, []string{
+			`item at index 3 must be of type []any but was string
+item at index 4 must be of type map[string]any but was string`,
+			`item at index 4 must be of type map[string]any but was string
+item at index 3 must be of type []any but was string`,
+		}, err.Error())
 	})
 }
 

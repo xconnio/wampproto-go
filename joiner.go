@@ -14,7 +14,10 @@ var ClientRoles = map[string]any{ //nolint:gochecknoglobals
 		"features": map[string]any{},
 	},
 	"callee": map[string]any{
-		"features": map[string]any{},
+		"features": map[string]any{
+			"progressive_call_results": true,
+			"call_canceling":           true,
+		},
 	},
 	"publisher": map[string]any{
 		"features": map[string]any{},

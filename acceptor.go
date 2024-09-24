@@ -20,7 +20,10 @@ const (
 
 var RouterRoles = map[string]any{ //nolint:gochecknoglobals
 	"dealer": map[string]any{
-		"features": map[string]any{},
+		"features": map[string]any{
+			"progressive_call_invocations": true,
+			"call_canceling":               true,
+		},
 	},
 	"broker": map[string]any{
 		"features": map[string]any{},

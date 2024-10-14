@@ -12,6 +12,12 @@ const (
 	OptionProgress        = "progress"
 )
 
+const (
+	FeatureProgressiveCallInvocations = "progressive_call_invocations"
+	FeatureProgressiveCallResults     = "progressive_call_results"
+	FeatureCallCancelling             = "call_canceling"
+)
+
 type PendingInvocation struct {
 	RequestID       int64
 	CallerID        int64

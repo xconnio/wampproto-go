@@ -11,12 +11,15 @@ import (
 
 var ClientRoles = map[string]any{ //nolint:gochecknoglobals
 	"caller": map[string]any{
-		"features": map[string]any{},
+		"features": map[string]any{
+			FeatureProgressiveCallInvocations: true,
+		},
 	},
 	"callee": map[string]any{
 		"features": map[string]any{
-			"progressive_call_results": true,
-			"call_canceling":           true,
+			FeatureProgressiveCallInvocations: true,
+			FeatureProgressiveCallResults:     true,
+			FeatureCallCancelling:             true,
 		},
 	},
 	"publisher": map[string]any{

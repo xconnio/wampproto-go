@@ -2,6 +2,8 @@ package messages
 
 import (
 	"fmt"
+
+	"github.com/xconnio/wampproto-go/util"
 )
 
 const MessageTypeHello = 1
@@ -94,7 +96,7 @@ func (h *Hello) Parse(wampMsg []any) error {
 		roles = map[string]any{}
 	}
 
-	authMethodsStr, err := AnysToStrings(authMethods)
+	authMethodsStr, err := util.AnysToStrings(authMethods)
 	if err != nil {
 		return fmt.Errorf("hello: failed to parse auth methods: %w", err)
 	}

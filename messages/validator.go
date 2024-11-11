@@ -3,6 +3,8 @@ package messages
 import (
 	"errors"
 	"fmt"
+
+	"github.com/xconnio/wampproto-go/util"
 )
 
 const errString = "item at index %d must be of type %s but was %T"
@@ -61,7 +63,7 @@ func sanityCheck(wampMsg []any, minLength, maxLength int) error {
 }
 
 func validateID(wampMsg []any, index int) (int64, error) {
-	item, ok := AsInt64(wampMsg[index])
+	item, ok := util.AsInt64(wampMsg[index])
 	if !ok {
 		return 0, fmt.Errorf(errString, index, "int64", wampMsg[index])
 	}
@@ -285,44 +287,4 @@ func ValidateMessage(wampMsg []any, spec ValidationSpec) (*Fields, error) {
 	}
 
 	return f, nil
-}
-
-func AsInt64(i interface{}) (int64, bool) {
-	switch v := i.(type) {
-	case int64:
-		return v, true
-	case uint64:
-		return int64(v), true // #nosec
-	case uint8:
-		return int64(v), true
-	case int:
-		return int64(v), true
-	case int8:
-		return int64(v), true
-	case int32:
-		return int64(v), true
-	case uint:
-		return int64(v), true // #nosec
-	case uint16:
-		return int64(v), true
-	case uint32:
-		return int64(v), true
-	case float64:
-		return int64(v), true
-	case float32:
-		return int64(v), true
-	}
-	return 0, false
-}
-
-func AnysToStrings(input []any) ([]string, error) {
-	result := make([]string, 0, len(input))
-	for _, item := range input {
-		str, ok := item.(string)
-		if !ok {
-			return nil, fmt.Errorf("element %v is not a string", item)
-		}
-		result = append(result, str)
-	}
-	return result, nil
 }

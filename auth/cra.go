@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 
 	"github.com/xconnio/wampproto-go/messages"
+	"github.com/xconnio/wampproto-go/util"
 )
 
 const MethodCRA = "wampcra"
@@ -54,8 +55,8 @@ func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (*messages
 	// If no salt given, use raw password as key.
 	if saltStr != "" {
 		// If salting info give, then compute a derived key using PBKDF2.
-		iters, _ := messages.AsInt64(challenge.Extra()["iterations"])
-		keylen, _ := messages.AsInt64(challenge.Extra()["keylen"])
+		iters, _ := util.AsInt64(challenge.Extra()["iterations"])
+		keylen, _ := util.AsInt64(challenge.Extra()["keylen"])
 
 		rawSecret = DeriveCRAKey(saltStr, a.secret, int(iters), int(keylen))
 	} else {

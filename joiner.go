@@ -3,6 +3,7 @@ package wampproto
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/xconnio/wampproto-go/auth"
 	"github.com/xconnio/wampproto-go/messages"
@@ -136,7 +137,25 @@ func (j *Joiner) ReceiveMessage(msg messages.Message) (messages.Message, error) 
 		j.state = joinerStateAuthenticateSent
 		return authenticate, nil
 	} else if msg.Type() == messages.MessageTypeAbort {
-		return nil, errors.New("received abort")
+		abort := msg.(*messages.Abort)
+
+		errStr := abort.Reason()
+		if len(abort.Args()) > 0 {
+			args := make([]string, len(abort.Args()))
+			for i, arg := range abort.Args() {
+				args[i] = fmt.Sprintf("%v", arg)
+			}
+			errStr += ": " + strings.Join(args, ", ")
+		}
+		if len(abort.KwArgs()) > 0 {
+			kwargs := make([]string, 0, len(abort.KwArgs()))
+			for key, value := range abort.KwArgs() {
+				kwargs = append(kwargs, fmt.Sprintf("%s=%v", key, value))
+			}
+			errStr += ": " + strings.Join(kwargs, ", ")
+		}
+
+		return nil, errors.New(errStr)
 	} else {
 		return nil, errors.New("received unknown message")
 	}

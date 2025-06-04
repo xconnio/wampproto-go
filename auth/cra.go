@@ -23,7 +23,7 @@ type craAuthenticator struct {
 	secret string
 }
 
-func NewCRAAuthenticator(authID string, authExtra map[string]any, secret string) ClientAuthenticator {
+func NewCRAAuthenticator(authID string, secret string, authExtra map[string]any) ClientAuthenticator {
 	return &craAuthenticator{
 		authID:    authID,
 		authExtra: authExtra,

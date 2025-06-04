@@ -19,7 +19,7 @@ const (
 )
 
 func TestNewCryptoSignAuthenticator(t *testing.T) {
-	authenticator, err := auth.NewCryptoSignAuthenticator(testAuthID, nil, testPrivateKey)
+	authenticator, err := auth.NewCryptoSignAuthenticator(testAuthID, testPrivateKey, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, testAuthID, authenticator.AuthID())
@@ -27,13 +27,13 @@ func TestNewCryptoSignAuthenticator(t *testing.T) {
 	require.Equal(t, testPublicKey, authenticator.AuthExtra()["pubkey"])
 
 	t.Run("InvalidPrivateKey", func(t *testing.T) {
-		_, err = auth.NewCryptoSignAuthenticator(testAuthID, nil, "invalidkey")
+		_, err = auth.NewCryptoSignAuthenticator(testAuthID, "invalidkey", nil)
 		require.Error(t, err)
 	})
 
 	t.Run("MismatchedPublicKey", func(t *testing.T) {
 		authExtra := map[string]any{"pubkey": "d057db19aa21f20419dfd385c3dae0cc39ecfc94f8acc921d5f9fc76443098f0"}
-		_, err = auth.NewCryptoSignAuthenticator("authID", authExtra, testPrivateKey)
+		_, err = auth.NewCryptoSignAuthenticator("authID", testPrivateKey, authExtra)
 		require.Error(t, err)
 	})
 
@@ -49,7 +49,7 @@ func TestNewCryptoSignAuthenticator(t *testing.T) {
 	})
 
 	t.Run("EmptyAuthExtra", func(t *testing.T) {
-		a, err := auth.NewCryptoSignAuthenticator(testAuthID, map[string]any{}, testPrivateKey)
+		a, err := auth.NewCryptoSignAuthenticator(testAuthID, testPrivateKey, map[string]any{})
 		require.NoError(t, err)
 
 		require.Equal(t, testAuthID, a.AuthID())

@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewTicketAuthenticator(t *testing.T) {
-	authenticator := auth.NewTicketAuthenticator(testAuthID, nil, "ticket")
+	authenticator := auth.NewTicketAuthenticator(testAuthID, "ticket", nil)
 
 	require.Equal(t, testAuthID, authenticator.AuthID())
 	require.Equal(t, auth.MethodTicket, authenticator.AuthMethod())

@@ -27,7 +27,7 @@ const (
 )
 
 func TestNewCRAAuthenticator(t *testing.T) {
-	authenticator := auth.NewCRAAuthenticator(testAuthID, nil, testSecret)
+	authenticator := auth.NewCRAAuthenticator(testAuthID, testSecret, nil)
 
 	require.Equal(t, testAuthID, authenticator.AuthID())
 	require.Equal(t, auth.MethodCRA, authenticator.AuthMethod())

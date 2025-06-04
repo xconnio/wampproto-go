@@ -13,7 +13,7 @@ type ticketAuthenticator struct {
 	ticket string
 }
 
-func NewTicketAuthenticator(authID string, authExtra map[string]any, ticket string) ClientAuthenticator {
+func NewTicketAuthenticator(authID string, ticket string, authExtra map[string]any) ClientAuthenticator {
 	return &ticketAuthenticator{
 		authID:    authID,
 		authExtra: authExtra,

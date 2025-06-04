@@ -21,8 +21,8 @@ type cryptoSignAuthenticator struct {
 	privateKey ed25519.PrivateKey
 }
 
-func NewCryptoSignAuthenticator(authID string, authExtra map[string]any,
-	privateKeyHex string) (ClientAuthenticator, error) {
+func NewCryptoSignAuthenticator(authID string, privateKeyHex string,
+	authExtra map[string]any) (ClientAuthenticator, error) {
 
 	privateKeyRaw, err := hex.DecodeString(privateKeyHex)
 	if err != nil {

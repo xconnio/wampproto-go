@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/hashicorp/go-immutable-radix/v2"
+
 	"github.com/xconnio/wampproto-go/messages"
+	"github.com/xconnio/wampproto-go/util"
 )
 
 const (
@@ -15,6 +18,7 @@ type Broker struct {
 	subscriptionsByTopic   map[string]*Subscription
 	subscriptionsBySession map[int64]map[int64]*Subscription
 	sessions               map[int64]*SessionDetails
+	prefixTree             *iradix.Tree[*Subscription]
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
@@ -26,6 +30,7 @@ func NewBroker() *Broker {
 		subscriptionsByTopic:   make(map[string]*Subscription),
 		subscriptionsBySession: make(map[int64]map[int64]*Subscription),
 		idGen:                  &SessionScopeIDGenerator{},
+		prefixTree:             iradix.New[*Subscription](),
 	}
 }
 
@@ -61,6 +66,10 @@ func (b *Broker) RemoveSession(id int64) error {
 
 		if len(subscription.Subscribers) == 0 {
 			delete(b.subscriptionsByTopic, v.Topic)
+		}
+
+		if subscription.Match == MatchPrefix {
+			b.prefixTree.Delete([]byte(subscription.Topic))
 		}
 	}
 
@@ -98,6 +107,14 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 				Topic:       subscribe.Topic(),
 				Subscribers: map[int64]int64{sessionID: sessionID},
 			}
+			match := util.ToString(subscribe.Options()[OptionMatch])
+			switch match {
+			case MatchPrefix:
+				subscription.Match = match
+				b.prefixTree, _, _ = b.prefixTree.Insert([]byte(subscription.Topic), subscription)
+			default:
+				subscription.Match = MatchExact
+			}
 			b.subscriptionsByTopic[subscribe.Topic()] = subscription
 		}
 
@@ -122,6 +139,9 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		delete(subscription.Subscribers, sessionID)
 		if len(subscription.Subscribers) == 0 {
 			delete(b.subscriptionsByTopic, subscription.Topic)
+		}
+		if subscription.Match == MatchPrefix {
+			b.prefixTree.Delete([]byte(subscription.Topic))
 		}
 
 		delete(b.subscriptionsBySession[sessionID], subscription.ID)
@@ -148,7 +168,17 @@ func (b *Broker) ReceivePublish(sessionID int64, publish *messages.Publish) (*Pu
 	result := &Publication{}
 	publicationID := b.idGen.NextID()
 
-	subscription, exists := b.subscriptionsByTopic[publish.Topic()]
+	var subscription *Subscription
+	subscription, exists = b.subscriptionsByTopic[publish.Topic()]
+	if !exists || len(subscription.Subscribers) == 0 {
+		if b.prefixTree.Len() > 0 {
+			_, sub, ok := b.prefixTree.Root().LongestPrefix([]byte(publish.Topic()))
+			exists = ok
+			if ok {
+				subscription = sub
+			}
+		}
+	}
 	if exists && len(subscription.Subscribers) > 0 {
 		event := messages.NewEvent(subscription.ID, publicationID, nil, publish.Args(), publish.KwArgs())
 		result.Event = event

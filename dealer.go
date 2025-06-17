@@ -4,12 +4,19 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/hashicorp/go-immutable-radix/v2"
+
 	"github.com/xconnio/wampproto-go/messages"
+	"github.com/xconnio/wampproto-go/util"
 )
 
 const (
 	OptionReceiveProgress = "receive_progress"
 	OptionProgress        = "progress"
+	OptionMatch           = "match"
+
+	MatchExact  = "exact"
+	MatchPrefix = "prefix"
 )
 
 const (
@@ -31,6 +38,7 @@ type Registration struct {
 	Procedure        string
 	Registrants      map[int64]int64
 	InvocationPolicy string
+	Match            string
 }
 
 type CallMap struct {
@@ -42,6 +50,7 @@ type Dealer struct {
 	sessions                 map[int64]*SessionDetails
 	registrationsByProcedure map[string]*Registration
 	registrationsBySession   map[int64]map[int64]*Registration
+	prefixTree               *iradix.Tree[*Registration]
 	pendingCalls             map[int64]*PendingInvocation
 	invocationIDbyCall       map[CallMap]int64
 
@@ -57,6 +66,7 @@ func NewDealer() *Dealer {
 		pendingCalls:             make(map[int64]*PendingInvocation),
 		invocationIDbyCall:       make(map[CallMap]int64),
 		idGen:                    &SessionScopeIDGenerator{},
+		prefixTree:               iradix.New[*Registration](),
 	}
 }
 
@@ -90,6 +100,9 @@ func (d *Dealer) RemoveSession(id int64) error {
 		if len(registration.Registrants) == 0 {
 			delete(d.registrationsByProcedure, registration.Procedure)
 		}
+		if registration.Match == MatchPrefix {
+			d.prefixTree.Delete([]byte(registration.Procedure))
+		}
 	}
 
 	delete(d.registrationsBySession, id)
@@ -113,8 +126,21 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 	switch msg.Type() {
 	case messages.MessageTypeCall:
 		call := msg.(*messages.Call)
-		regs, exists := d.registrationsByProcedure[call.Procedure()]
-		if !exists || len(regs.Registrants) == 0 {
+		var regs *Registration
+		var found bool
+
+		regs, found = d.registrationsByProcedure[call.Procedure()]
+		if !found || len(regs.Registrants) == 0 {
+			if d.prefixTree.Len() > 0 {
+				_, reg, ok := d.prefixTree.Root().LongestPrefix([]byte(call.Procedure()))
+				found = ok
+				if ok {
+					regs = reg
+				}
+			}
+		}
+
+		if !found || len(regs.Registrants) == 0 {
 			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), map[string]any{},
 				"wamp.error.no_such_procedure", nil, nil)
 			return &MessageWithRecipient{Message: callErr, Recipient: sessionID}, nil
@@ -199,6 +225,14 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 				Procedure:   register.Procedure(),
 				Registrants: map[int64]int64{sessionID: sessionID},
 			}
+			match := util.ToString(register.Options()[OptionMatch])
+			switch match {
+			case MatchPrefix:
+				registration.Match = match
+				d.prefixTree, _, _ = d.prefixTree.Insert([]byte(registration.Procedure), registration)
+			default:
+				registration.Match = MatchExact
+			}
 		}
 
 		d.registrationsByProcedure[register.Procedure()] = registration
@@ -220,6 +254,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		if len(registration.Registrants) == 0 {
 			delete(registrations, unregister.RegistrationID())
 			delete(d.registrationsByProcedure, registration.Procedure)
+			if registration.Match == MatchPrefix {
+				d.prefixTree.Delete([]byte(registration.Procedure))
+			}
 		}
 
 		unregistered := messages.NewUnregistered(unregister.RequestID())

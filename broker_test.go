@@ -153,3 +153,35 @@ func TestBrokerSubscribeUnsubscribe(t *testing.T) {
 		require.EqualError(t, err, "broker: cannot unsubscribe non-existent subscription 5")
 	})
 }
+
+func TestBrokerPrefixSubscription(t *testing.T) {
+	broker := wampproto.NewBroker()
+
+	subscriber := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	err := broker.AddSession(subscriber)
+	require.NoError(t, err)
+
+	t.Run("Subscribe", func(t *testing.T) {
+		subscribe := messages.NewSubscribe(1, map[string]any{wampproto.OptionMatch: wampproto.MatchPrefix}, "foo.bar.")
+		msg, err := broker.ReceiveMessage(subscriber.ID(), subscribe)
+		require.NoError(t, err)
+		require.NotNil(t, msg)
+		require.Equal(t, msg.Recipient, subscriber.ID())
+		require.Equal(t, messages.MessageTypeSubscribed, msg.Message.Type())
+
+		hasTopic := broker.HasSubscription("foo.bar.")
+		require.True(t, hasTopic)
+	})
+
+	t.Run("Publish", func(t *testing.T) {
+		publisher := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+		err := broker.AddSession(publisher)
+		require.NoError(t, err)
+
+		publish := messages.NewPublish(3, map[string]any{}, "foo.bar.test", []any{"abc"}, nil)
+		publication, err := broker.ReceivePublish(publisher.ID(), publish)
+		require.NoError(t, err)
+		require.NotNil(t, publication)
+		require.Len(t, publication.Recipients, 1)
+	})
+}

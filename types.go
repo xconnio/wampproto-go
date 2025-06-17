@@ -50,6 +50,7 @@ type Subscription struct {
 	ID          int64
 	Topic       string
 	Subscribers map[int64]int64
+	Match       string
 }
 
 type Publication struct {

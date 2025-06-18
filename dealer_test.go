@@ -211,6 +211,22 @@ func TestProgressiveCallInvocations(t *testing.T) {
 }
 
 func TestDealerPrefixRegistration(t *testing.T) {
+	testDealerRegistrationAndCall(t,
+		wampproto.MatchPrefix,
+		"foo.bar.",
+		"foo.bar.test",
+	)
+}
+
+func TestDealerWildcardRegistration(t *testing.T) {
+	testDealerRegistrationAndCall(t,
+		wampproto.MatchWildcard,
+		"foo.bar*test",
+		"foo.bar.alpha.test",
+	)
+}
+
+func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI string) {
 	dealer := wampproto.NewDealer()
 
 	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
@@ -218,15 +234,15 @@ func TestDealerPrefixRegistration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Register", func(t *testing.T) {
-		register := messages.NewRegister(1, map[string]any{wampproto.OptionMatch: wampproto.MatchPrefix}, "foo.bar.")
+		register := messages.NewRegister(1, map[string]any{
+			wampproto.OptionMatch: matchType,
+		}, procedure)
 		msg, err := dealer.ReceiveMessage(callee.ID(), register)
 		require.NoError(t, err)
 		require.NotNil(t, msg)
 		require.Equal(t, msg.Recipient, callee.ID())
 		require.Equal(t, messages.MessageTypeRegistered, msg.Message.Type())
-
-		hasProcedure := dealer.HasProcedure("foo.bar.")
-		require.True(t, hasProcedure)
+		require.True(t, dealer.HasProcedure(procedure))
 	})
 
 	t.Run("Call", func(t *testing.T) {
@@ -234,7 +250,7 @@ func TestDealerPrefixRegistration(t *testing.T) {
 		err := dealer.AddSession(caller)
 		require.NoError(t, err)
 
-		call := messages.NewCall(3, map[string]any{}, "foo.bar.test", []any{"abc"}, nil)
+		call := messages.NewCall(3, map[string]any{}, callURI, []any{"abc"}, nil)
 		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
 		require.NoError(t, err)
 		require.NotNil(t, invWithRecipient)

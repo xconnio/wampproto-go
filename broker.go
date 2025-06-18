@@ -19,6 +19,7 @@ type Broker struct {
 	subscriptionsBySession map[int64]map[int64]*Subscription
 	sessions               map[int64]*SessionDetails
 	prefixTree             *iradix.Tree[*Subscription]
+	wcSubscriptionsByTopic map[string]*Subscription
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
@@ -31,6 +32,7 @@ func NewBroker() *Broker {
 		subscriptionsBySession: make(map[int64]map[int64]*Subscription),
 		idGen:                  &SessionScopeIDGenerator{},
 		prefixTree:             iradix.New[*Subscription](),
+		wcSubscriptionsByTopic: make(map[string]*Subscription),
 	}
 }
 
@@ -70,6 +72,10 @@ func (b *Broker) RemoveSession(id int64) error {
 
 		if subscription.Match == MatchPrefix {
 			b.prefixTree.Delete([]byte(subscription.Topic))
+		}
+
+		if subscription.Match == MatchWildcard {
+			delete(b.wcSubscriptionsByTopic, v.Topic)
 		}
 	}
 
@@ -112,6 +118,9 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			case MatchPrefix:
 				subscription.Match = match
 				b.prefixTree, _, _ = b.prefixTree.Insert([]byte(subscription.Topic), subscription)
+			case MatchWildcard:
+				subscription.Match = match
+				b.wcSubscriptionsByTopic[subscription.Topic] = subscription
 			default:
 				subscription.Match = MatchExact
 			}
@@ -143,6 +152,9 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		if subscription.Match == MatchPrefix {
 			b.prefixTree.Delete([]byte(subscription.Topic))
 		}
+		if subscription.Match == MatchWildcard {
+			delete(b.wcSubscriptionsByTopic, subscription.Topic)
+		}
 
 		delete(b.subscriptionsBySession[sessionID], subscription.ID)
 
@@ -173,9 +185,17 @@ func (b *Broker) ReceivePublish(sessionID int64, publish *messages.Publish) (*Pu
 	if !exists || len(subscription.Subscribers) == 0 {
 		if b.prefixTree.Len() > 0 {
 			_, sub, ok := b.prefixTree.Root().LongestPrefix([]byte(publish.Topic()))
-			exists = ok
 			if ok {
-				subscription = sub
+				subscription, exists = sub, true
+			}
+		}
+
+		if !exists {
+			for topic, sub := range b.wcSubscriptionsByTopic {
+				if wildcardMatch(publish.Topic(), topic) {
+					subscription, exists = sub, true
+					break
+				}
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package wampproto
 
 import (
 	"fmt"
+	"path"
 	"sync"
 
 	"github.com/hashicorp/go-immutable-radix/v2"
@@ -15,8 +16,9 @@ const (
 	OptionProgress        = "progress"
 	OptionMatch           = "match"
 
-	MatchExact  = "exact"
-	MatchPrefix = "prefix"
+	MatchExact    = "exact"
+	MatchPrefix   = "prefix"
+	MatchWildcard = "wildcard"
 )
 
 const (
@@ -47,12 +49,13 @@ type CallMap struct {
 }
 
 type Dealer struct {
-	sessions                 map[int64]*SessionDetails
-	registrationsByProcedure map[string]*Registration
-	registrationsBySession   map[int64]map[int64]*Registration
-	prefixTree               *iradix.Tree[*Registration]
-	pendingCalls             map[int64]*PendingInvocation
-	invocationIDbyCall       map[CallMap]int64
+	sessions                   map[int64]*SessionDetails
+	registrationsByProcedure   map[string]*Registration
+	registrationsBySession     map[int64]map[int64]*Registration
+	prefixTree                 *iradix.Tree[*Registration]
+	wcRegistrationsByProcedure map[string]*Registration
+	pendingCalls               map[int64]*PendingInvocation
+	invocationIDbyCall         map[CallMap]int64
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
@@ -60,13 +63,14 @@ type Dealer struct {
 
 func NewDealer() *Dealer {
 	return &Dealer{
-		sessions:                 make(map[int64]*SessionDetails),
-		registrationsByProcedure: make(map[string]*Registration),
-		registrationsBySession:   make(map[int64]map[int64]*Registration),
-		pendingCalls:             make(map[int64]*PendingInvocation),
-		invocationIDbyCall:       make(map[CallMap]int64),
-		idGen:                    &SessionScopeIDGenerator{},
-		prefixTree:               iradix.New[*Registration](),
+		sessions:                   make(map[int64]*SessionDetails),
+		registrationsByProcedure:   make(map[string]*Registration),
+		registrationsBySession:     make(map[int64]map[int64]*Registration),
+		pendingCalls:               make(map[int64]*PendingInvocation),
+		invocationIDbyCall:         make(map[CallMap]int64),
+		idGen:                      &SessionScopeIDGenerator{},
+		prefixTree:                 iradix.New[*Registration](),
+		wcRegistrationsByProcedure: make(map[string]*Registration),
 	}
 }
 
@@ -103,6 +107,10 @@ func (d *Dealer) RemoveSession(id int64) error {
 		if registration.Match == MatchPrefix {
 			d.prefixTree.Delete([]byte(registration.Procedure))
 		}
+
+		if registration.Match == MatchWildcard {
+			delete(d.wcRegistrationsByProcedure, registration.Procedure)
+		}
 	}
 
 	delete(d.registrationsBySession, id)
@@ -133,9 +141,17 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		if !found || len(regs.Registrants) == 0 {
 			if d.prefixTree.Len() > 0 {
 				_, reg, ok := d.prefixTree.Root().LongestPrefix([]byte(call.Procedure()))
-				found = ok
 				if ok {
-					regs = reg
+					regs, found = reg, true
+				}
+			}
+
+			if !found {
+				for procedure, reg := range d.wcRegistrationsByProcedure {
+					if wildcardMatch(call.Procedure(), procedure) {
+						regs, found = reg, true
+						break
+					}
 				}
 			}
 		}
@@ -230,6 +246,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			case MatchPrefix:
 				registration.Match = match
 				d.prefixTree, _, _ = d.prefixTree.Insert([]byte(registration.Procedure), registration)
+			case MatchWildcard:
+				registration.Match = match
+				d.wcRegistrationsByProcedure[registration.Procedure] = registration
 			default:
 				registration.Match = MatchExact
 			}
@@ -257,6 +276,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			if registration.Match == MatchPrefix {
 				d.prefixTree.Delete([]byte(registration.Procedure))
 			}
+			if registration.Match == MatchWildcard {
+				delete(d.wcRegistrationsByProcedure, registration.Procedure)
+			}
 		}
 
 		unregistered := messages.NewUnregistered(unregister.RequestID())
@@ -280,4 +302,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 	default:
 		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)
 	}
+}
+
+func wildcardMatch(str, pattern string) bool {
+	matched, err := path.Match(pattern, str)
+	return err == nil && matched
 }

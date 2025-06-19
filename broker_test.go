@@ -155,6 +155,22 @@ func TestBrokerSubscribeUnsubscribe(t *testing.T) {
 }
 
 func TestBrokerPrefixSubscription(t *testing.T) {
+	testBrokerSubscriptionFlow(t,
+		wampproto.MatchPrefix,
+		"foo.bar.",
+		"foo.bar.test",
+	)
+}
+
+func TestBrokerWildcardSubscription(t *testing.T) {
+	testBrokerSubscriptionFlow(t,
+		wampproto.MatchWildcard,
+		"foo.bar*test",
+		"foo.bar.alpha.test",
+	)
+}
+
+func testBrokerSubscriptionFlow(t *testing.T, matchType, topic, publishURI string) {
 	broker := wampproto.NewBroker()
 
 	subscriber := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
@@ -162,14 +178,16 @@ func TestBrokerPrefixSubscription(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Subscribe", func(t *testing.T) {
-		subscribe := messages.NewSubscribe(1, map[string]any{wampproto.OptionMatch: wampproto.MatchPrefix}, "foo.bar.")
+		subscribe := messages.NewSubscribe(1, map[string]any{
+			wampproto.OptionMatch: matchType,
+		}, topic)
 		msg, err := broker.ReceiveMessage(subscriber.ID(), subscribe)
 		require.NoError(t, err)
 		require.NotNil(t, msg)
 		require.Equal(t, msg.Recipient, subscriber.ID())
 		require.Equal(t, messages.MessageTypeSubscribed, msg.Message.Type())
 
-		hasTopic := broker.HasSubscription("foo.bar.")
+		hasTopic := broker.HasSubscription(topic)
 		require.True(t, hasTopic)
 	})
 
@@ -178,7 +196,7 @@ func TestBrokerPrefixSubscription(t *testing.T) {
 		err := broker.AddSession(publisher)
 		require.NoError(t, err)
 
-		publish := messages.NewPublish(3, map[string]any{}, "foo.bar.test", []any{"abc"}, nil)
+		publish := messages.NewPublish(3, map[string]any{}, publishURI, []any{"abc"}, nil)
 		publication, err := broker.ReceivePublish(publisher.ID(), publish)
 		require.NoError(t, err)
 		require.NotNil(t, publication)

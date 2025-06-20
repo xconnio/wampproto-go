@@ -1,7 +1,9 @@
 package wampproto
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"path"
 	"sync"
 
@@ -15,10 +17,17 @@ const (
 	OptionReceiveProgress = "receive_progress"
 	OptionProgress        = "progress"
 	OptionMatch           = "match"
+	OptionInvoke          = "invoke"
 
 	MatchExact    = "exact"
 	MatchPrefix   = "prefix"
 	MatchWildcard = "wildcard"
+
+	InvokeSingle     = "single"
+	InvokeRoundRobin = "roundrobin"
+	InvokeRandom     = "random"
+	InvokeFirst      = "first"
+	InvokeLast       = "last"
 )
 
 const (
@@ -40,6 +49,8 @@ type Registration struct {
 	Procedure        string
 	Registrants      map[int64]int64
 	InvocationPolicy string
+	nextCallee       int
+	callees          []int64
 	Match            string
 }
 
@@ -111,6 +122,16 @@ func (d *Dealer) RemoveSession(id int64) error {
 		if registration.Match == MatchWildcard {
 			delete(d.wcRegistrationsByProcedure, registration.Procedure)
 		}
+
+		for i := range registration.callees {
+			if registration.callees[i] == id {
+				if len(registration.callees) == 1 {
+					registration.callees = make([]int64, 0)
+				} else {
+					registration.callees = append(registration.callees[:i], registration.callees[i+1:]...)
+				}
+			}
+		}
 	}
 
 	delete(d.registrationsBySession, id)
@@ -163,10 +184,28 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		}
 
 		var callee int64
-		for session := range regs.Registrants {
-			callee = session
-			break
+		if len(regs.callees) > 1 {
+			switch regs.InvocationPolicy {
+			case InvokeFirst:
+				callee = regs.callees[0]
+			case InvokeRoundRobin:
+				if regs.nextCallee >= len(regs.callees) {
+					regs.nextCallee = 0
+				}
+				callee = regs.callees[regs.nextCallee]
+				regs.nextCallee++
+			case InvokeRandom:
+				idx, _ := rand.Int(rand.Reader, big.NewInt(int64(len(regs.callees))))
+				callee = regs.callees[idx.Int64()]
+			case InvokeLast:
+				callee = regs.callees[len(regs.callees)-1]
+			default:
+				panic(fmt.Sprintf("multiple callees registered with '%s' policy", InvokeSingle))
+			}
+		} else {
+			callee = regs.callees[0]
 		}
+
 		receiveProgress, _ := call.Options()[OptionReceiveProgress].(bool)
 		progress, _ := call.Options()[OptionProgress].(bool)
 
@@ -229,17 +268,25 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			return nil, fmt.Errorf("cannot register procedure for non-existent session %d", sessionID)
 		}
 
+		invokePolicy := util.ToString(register.Options()[OptionInvoke])
 		registration, exists := d.registrationsByProcedure[register.Procedure()]
 		if exists {
-			// TODO: implement shared registrations
-			err := messages.NewError(messages.MessageTypeRegister, register.RequestID(), map[string]any{},
-				"wamp.error.procedure_already_exists", nil, nil)
-			return &MessageWithRecipient{Message: err, Recipient: sessionID}, nil
+			if registration.InvocationPolicy == "" || registration.InvocationPolicy == InvokeSingle ||
+				registration.InvocationPolicy != invokePolicy {
+				err := messages.NewError(messages.MessageTypeRegister, register.RequestID(), map[string]any{},
+					"wamp.error.procedure_already_exists", nil, nil)
+				return &MessageWithRecipient{Message: err, Recipient: sessionID}, nil
+			}
+			registration.Registrants[sessionID] = sessionID
+			registration.callees = append(registration.callees, sessionID)
+
 		} else {
 			registration = &Registration{
-				ID:          d.idGen.NextID(),
-				Procedure:   register.Procedure(),
-				Registrants: map[int64]int64{sessionID: sessionID},
+				ID:               d.idGen.NextID(),
+				Procedure:        register.Procedure(),
+				Registrants:      map[int64]int64{sessionID: sessionID},
+				callees:          []int64{sessionID},
+				InvocationPolicy: invokePolicy,
 			}
 			match := util.ToString(register.Options()[OptionMatch])
 			switch match {

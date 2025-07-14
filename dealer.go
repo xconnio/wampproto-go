@@ -15,6 +15,12 @@ const (
 	OptionReceiveProgress = "receive_progress"
 	OptionProgress        = "progress"
 	OptionMatch           = "match"
+	OptionMode            = "mode"
+	OptionReason          = "reason"
+
+	CancelModeKill       = "kill"
+	CancelModeKillNoWait = "killnowait"
+	CancelModeSkip       = "skip"
 
 	MatchExact    = "exact"
 	MatchPrefix   = "prefix"
@@ -127,7 +133,7 @@ func (d *Dealer) HasProcedure(procedure string) bool {
 	return exists && len(reg.Registrants) > 0
 }
 
-func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*MessageWithRecipient, error) {
+func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) ([]*MessageWithRecipient, error) {
 	d.Lock()
 	defer d.Unlock()
 
@@ -159,7 +165,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		if !found || len(regs.Registrants) == 0 {
 			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), map[string]any{},
 				"wamp.error.no_such_procedure", nil, nil)
-			return &MessageWithRecipient{Message: callErr, Recipient: sessionID}, nil
+			return []*MessageWithRecipient{{Message: callErr, Recipient: sessionID}}, nil
 		}
 
 		var callee int64
@@ -198,7 +204,55 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			invocation = messages.NewInvocation(invocationID, regs.ID, details, call.Args(), call.KwArgs())
 		}
 
-		return &MessageWithRecipient{Message: invocation, Recipient: callee}, nil
+		return []*MessageWithRecipient{{Message: invocation, Recipient: callee}}, nil
+	case messages.MessageTypeCancel:
+		cancel := msg.(*messages.Cancel)
+		mode := util.ToString(cancel.Options()[OptionMode])
+		switch mode {
+		case CancelModeSkip, CancelModeKill, CancelModeKillNoWait:
+		case "":
+			mode = CancelModeKillNoWait
+		default:
+			errMsg := messages.NewError(messages.MessageTypeCancel, cancel.RequestID(), nil, ErrInvalidArgument,
+				[]any{fmt.Sprintf("invalid cancel mode: %s", mode)}, nil)
+			return []*MessageWithRecipient{{Message: errMsg, Recipient: sessionID}}, nil
+		}
+
+		callMap := CallMap{CallerID: sessionID, CallID: cancel.RequestID()}
+		invocationID, ok := d.invocationIDbyCall[callMap]
+		if !ok {
+			return nil, fmt.Errorf("no pending invocation to cancel")
+		}
+
+		pendingCall, ok := d.pendingCalls[invocationID]
+		if !ok {
+			return nil, fmt.Errorf("no pending call to cancel")
+		}
+
+		if sessionID != pendingCall.CallerID {
+			return nil, fmt.Errorf("cancel received from the session who doesn't own the call")
+		}
+
+		var messagesWithRecipient []*MessageWithRecipient
+		if mode != CancelModeSkip {
+			messagesWithRecipient = append(messagesWithRecipient, &MessageWithRecipient{
+				Message:   messages.NewInterrupt(invocationID, map[string]any{OptionReason: ErrCanceled, OptionMode: mode}),
+				Recipient: pendingCall.CalleeID,
+			})
+		}
+
+		if mode != CancelModeKill {
+			errMessage := messages.NewError(messages.MessageTypeCall, cancel.RequestID(), nil, ErrCanceled, nil, nil)
+			messagesWithRecipient = append(messagesWithRecipient, &MessageWithRecipient{
+				Message:   errMessage,
+				Recipient: pendingCall.CallerID,
+			})
+
+			delete(d.pendingCalls, invocationID)
+			delete(d.invocationIDbyCall, callMap)
+		}
+
+		return messagesWithRecipient, nil
 	case messages.MessageTypeYield:
 		yield := msg.(*messages.Yield)
 		pending, exists := d.pendingCalls[yield.RequestID()]
@@ -210,7 +264,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		var details map[string]any
 		if pending.ReceiveProgress && progress {
 			details = map[string]any{OptionProgress: progress}
-		} else {
+		}
+
+		if !pending.ReceiveProgress {
 			delete(d.pendingCalls, yield.RequestID())
 		}
 
@@ -221,7 +277,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			result = messages.NewResult(pending.RequestID, details, yield.Args(), yield.KwArgs())
 		}
 
-		return &MessageWithRecipient{Message: result, Recipient: pending.CallerID}, nil
+		return []*MessageWithRecipient{{Message: result, Recipient: pending.CallerID}}, nil
 	case messages.MessageTypeRegister:
 		register := msg.(*messages.Register)
 		_, exists := d.registrationsBySession[sessionID]
@@ -234,7 +290,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			// TODO: implement shared registrations
 			err := messages.NewError(messages.MessageTypeRegister, register.RequestID(), map[string]any{},
 				"wamp.error.procedure_already_exists", nil, nil)
-			return &MessageWithRecipient{Message: err, Recipient: sessionID}, nil
+			return []*MessageWithRecipient{{Message: err, Recipient: sessionID}}, nil
 		} else {
 			registration = &Registration{
 				ID:          d.idGen.NextID(),
@@ -258,7 +314,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		d.registrationsBySession[sessionID][registration.ID] = registration
 
 		registered := messages.NewRegistered(register.RequestID(), registration.ID)
-		return &MessageWithRecipient{Message: registered, Recipient: sessionID}, nil
+		return []*MessageWithRecipient{{Message: registered, Recipient: sessionID}}, nil
 	case messages.MessageTypeUnregister:
 		unregister := msg.(*messages.Unregister)
 		registrations, exists := d.registrationsBySession[sessionID]
@@ -282,7 +338,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 		}
 
 		unregistered := messages.NewUnregistered(unregister.RequestID())
-		return &MessageWithRecipient{Message: unregistered, Recipient: sessionID}, nil
+		return []*MessageWithRecipient{{Message: unregistered, Recipient: sessionID}}, nil
 	case messages.MessageTypeError:
 		wErr := msg.(*messages.Error)
 		if wErr.MessageType() != messages.MessageTypeInvocation {
@@ -298,7 +354,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 
 		wErr = messages.NewError(messages.MessageTypeCall, pending.RequestID, wErr.Details(), wErr.URI(),
 			wErr.Args(), wErr.KwArgs())
-		return &MessageWithRecipient{Message: wErr, Recipient: pending.CallerID}, nil
+		return []*MessageWithRecipient{{Message: wErr, Recipient: pending.CallerID}}, nil
 	default:
 		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)
 	}

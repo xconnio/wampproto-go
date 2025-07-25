@@ -38,6 +38,10 @@ type Cancel struct {
 }
 
 func NewCancel(requestID uint64, options map[string]any) *Cancel {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
 	return &Cancel{CancelFields: &cancelFields{requestID: requestID, options: options}}
 }
 

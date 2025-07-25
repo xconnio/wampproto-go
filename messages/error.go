@@ -83,6 +83,10 @@ func NewErrorWithFields(fields ErrorFields) *Error { return &Error{ErrorFields: 
 
 func NewError(messageType, requestID uint64, details map[string]any, uri string, args []any,
 	kwArgs map[string]any) *Error {
+	if details == nil {
+		details = make(map[string]any)
+	}
+
 	return &Error{ErrorFields: &errorFields{
 		messageType: messageType,
 		requestID:   requestID,

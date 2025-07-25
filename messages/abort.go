@@ -52,6 +52,10 @@ type Abort struct {
 }
 
 func NewAbort(details map[string]any, reason string, args []any, KwArgs map[string]any) *Abort {
+	if details == nil {
+		details = make(map[string]any)
+	}
+
 	return &Abort{AbortFields: &abortFields{
 		details: details,
 		reason:  reason,

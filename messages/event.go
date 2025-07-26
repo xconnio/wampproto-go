@@ -64,7 +64,7 @@ func (e *eventFields) Payload() []byte {
 	return nil
 }
 
-func (e *eventFields) PayloadSerializer() int {
+func (e *eventFields) PayloadSerializer() uint64 {
 	return 0
 }
 

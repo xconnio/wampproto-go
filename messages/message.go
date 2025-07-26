@@ -9,5 +9,5 @@ type Message interface {
 type BinaryPayload interface {
 	PayloadIsBinary() bool
 	Payload() []byte
-	PayloadSerializer() int
+	PayloadSerializer() uint64
 }

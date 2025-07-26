@@ -71,7 +71,7 @@ func (e *errorFields) Payload() []byte {
 	return nil
 }
 
-func (e *errorFields) PayloadSerializer() int {
+func (e *errorFields) PayloadSerializer() uint64 {
 	return 0
 }
 

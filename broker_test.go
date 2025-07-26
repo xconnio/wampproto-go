@@ -97,7 +97,7 @@ func TestBrokerSubscribeUnsubscribe(t *testing.T) {
 	err := broker.AddSession(subDetails)
 	require.NoError(t, err)
 
-	var subscriptionID int64
+	var subscriptionID uint64
 	t.Run("Subscribe", func(t *testing.T) {
 		subscribe := messages.NewSubscribe(1, nil, "foo.bar")
 		msgWithRecipient, err := broker.ReceiveMessage(subDetails.ID(), subscribe)

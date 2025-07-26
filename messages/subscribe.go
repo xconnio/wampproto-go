@@ -17,13 +17,13 @@ var subscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type SubscribeFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 	Topic() string
 }
 
 type subscribeFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 	topic     string
 }
@@ -32,7 +32,7 @@ func (s *subscribeFields) Marshal() []any {
 	return []any{MessageTypeSubscribe, s.requestID, s.options, s.topic}
 }
 
-func (s *subscribeFields) RequestID() int64 {
+func (s *subscribeFields) RequestID() uint64 {
 	return s.requestID
 }
 
@@ -48,7 +48,7 @@ type Subscribe struct {
 	SubscribeFields
 }
 
-func NewSubscribe(requestID int64, options map[string]any, uri string) *Subscribe {
+func NewSubscribe(requestID uint64, options map[string]any, uri string) *Subscribe {
 	if options == nil {
 		options = make(map[string]any)
 	}

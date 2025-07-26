@@ -15,14 +15,14 @@ var unregisteredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type UnregisteredFields interface {
-	RequestID() int64
+	RequestID() uint64
 }
 
 type unregisteredFields struct {
-	requestID int64
+	requestID uint64
 }
 
-func (ur *unregisteredFields) RequestID() int64 {
+func (ur *unregisteredFields) RequestID() uint64 {
 	return ur.requestID
 }
 
@@ -30,7 +30,7 @@ type Unregistered struct {
 	UnregisteredFields
 }
 
-func NewUnregistered(requestID int64) *Unregistered {
+func NewUnregistered(requestID uint64) *Unregistered {
 	return &Unregistered{UnregisteredFields: &unregisteredFields{requestID: requestID}}
 }
 

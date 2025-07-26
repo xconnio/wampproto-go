@@ -16,20 +16,20 @@ var unregisterValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type UnregisterFields interface {
-	RequestID() int64
-	RegistrationID() int64
+	RequestID() uint64
+	RegistrationID() uint64
 }
 
 type unregisterFields struct {
-	requestID      int64
-	registrationID int64
+	requestID      uint64
+	registrationID uint64
 }
 
-func (ur *unregisterFields) RequestID() int64 {
+func (ur *unregisterFields) RequestID() uint64 {
 	return ur.requestID
 }
 
-func (ur *unregisterFields) RegistrationID() int64 {
+func (ur *unregisterFields) RegistrationID() uint64 {
 	return ur.registrationID
 }
 
@@ -37,7 +37,7 @@ type Unregister struct {
 	UnregisterFields
 }
 
-func NewUnregister(requestID, registrationID int64) *Unregister {
+func NewUnregister(requestID, registrationID uint64) *Unregister {
 	return &Unregister{UnregisterFields: &unregisterFields{requestID: requestID, registrationID: registrationID}}
 }
 

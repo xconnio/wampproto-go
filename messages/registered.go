@@ -16,20 +16,20 @@ var registeredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type RegisteredFields interface {
-	RequestID() int64
-	RegistrationID() int64
+	RequestID() uint64
+	RegistrationID() uint64
 }
 
 type registeredFields struct {
-	requestID      int64
-	registrationID int64
+	requestID      uint64
+	registrationID uint64
 }
 
-func (r *registeredFields) RequestID() int64 {
+func (r *registeredFields) RequestID() uint64 {
 	return r.requestID
 }
 
-func (r *registeredFields) RegistrationID() int64 {
+func (r *registeredFields) RegistrationID() uint64 {
 	return r.registrationID
 }
 
@@ -37,7 +37,7 @@ type Registered struct {
 	RegisteredFields
 }
 
-func NewRegistered(requestID, registrationID int64) *Registered {
+func NewRegistered(requestID, registrationID uint64) *Registered {
 	return &Registered{RegisteredFields: &registeredFields{requestID: requestID, registrationID: registrationID}}
 }
 

@@ -25,7 +25,7 @@ func registerProc(t *testing.T, callee *wampproto.Session, uri string) {
 }
 
 func callProc(t *testing.T, caller, callee *wampproto.Session, uri string) {
-	callRequest := int64(2)
+	callRequest := uint64(2)
 
 	call := messages.NewCall(callRequest, nil, uri, nil, nil)
 	payload, err := caller.SendMessage(call)
@@ -84,7 +84,7 @@ func TestSessionCall(t *testing.T) {
 }
 
 func subscribeTopic(t *testing.T, subscriber *wampproto.Session, uri string) {
-	subscribeID := int64(1)
+	subscribeID := uint64(1)
 	subscribe := messages.NewSubscribe(subscribeID, nil, uri)
 	payload, err := subscriber.SendMessage(subscribe)
 	require.NoError(t, err)

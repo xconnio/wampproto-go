@@ -12,17 +12,17 @@ type Session struct {
 	serializer serializers.Serializer
 
 	// data structures for RPC
-	callRequests       internal.Map[int64, int64]
-	registerRequests   internal.Map[int64, int64]
-	registrations      internal.Map[int64, int64]
-	invocationRequests internal.Map[int64, int64]
-	unregisterRequests internal.Map[int64, int64]
+	callRequests       internal.Map[uint64, uint64]
+	registerRequests   internal.Map[uint64, uint64]
+	registrations      internal.Map[uint64, uint64]
+	invocationRequests internal.Map[uint64, uint64]
+	unregisterRequests internal.Map[uint64, uint64]
 
 	// data structures for PubSub
-	publishRequests     internal.Map[int64, int64]
-	subscribeRequests   internal.Map[int64, int64]
-	subscriptions       internal.Map[int64, int64]
-	unsubscribeRequests internal.Map[int64, int64]
+	publishRequests     internal.Map[uint64, uint64]
+	subscribeRequests   internal.Map[uint64, uint64]
+	subscriptions       internal.Map[uint64, uint64]
+	unsubscribeRequests internal.Map[uint64, uint64]
 }
 
 func NewSession(serializer serializers.Serializer) *Session {
@@ -33,16 +33,16 @@ func NewSession(serializer serializers.Serializer) *Session {
 	return &Session{
 		serializer: serializer,
 
-		callRequests:       internal.Map[int64, int64]{},
-		registerRequests:   internal.Map[int64, int64]{},
-		registrations:      internal.Map[int64, int64]{},
-		invocationRequests: internal.Map[int64, int64]{},
-		unregisterRequests: internal.Map[int64, int64]{},
+		callRequests:       internal.Map[uint64, uint64]{},
+		registerRequests:   internal.Map[uint64, uint64]{},
+		registrations:      internal.Map[uint64, uint64]{},
+		invocationRequests: internal.Map[uint64, uint64]{},
+		unregisterRequests: internal.Map[uint64, uint64]{},
 
-		publishRequests:     internal.Map[int64, int64]{},
-		subscribeRequests:   internal.Map[int64, int64]{},
-		subscriptions:       internal.Map[int64, int64]{},
-		unsubscribeRequests: internal.Map[int64, int64]{},
+		publishRequests:     internal.Map[uint64, uint64]{},
+		subscribeRequests:   internal.Map[uint64, uint64]{},
+		subscriptions:       internal.Map[uint64, uint64]{},
+		unsubscribeRequests: internal.Map[uint64, uint64]{},
 	}
 }
 

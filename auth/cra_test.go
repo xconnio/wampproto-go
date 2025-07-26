@@ -93,7 +93,7 @@ func TestVerifyCRASignature(t *testing.T) {
 }
 
 func TestGenerateCRAChallenge(t *testing.T) {
-	session := int64(12345)
+	session := uint64(12345)
 	authid := "authid"
 	authrole := "authrole"
 	provider := "provider"
@@ -105,7 +105,7 @@ func TestGenerateCRAChallenge(t *testing.T) {
 	err = json.Unmarshal([]byte(challenge), &data)
 	require.NoError(t, err)
 
-	require.Equal(t, session, int64(data["session"].(float64)))
+	require.Equal(t, session, uint64(data["session"].(float64)))
 	require.Equal(t, authid, data["authid"])
 	require.Equal(t, authrole, data["authrole"])
 	require.Equal(t, provider, data["authprovider"])

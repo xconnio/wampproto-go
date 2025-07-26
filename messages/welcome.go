@@ -16,16 +16,16 @@ var welcomeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type WelcomeFields interface {
-	SessionID() int64
+	SessionID() uint64
 	Details() map[string]any
 }
 
 type welcomeFields struct {
-	sessionID int64
+	sessionID uint64
 	details   map[string]any
 }
 
-func (w *welcomeFields) SessionID() int64 {
+func (w *welcomeFields) SessionID() uint64 {
 	return w.sessionID
 }
 
@@ -37,7 +37,7 @@ type Welcome struct {
 	WelcomeFields
 }
 
-func NewWelcome(sessionID int64, details map[string]any) *Welcome {
+func NewWelcome(sessionID uint64, details map[string]any) *Welcome {
 	return &Welcome{WelcomeFields: &welcomeFields{sessionID: sessionID, details: details}}
 }
 

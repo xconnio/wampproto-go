@@ -37,7 +37,7 @@ func TestDealerRegisterUnregister(t *testing.T) {
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
-	var registerationID int64
+	var registerationID uint64
 
 	t.Run("Register", func(t *testing.T) {
 		register := messages.NewRegister(1, nil, "foo.bar")

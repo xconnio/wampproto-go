@@ -16,20 +16,20 @@ var subscribedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type SubscribedFields interface {
-	RequestID() int64
-	SubscriptionID() int64
+	RequestID() uint64
+	SubscriptionID() uint64
 }
 
 type subscribedFields struct {
-	requestID      int64
-	subscriptionID int64
+	requestID      uint64
+	subscriptionID uint64
 }
 
-func (s *subscribedFields) RequestID() int64 {
+func (s *subscribedFields) RequestID() uint64 {
 	return s.requestID
 }
 
-func (s *subscribedFields) SubscriptionID() int64 {
+func (s *subscribedFields) SubscriptionID() uint64 {
 	return s.subscriptionID
 }
 
@@ -37,7 +37,7 @@ type Subscribed struct {
 	SubscribedFields
 }
 
-func NewSubscribed(requestID, subscriptionID int64) *Subscribed {
+func NewSubscribed(requestID, subscriptionID uint64) *Subscribed {
 	return &Subscribed{SubscribedFields: &subscribedFields{requestID: requestID, subscriptionID: subscriptionID}}
 }
 

@@ -28,34 +28,34 @@ const (
 )
 
 type PendingInvocation struct {
-	RequestID       int64
-	CallerID        int64
-	CalleeID        int64
+	RequestID       uint64
+	CallerID        uint64
+	CalleeID        uint64
 	Progress        bool
 	ReceiveProgress bool
 }
 
 type Registration struct {
-	ID               int64
+	ID               uint64
 	Procedure        string
-	Registrants      map[int64]int64
+	Registrants      map[uint64]uint64
 	InvocationPolicy string
 	Match            string
 }
 
 type CallMap struct {
-	CallerID int64
-	CallID   int64
+	CallerID uint64
+	CallID   uint64
 }
 
 type Dealer struct {
-	sessions                   map[int64]*SessionDetails
+	sessions                   map[uint64]*SessionDetails
 	registrationsByProcedure   map[string]*Registration
-	registrationsBySession     map[int64]map[int64]*Registration
+	registrationsBySession     map[uint64]map[uint64]*Registration
 	prefixTree                 *iradix.Tree[*Registration]
 	wcRegistrationsByProcedure map[string]*Registration
-	pendingCalls               map[int64]*PendingInvocation
-	invocationIDbyCall         map[CallMap]int64
+	pendingCalls               map[uint64]*PendingInvocation
+	invocationIDbyCall         map[CallMap]uint64
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
@@ -63,11 +63,11 @@ type Dealer struct {
 
 func NewDealer() *Dealer {
 	return &Dealer{
-		sessions:                   make(map[int64]*SessionDetails),
+		sessions:                   make(map[uint64]*SessionDetails),
 		registrationsByProcedure:   make(map[string]*Registration),
-		registrationsBySession:     make(map[int64]map[int64]*Registration),
-		pendingCalls:               make(map[int64]*PendingInvocation),
-		invocationIDbyCall:         make(map[CallMap]int64),
+		registrationsBySession:     make(map[uint64]map[uint64]*Registration),
+		pendingCalls:               make(map[uint64]*PendingInvocation),
+		invocationIDbyCall:         make(map[CallMap]uint64),
 		idGen:                      &SessionScopeIDGenerator{},
 		prefixTree:                 iradix.New[*Registration](),
 		wcRegistrationsByProcedure: make(map[string]*Registration),
@@ -83,12 +83,12 @@ func (d *Dealer) AddSession(details *SessionDetails) error {
 		return fmt.Errorf("cannot attach an already attached client %d", details.ID())
 	}
 
-	d.registrationsBySession[details.ID()] = map[int64]*Registration{}
+	d.registrationsBySession[details.ID()] = map[uint64]*Registration{}
 	d.sessions[details.ID()] = details
 	return nil
 }
 
-func (d *Dealer) RemoveSession(id int64) error {
+func (d *Dealer) RemoveSession(id uint64) error {
 	d.Lock()
 	defer d.Unlock()
 
@@ -127,7 +127,7 @@ func (d *Dealer) HasProcedure(procedure string) bool {
 	return exists && len(reg.Registrants) > 0
 }
 
-func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*MessageWithRecipient, error) {
+func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*MessageWithRecipient, error) {
 	d.Lock()
 	defer d.Unlock()
 
@@ -162,7 +162,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			return &MessageWithRecipient{Message: callErr, Recipient: sessionID}, nil
 		}
 
-		var callee int64
+		var callee uint64
 		for session := range regs.Registrants {
 			callee = session
 			break
@@ -229,7 +229,7 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			return nil, fmt.Errorf("cannot register procedure for non-existent session %d", sessionID)
 		}
 
-		registration, exists := d.registrationsByProcedure[register.Procedure()]
+		registration, exists := d.registrationsByProcedure[register.Procedure()] //nolint:staticcheck
 		if exists {
 			// TODO: implement shared registrations
 			err := messages.NewError(messages.MessageTypeRegister, register.RequestID(), map[string]any{},
@@ -239,8 +239,9 @@ func (d *Dealer) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			registration = &Registration{
 				ID:          d.idGen.NextID(),
 				Procedure:   register.Procedure(),
-				Registrants: map[int64]int64{sessionID: sessionID},
+				Registrants: map[uint64]uint64{sessionID: sessionID},
 			}
+
 			match := util.ToString(register.Options()[OptionMatch])
 			switch match {
 			case MatchPrefix:

@@ -20,8 +20,8 @@ var errorValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type ErrorFields interface {
-	MessageType() int64
-	RequestID() int64
+	MessageType() uint64
+	RequestID() uint64
 	Details() map[string]any
 	URI() string
 	Args() []any
@@ -31,19 +31,19 @@ type ErrorFields interface {
 }
 
 type errorFields struct {
-	messageType int64
-	requestID   int64
+	messageType uint64
+	requestID   uint64
 	details     map[string]any
 	uri         string
 	args        []any
 	kwArgs      map[string]any
 }
 
-func (e *errorFields) MessageType() int64 {
+func (e *errorFields) MessageType() uint64 {
 	return e.messageType
 }
 
-func (e *errorFields) RequestID() int64 {
+func (e *errorFields) RequestID() uint64 {
 	return e.requestID
 }
 
@@ -81,7 +81,7 @@ type Error struct {
 
 func NewErrorWithFields(fields ErrorFields) *Error { return &Error{ErrorFields: fields} }
 
-func NewError(messageType, requestID int64, details map[string]any, uri string, args []any,
+func NewError(messageType, requestID uint64, details map[string]any, uri string, args []any,
 	kwArgs map[string]any) *Error {
 	return &Error{ErrorFields: &errorFields{
 		messageType: messageType,

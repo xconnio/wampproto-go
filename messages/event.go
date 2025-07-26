@@ -19,8 +19,8 @@ var eventValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type EventFields interface {
-	SubscriptionID() int64
-	PublicationID() int64
+	SubscriptionID() uint64
+	PublicationID() uint64
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
@@ -29,18 +29,18 @@ type EventFields interface {
 }
 
 type eventFields struct {
-	subscriptionID int64
-	publicationID  int64
+	subscriptionID uint64
+	publicationID  uint64
 	details        map[string]any
 	args           []any
 	kwArgs         map[string]any
 }
 
-func (e *eventFields) SubscriptionID() int64 {
+func (e *eventFields) SubscriptionID() uint64 {
 	return e.subscriptionID
 }
 
-func (e *eventFields) PublicationID() int64 {
+func (e *eventFields) PublicationID() uint64 {
 	return e.publicationID
 }
 
@@ -74,7 +74,7 @@ type Event struct {
 
 func NewEventWithFields(fields EventFields) *Event { return &Event{EventFields: fields} }
 
-func NewEvent(subscriptionID, publicationID int64, details map[string]any, args []any, kwArgs map[string]any) *Event {
+func NewEvent(subscriptionID, publicationID uint64, details map[string]any, args []any, kwArgs map[string]any) *Event {
 	if details == nil {
 		details = make(map[string]any)
 	}

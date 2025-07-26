@@ -21,12 +21,12 @@ type ValidationSpec struct {
 }
 
 type Fields struct {
-	RequestID int64
+	RequestID uint64
 	URI       string
 	Args      []any
 	KwArgs    map[string]any
 
-	SessionID int64
+	SessionID uint64
 
 	Realm       string
 	AuthID      string
@@ -36,7 +36,7 @@ type Fields struct {
 	AuthExtra   map[string]any
 	Roles       map[string]any
 
-	MessageType int64
+	MessageType uint64
 	Signature   string
 	Reason      string
 
@@ -44,10 +44,10 @@ type Fields struct {
 	Options map[string]any
 	Details map[string]any
 
-	SubscriptionID int64
-	PublicationID  int64
+	SubscriptionID uint64
+	PublicationID  uint64
 
-	RegistrationID int64
+	RegistrationID uint64
 }
 
 func sanityCheck(wampMsg []any, minLength, maxLength int) error {
@@ -62,10 +62,10 @@ func sanityCheck(wampMsg []any, minLength, maxLength int) error {
 	return nil
 }
 
-func validateID(wampMsg []any, index int) (int64, error) {
-	item, ok := util.AsInt64(wampMsg[index])
+func validateID(wampMsg []any, index int) (uint64, error) {
+	item, ok := util.AsUInt64(wampMsg[index])
 	if !ok {
-		return 0, fmt.Errorf(errString, index, "int64", wampMsg[index])
+		return 0, fmt.Errorf(errString, index, "uint64", wampMsg[index])
 	}
 
 	return item, nil

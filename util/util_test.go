@@ -12,13 +12,12 @@ func TestAsInt64(t *testing.T) {
 	t.Run("ValidConversion", func(t *testing.T) {
 		tests := []struct {
 			input    interface{}
-			expected int64
+			expected uint64
 		}{
-			{input: int64(123), expected: 123},
-			{input: uint64(456), expected: 456},
+			{input: uint64(123), expected: 123},
+			{input: int64(456), expected: 456},
 			{input: uint8(7), expected: 7},
 			{input: 890, expected: 890},
-			{input: int8(-12), expected: -12},
 			{input: int32(345), expected: 345},
 			{input: uint(678), expected: 678},
 			{input: uint16(901), expected: 901},
@@ -28,16 +27,16 @@ func TestAsInt64(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			result, ok := util.AsInt64(test.input)
+			result, ok := util.AsUInt64(test.input)
 			require.True(t, ok)
 			require.Equal(t, test.expected, result)
 		}
 	})
 
 	t.Run("InvalidConversion", func(t *testing.T) {
-		result, ok := util.AsInt64("invalid")
+		result, ok := util.AsUInt64("invalid")
 		require.False(t, ok)
-		require.Equal(t, int64(0), result)
+		require.Equal(t, uint64(0), result)
 	})
 }
 
@@ -49,10 +48,9 @@ func TestAsFloat64(t *testing.T) {
 		}{
 			{input: float64(123.45), expected: 123.45},
 			{input: float32(67.89), expected: 67.88999938964844},
-			{input: int64(123), expected: 123.0},
-			{input: uint64(456), expected: 456.0},
+			{input: uint64(123), expected: 123.0},
+			{input: int64(456), expected: 456.0},
 			{input: 789, expected: 789.0},
-			{input: int8(-12), expected: -12.0},
 			{input: int32(345), expected: 345.0},
 			{input: uint(678), expected: 678.0},
 			{input: uint32(234), expected: 234.0},

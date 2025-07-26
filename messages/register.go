@@ -17,18 +17,18 @@ var registerValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type RegisterFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 	Procedure() string
 }
 
 type registerFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 	procedure string
 }
 
-func (r *registerFields) RequestID() int64 {
+func (r *registerFields) RequestID() uint64 {
 	return r.requestID
 }
 
@@ -44,7 +44,7 @@ type Register struct {
 	RegisterFields
 }
 
-func NewRegister(requestID int64, options map[string]any, uri string) *Register {
+func NewRegister(requestID uint64, options map[string]any, uri string) *Register {
 	if options == nil {
 		options = make(map[string]any)
 	}

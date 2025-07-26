@@ -47,7 +47,7 @@ func TestValidateSessionID(t *testing.T) {
 
 		err := messages.ValidateSessionID(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), fields.SessionID)
+		require.Equal(t, uint64(1), fields.SessionID)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestValidateSessionID(t *testing.T) {
 		var fields messages.Fields
 
 		err := messages.ValidateSessionID(wampMsg, index, &fields)
-		require.EqualError(t, err, "item at index 0 must be of type int64 but was string")
+		require.EqualError(t, err, "item at index 0 must be of type uint64 but was string")
 	})
 }
 
@@ -68,7 +68,7 @@ func TestValidateMessageType(t *testing.T) {
 
 		err := messages.ValidateMessageType(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), fields.MessageType)
+		require.Equal(t, uint64(1), fields.MessageType)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestValidateMessageType(t *testing.T) {
 		var fields messages.Fields
 
 		err := messages.ValidateMessageType(wampMsg, index, &fields)
-		require.EqualError(t, err, "item at index 1 must be of type int64 but was string")
+		require.EqualError(t, err, "item at index 1 must be of type uint64 but was string")
 	})
 }
 
@@ -89,7 +89,7 @@ func TestValidateRequestID(t *testing.T) {
 
 		err := messages.ValidateRequestID(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), fields.RequestID)
+		require.Equal(t, uint64(1), fields.RequestID)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestValidateRequestID(t *testing.T) {
 		var fields messages.Fields
 
 		err := messages.ValidateRequestID(wampMsg, index, &fields)
-		require.EqualError(t, err, "item at index 0 must be of type int64 but was string")
+		require.EqualError(t, err, "item at index 0 must be of type uint64 but was string")
 	})
 }
 
@@ -110,7 +110,7 @@ func TestValidateRegistrationID(t *testing.T) {
 
 		err := messages.ValidateRegistrationID(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), fields.RegistrationID)
+		require.Equal(t, uint64(1), fields.RegistrationID)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestValidateRegistrationID(t *testing.T) {
 		var fields messages.Fields
 
 		err := messages.ValidateRegistrationID(wampMsg, index, &fields)
-		require.EqualError(t, err, "item at index 1 must be of type int64 but was string")
+		require.EqualError(t, err, "item at index 1 must be of type uint64 but was string")
 	})
 }
 
@@ -131,7 +131,7 @@ func TestValidatePublicationID(t *testing.T) {
 
 		err := messages.ValidatePublicationID(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), fields.PublicationID)
+		require.Equal(t, uint64(1), fields.PublicationID)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestValidatePublicationID(t *testing.T) {
 		var fields messages.Fields
 
 		err := messages.ValidatePublicationID(wampMsg, index, &fields)
-		require.EqualError(t, err, "item at index 1 must be of type int64 but was string")
+		require.EqualError(t, err, "item at index 1 must be of type uint64 but was string")
 	})
 }
 
@@ -152,7 +152,7 @@ func TestValidateSubscriptionID(t *testing.T) {
 
 		err := messages.ValidateSubscriptionID(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), fields.SubscriptionID)
+		require.Equal(t, uint64(1), fields.SubscriptionID)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestValidateSubscriptionID(t *testing.T) {
 		var fields messages.Fields
 
 		err := messages.ValidateSubscriptionID(wampMsg, index, &fields)
-		require.EqualError(t, err, "item at index 1 must be of type int64 but was string")
+		require.EqualError(t, err, "item at index 1 must be of type uint64 but was string")
 	})
 }
 

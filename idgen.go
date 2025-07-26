@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"golang.org/x/exp/rand"
+
+	"github.com/xconnio/wampproto-go/util"
 )
 
-const maxID int64 = 1 << 53
+const maxID uint64 = 1 << 53
 
 func init() {
 	source := rand.NewSource(uint64(time.Now().UnixNano())) // #nosec
@@ -15,16 +17,17 @@ func init() {
 }
 
 // GenerateID generates a random WAMP ID.
-func GenerateID() int64 {
-	return rand.Int63n(maxID)
+func GenerateID() uint64 {
+	id, _ := util.AsUInt64(rand.Int63n(int64(maxID)))
+	return id
 }
 
 type SessionScopeIDGenerator struct {
-	id int64
+	id uint64
 	sync.Mutex
 }
 
-func (s *SessionScopeIDGenerator) NextID() int64 {
+func (s *SessionScopeIDGenerator) NextID() uint64 {
 	s.Lock()
 	defer s.Unlock()
 

@@ -18,7 +18,7 @@ var resultValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type ResultFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
@@ -27,7 +27,7 @@ type ResultFields interface {
 }
 
 type resultFields struct {
-	requestID int64
+	requestID uint64
 	details   map[string]any
 	args      []any
 	kwArgs    map[string]any
@@ -36,7 +36,7 @@ type resultFields struct {
 	payload    []byte
 }
 
-func (e *resultFields) RequestID() int64 {
+func (e *resultFields) RequestID() uint64 {
 	return e.requestID
 }
 
@@ -68,7 +68,7 @@ type Result struct {
 	ResultFields
 }
 
-func NewResult(requestID int64, details map[string]any, args []any, kwArgs map[string]any) *Result {
+func NewResult(requestID uint64, details map[string]any, args []any, kwArgs map[string]any) *Result {
 	if details == nil {
 		details = make(map[string]any)
 	}
@@ -80,7 +80,7 @@ func NewResultWithFields(field ResultFields) *Result {
 	return &Result{ResultFields: field}
 }
 
-func NewResultBinary(requestID int64, details map[string]any, payload []byte, serializer int) *Result {
+func NewResultBinary(requestID uint64, details map[string]any, payload []byte, serializer int) *Result {
 	if details == nil {
 		details = make(map[string]any)
 	}

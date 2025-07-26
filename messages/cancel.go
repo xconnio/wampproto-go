@@ -16,16 +16,16 @@ var cancelValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type CancelFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 }
 
 type cancelFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 }
 
-func (c *cancelFields) RequestID() int64 {
+func (c *cancelFields) RequestID() uint64 {
 	return c.requestID
 }
 
@@ -37,7 +37,7 @@ type Cancel struct {
 	CancelFields
 }
 
-func NewCancel(requestID int64, options map[string]any) *Cancel {
+func NewCancel(requestID uint64, options map[string]any) *Cancel {
 	return &Cancel{CancelFields: &cancelFields{requestID: requestID, options: options}}
 }
 

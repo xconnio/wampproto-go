@@ -64,7 +64,7 @@ func (e *publishFields) Payload() []byte {
 	return nil
 }
 
-func (e *publishFields) PayloadSerializer() int {
+func (e *publishFields) PayloadSerializer() uint64 {
 	return 0
 }
 

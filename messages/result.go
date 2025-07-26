@@ -32,7 +32,7 @@ type resultFields struct {
 	args      []any
 	kwArgs    map[string]any
 
-	serializer int
+	serializer uint64
 	payload    []byte
 }
 
@@ -60,7 +60,7 @@ func (e *resultFields) Payload() []byte {
 	return e.payload
 }
 
-func (e *resultFields) PayloadSerializer() int {
+func (e *resultFields) PayloadSerializer() uint64 {
 	return e.serializer
 }
 
@@ -80,7 +80,7 @@ func NewResultWithFields(field ResultFields) *Result {
 	return &Result{ResultFields: field}
 }
 
-func NewResultBinary(requestID uint64, details map[string]any, payload []byte, serializer int) *Result {
+func NewResultBinary(requestID uint64, details map[string]any, payload []byte, serializer uint64) *Result {
 	if details == nil {
 		details = make(map[string]any)
 	}

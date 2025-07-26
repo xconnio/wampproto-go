@@ -16,8 +16,8 @@ const (
 
 type Broker struct {
 	subscriptionsByTopic   map[string]*Subscription
-	subscriptionsBySession map[int64]map[int64]*Subscription
-	sessions               map[int64]*SessionDetails
+	subscriptionsBySession map[uint64]map[uint64]*Subscription
+	sessions               map[uint64]*SessionDetails
 	prefixTree             *iradix.Tree[*Subscription]
 	wcSubscriptionsByTopic map[string]*Subscription
 
@@ -27,9 +27,9 @@ type Broker struct {
 
 func NewBroker() *Broker {
 	return &Broker{
-		sessions:               map[int64]*SessionDetails{},
+		sessions:               map[uint64]*SessionDetails{},
 		subscriptionsByTopic:   make(map[string]*Subscription),
-		subscriptionsBySession: make(map[int64]map[int64]*Subscription),
+		subscriptionsBySession: make(map[uint64]map[uint64]*Subscription),
 		idGen:                  &SessionScopeIDGenerator{},
 		prefixTree:             iradix.New[*Subscription](),
 		wcSubscriptionsByTopic: make(map[string]*Subscription),
@@ -45,12 +45,12 @@ func (b *Broker) AddSession(details *SessionDetails) error {
 		return fmt.Errorf("broker: cannot add session %b, it already exists", details.ID())
 	}
 
-	b.subscriptionsBySession[details.ID()] = map[int64]*Subscription{}
+	b.subscriptionsBySession[details.ID()] = map[uint64]*Subscription{}
 	b.sessions[details.ID()] = details
 	return nil
 }
 
-func (b *Broker) RemoveSession(id int64) error {
+func (b *Broker) RemoveSession(id uint64) error {
 	b.Lock()
 	defer b.Unlock()
 
@@ -92,7 +92,7 @@ func (b *Broker) HasSubscription(topic string) bool {
 	return exists
 }
 
-func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*MessageWithRecipient, error) {
+func (b *Broker) ReceiveMessage(sessionID uint64, msg messages.Message) (*MessageWithRecipient, error) {
 	b.Lock()
 	defer b.Unlock()
 
@@ -111,7 +111,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 			subscription = &Subscription{
 				ID:          b.idGen.NextID(),
 				Topic:       subscribe.Topic(),
-				Subscribers: map[int64]int64{sessionID: sessionID},
+				Subscribers: map[uint64]uint64{sessionID: sessionID},
 			}
 			match := util.ToString(subscribe.Options()[OptionMatch])
 			switch match {
@@ -168,7 +168,7 @@ func (b *Broker) ReceiveMessage(sessionID int64, msg messages.Message) (*Message
 	}
 }
 
-func (b *Broker) ReceivePublish(sessionID int64, publish *messages.Publish) (*Publication, error) {
+func (b *Broker) ReceivePublish(sessionID uint64, publish *messages.Publish) (*Publication, error) {
 	b.Lock()
 	defer b.Unlock()
 

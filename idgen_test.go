@@ -8,7 +8,7 @@ import (
 	"github.com/xconnio/wampproto-go"
 )
 
-const maxID int64 = 1 << 53
+const maxID uint64 = 1 << 53
 
 func TestGenerateID(t *testing.T) {
 	id1 := wampproto.GenerateID()
@@ -21,7 +21,7 @@ func TestGenerateID(t *testing.T) {
 func TestSessionScopeIDGenerator(t *testing.T) {
 	gen := &wampproto.SessionScopeIDGenerator{}
 
-	for i := int64(1); i < 10; i++ {
+	for i := uint64(1); i < 10; i++ {
 		id := gen.NextID()
 		require.Equal(t, i, id)
 	}

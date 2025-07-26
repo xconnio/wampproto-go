@@ -3,7 +3,7 @@ package wampproto
 import "github.com/xconnio/wampproto-go/messages"
 
 type SessionDetails struct {
-	id       int64
+	id       uint64
 	realm    string
 	authID   string
 	authRole string
@@ -11,7 +11,7 @@ type SessionDetails struct {
 	staticSerializer bool
 }
 
-func NewSessionDetails(id int64, realm, authID, authRole string, staticSerializer bool) *SessionDetails {
+func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializer bool) *SessionDetails {
 	return &SessionDetails{
 		id:               id,
 		realm:            realm,
@@ -21,7 +21,7 @@ func NewSessionDetails(id int64, realm, authID, authRole string, staticSerialize
 	}
 }
 
-func (s *SessionDetails) ID() int64 {
+func (s *SessionDetails) ID() uint64 {
 	return s.id
 }
 
@@ -43,18 +43,18 @@ func (s *SessionDetails) StaticSerializer() bool {
 
 type MessageWithRecipient struct {
 	Message   messages.Message
-	Recipient int64
+	Recipient uint64
 }
 
 type Subscription struct {
-	ID          int64
+	ID          uint64
 	Topic       string
-	Subscribers map[int64]int64
+	Subscribers map[uint64]uint64
 	Match       string
 }
 
 type Publication struct {
 	Event      *messages.Event
-	Recipients []int64
+	Recipients []uint64
 	Ack        *MessageWithRecipient
 }

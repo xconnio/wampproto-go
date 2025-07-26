@@ -19,7 +19,7 @@ var callValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type CallFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 	Procedure() string
 	Args() []any
@@ -29,7 +29,7 @@ type CallFields interface {
 }
 
 type callFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 	procedure string
 	args      []any
@@ -39,7 +39,7 @@ type callFields struct {
 	payload    []byte
 }
 
-func (e *callFields) RequestID() int64 {
+func (e *callFields) RequestID() uint64 {
 	return e.requestID
 }
 
@@ -75,7 +75,7 @@ type Call struct {
 	CallFields
 }
 
-func NewCall(requestID int64, options map[string]any, procedure string, args []any, kwArgs map[string]any) *Call {
+func NewCall(requestID uint64, options map[string]any, procedure string, args []any, kwArgs map[string]any) *Call {
 	if options == nil {
 		options = make(map[string]any)
 	}
@@ -91,7 +91,7 @@ func NewCall(requestID int64, options map[string]any, procedure string, args []a
 
 func NewCallWithFields(fields CallFields) *Call { return &Call{CallFields: fields} }
 
-func NewCallBinary(requestID int64, options map[string]any, procedure string, payload []byte, serializer int) *Call {
+func NewCallBinary(requestID uint64, options map[string]any, procedure string, payload []byte, serializer int) *Call {
 	if options == nil {
 		options = make(map[string]any)
 	}

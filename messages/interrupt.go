@@ -16,16 +16,16 @@ var interruptValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type InterruptFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 }
 
 type interruptFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 }
 
-func (c *interruptFields) RequestID() int64 {
+func (c *interruptFields) RequestID() uint64 {
 	return c.requestID
 }
 
@@ -41,7 +41,7 @@ func NewInterruptWithFields(fields InterruptFields) *Interrupt {
 	return &Interrupt{InterruptFields: fields}
 }
 
-func NewInterrupt(requestID int64, options map[string]any) *Interrupt {
+func NewInterrupt(requestID uint64, options map[string]any) *Interrupt {
 	return &Interrupt{InterruptFields: &interruptFields{requestID: requestID, options: options}}
 }
 

@@ -15,14 +15,14 @@ var unsubscribedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type UnsubscribedFields interface {
-	RequestID() int64
+	RequestID() uint64
 }
 
 type unsubscribedFields struct {
-	requestID int64
+	requestID uint64
 }
 
-func (us *unsubscribedFields) RequestID() int64 {
+func (us *unsubscribedFields) RequestID() uint64 {
 	return us.requestID
 }
 
@@ -30,7 +30,7 @@ type Unsubscribed struct {
 	UnsubscribedFields
 }
 
-func NewUnsubscribed(requestID int64) *Unsubscribed {
+func NewUnsubscribed(requestID uint64) *Unsubscribed {
 	return &Unsubscribed{UnsubscribedFields: &unsubscribedFields{requestID: requestID}}
 }
 

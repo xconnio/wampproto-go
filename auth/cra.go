@@ -55,10 +55,10 @@ func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (*messages
 	// If no salt given, use raw password as key.
 	if saltStr != "" {
 		// If salting info give, then compute a derived key using PBKDF2.
-		iters, _ := util.AsInt64(challenge.Extra()["iterations"])
-		keylen, _ := util.AsInt64(challenge.Extra()["keylen"])
+		iters, _ := util.AsInt(challenge.Extra()["iterations"])
+		keylen, _ := util.AsInt(challenge.Extra()["keylen"])
 
-		rawSecret = DeriveCRAKey(saltStr, a.secret, int(iters), int(keylen))
+		rawSecret = DeriveCRAKey(saltStr, a.secret, iters, keylen)
 	} else {
 		rawSecret = []byte(a.secret)
 	}
@@ -114,7 +114,7 @@ func VerifyCRASignature(sig, chal string, key []byte) bool {
 	return hmac.Equal(sigBytes, SignCRAChallengeBytes(chal, key))
 }
 
-func GenerateCRAChallenge(session int64, authid, authrole, provider string) (string, error) {
+func GenerateCRAChallenge(session uint64, authid, authrole, provider string) (string, error) {
 	nonce, err := makeNonce()
 	if err != nil {
 		return "", fmt.Errorf("failed to get nonce: %w", err)
@@ -127,7 +127,7 @@ func GenerateCRAChallenge(session int64, authid, authrole, provider string) (str
 		"timestamp":    NowISO8601(),
 		"authrole":     authrole,
 		"authmethod":   MethodCRA,
-		"session":      int(session),
+		"session":      session,
 	}
 
 	raw, err := json.Marshal(data)

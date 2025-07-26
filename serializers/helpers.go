@@ -8,7 +8,7 @@ import (
 )
 
 func ToMessage(wampMsg []any) (messages.Message, error) {
-	messageType, _ := util.AsInt64(wampMsg[0])
+	messageType, _ := util.AsUInt64(wampMsg[0])
 	var msg messages.Message
 	switch messageType {
 	case messages.MessageTypeAbort:

@@ -21,8 +21,8 @@ var invocationValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type InvocationFields interface {
-	RequestID() int64
-	RegistrationID() int64
+	RequestID() uint64
+	RegistrationID() uint64
 	Details() map[string]any
 	Args() []any
 	KwArgs() map[string]any
@@ -31,8 +31,8 @@ type InvocationFields interface {
 }
 
 type invocationFields struct {
-	requestID      int64
-	registrationID int64
+	requestID      uint64
+	registrationID uint64
 	details        map[string]any
 	args           []any
 	kwArgs         map[string]any
@@ -41,7 +41,7 @@ type invocationFields struct {
 	payload    []byte
 }
 
-func (e *invocationFields) RequestID() int64 {
+func (e *invocationFields) RequestID() uint64 {
 	return e.requestID
 }
 
@@ -49,7 +49,7 @@ func (e *invocationFields) Details() map[string]any {
 	return e.details
 }
 
-func (e *invocationFields) RegistrationID() int64 {
+func (e *invocationFields) RegistrationID() uint64 {
 	return e.registrationID
 }
 
@@ -77,7 +77,7 @@ type Invocation struct {
 	InvocationFields
 }
 
-func NewInvocation(requestID, registrationID int64, details map[string]any, args []any,
+func NewInvocation(requestID, registrationID uint64, details map[string]any, args []any,
 	kwArgs map[string]any) *Invocation {
 
 	if details == nil {
@@ -97,7 +97,7 @@ func NewInvocationWithFields(fields InvocationFields) *Invocation {
 	return &Invocation{InvocationFields: fields}
 }
 
-func NewInvocationBinary(requestID, registrationID int64, details map[string]any, payload []byte,
+func NewInvocationBinary(requestID, registrationID uint64, details map[string]any, payload []byte,
 	serializer int) *Invocation {
 
 	if details == nil {

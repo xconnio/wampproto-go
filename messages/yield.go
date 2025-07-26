@@ -18,7 +18,7 @@ var yieldValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type YieldFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 	Args() []any
 	KwArgs() map[string]any
@@ -29,7 +29,7 @@ type YieldFields interface {
 }
 
 type yieldFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 	args      []any
 	kwArgs    map[string]any
@@ -38,7 +38,7 @@ type yieldFields struct {
 	payload    []byte
 }
 
-func (e *yieldFields) RequestID() int64 {
+func (e *yieldFields) RequestID() uint64 {
 	return e.requestID
 }
 
@@ -70,7 +70,7 @@ type Yield struct {
 	YieldFields
 }
 
-func NewYield(requestID int64, options map[string]any, args []any, kwArgs map[string]any) *Yield {
+func NewYield(requestID uint64, options map[string]any, args []any, kwArgs map[string]any) *Yield {
 	if options == nil {
 		options = make(map[string]any)
 	}
@@ -82,7 +82,7 @@ func NewYieldWithFields(fields YieldFields) *Yield {
 	return &Yield{YieldFields: fields}
 }
 
-func NewYieldBinary(requestID int64, options map[string]any, payload []byte, serializer int) *Yield {
+func NewYieldBinary(requestID uint64, options map[string]any, payload []byte, serializer int) *Yield {
 	if options == nil {
 		options = make(map[string]any)
 	}

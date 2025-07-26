@@ -16,20 +16,20 @@ var publishedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type PublishedFields interface {
-	RequestID() int64
-	PublicationID() int64
+	RequestID() uint64
+	PublicationID() uint64
 }
 
 type publishedFields struct {
-	requestID     int64
-	publicationID int64
+	requestID     uint64
+	publicationID uint64
 }
 
-func (p *publishedFields) RequestID() int64 {
+func (p *publishedFields) RequestID() uint64 {
 	return p.requestID
 }
 
-func (p *publishedFields) PublicationID() int64 {
+func (p *publishedFields) PublicationID() uint64 {
 	return p.publicationID
 }
 
@@ -37,7 +37,7 @@ type Published struct {
 	PublishedFields
 }
 
-func NewPublished(requestID, publicationID int64) *Published {
+func NewPublished(requestID, publicationID uint64) *Published {
 	return &Published{PublishedFields: &publishedFields{requestID: requestID, publicationID: publicationID}}
 }
 

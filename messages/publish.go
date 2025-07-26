@@ -19,7 +19,7 @@ var publishValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
 }
 
 type PublishFields interface {
-	RequestID() int64
+	RequestID() uint64
 	Options() map[string]any
 	Topic() string
 	Args() []any
@@ -29,14 +29,14 @@ type PublishFields interface {
 }
 
 type publishFields struct {
-	requestID int64
+	requestID uint64
 	options   map[string]any
 	topic     string
 	args      []any
 	kwArgs    map[string]any
 }
 
-func (e *publishFields) RequestID() int64 {
+func (e *publishFields) RequestID() uint64 {
 	return e.requestID
 }
 
@@ -72,7 +72,7 @@ type Publish struct {
 	PublishFields
 }
 
-func NewPublish(requestID int64, option map[string]any, uri string, args []any, kwArgs map[string]any) *Publish {
+func NewPublish(requestID uint64, option map[string]any, uri string, args []any, kwArgs map[string]any) *Publish {
 	if option == nil {
 		option = make(map[string]any)
 	}

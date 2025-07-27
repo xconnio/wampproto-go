@@ -260,6 +260,8 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 		}
 	case messages.MessageTypeGoodbye:
 		return msg, nil
+	case messages.MessageTypeAbort:
+		return msg, nil
 	default:
 		return nil, fmt.Errorf("unknown message type %T", msg)
 	}

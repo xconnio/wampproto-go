@@ -12,15 +12,15 @@ type Session struct {
 	serializer serializers.Serializer
 
 	// data structures for RPC
-	callRequests       internal.Map[uint64, uint64]
-	registerRequests   internal.Map[uint64, uint64]
+	callRequests       internal.Map[uint64, struct{}]
+	registerRequests   internal.Map[uint64, struct{}]
 	registrations      internal.Map[uint64, uint64]
-	invocationRequests internal.Map[uint64, uint64]
+	invocationRequests internal.Map[uint64, struct{}]
 	unregisterRequests internal.Map[uint64, uint64]
 
 	// data structures for PubSub
-	publishRequests     internal.Map[uint64, uint64]
-	subscribeRequests   internal.Map[uint64, uint64]
+	publishRequests     internal.Map[uint64, struct{}]
+	subscribeRequests   internal.Map[uint64, struct{}]
 	subscriptions       internal.Map[uint64, uint64]
 	unsubscribeRequests internal.Map[uint64, uint64]
 }
@@ -33,14 +33,14 @@ func NewSession(serializer serializers.Serializer) *Session {
 	return &Session{
 		serializer: serializer,
 
-		callRequests:       internal.Map[uint64, uint64]{},
-		registerRequests:   internal.Map[uint64, uint64]{},
+		callRequests:       internal.Map[uint64, struct{}]{},
+		registerRequests:   internal.Map[uint64, struct{}]{},
 		registrations:      internal.Map[uint64, uint64]{},
-		invocationRequests: internal.Map[uint64, uint64]{},
+		invocationRequests: internal.Map[uint64, struct{}]{},
 		unregisterRequests: internal.Map[uint64, uint64]{},
 
-		publishRequests:     internal.Map[uint64, uint64]{},
-		subscribeRequests:   internal.Map[uint64, uint64]{},
+		publishRequests:     internal.Map[uint64, struct{}]{},
+		subscribeRequests:   internal.Map[uint64, struct{}]{},
 		subscriptions:       internal.Map[uint64, uint64]{},
 		unsubscribeRequests: internal.Map[uint64, uint64]{},
 	}
@@ -55,7 +55,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 	switch msg.Type() {
 	case messages.MessageTypeCall:
 		call := msg.(*messages.Call)
-		w.callRequests.Store(call.RequestID(), call.RequestID())
+		w.callRequests.Store(call.RequestID(), struct{}{})
 
 		return data, nil
 	case messages.MessageTypeYield:
@@ -68,7 +68,7 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 		return data, nil
 	case messages.MessageTypeRegister:
 		register := msg.(*messages.Register)
-		w.registerRequests.Store(register.RequestID(), register.RequestID())
+		w.registerRequests.Store(register.RequestID(), struct{}{})
 
 		return data, nil
 	case messages.MessageTypeUnregister:
@@ -80,13 +80,13 @@ func (w *Session) SendMessage(msg messages.Message) ([]byte, error) {
 		publish := msg.(*messages.Publish)
 		acknowledge, ok := publish.Options()["acknowledge"].(bool)
 		if ok && acknowledge {
-			w.publishRequests.Store(publish.RequestID(), publish.RequestID())
+			w.publishRequests.Store(publish.RequestID(), struct{}{})
 		}
 
 		return data, nil
 	case messages.MessageTypeSubscribe:
 		subscribe := msg.(*messages.Subscribe)
-		w.subscribeRequests.Store(subscribe.RequestID(), subscribe.RequestID())
+		w.subscribeRequests.Store(subscribe.RequestID(), struct{}{})
 
 		return data, nil
 	case messages.MessageTypeUnsubscribe:
@@ -168,7 +168,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 			return nil, fmt.Errorf("received INVOCATION for invalid registrationID")
 		}
 
-		w.invocationRequests.Store(invocation.RequestID(), invocation.RequestID())
+		w.invocationRequests.Store(invocation.RequestID(), struct{}{})
 
 		return invocation, nil
 	case messages.MessageTypePublished:

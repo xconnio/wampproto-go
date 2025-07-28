@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const MessageTypeAuthenticate = 5
+const MessageTypeAuthenticate uint64 = 5
 const MessageNameAuthenticate = "AUTHENTICATE"
 
 var authenticateValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -47,7 +47,7 @@ func NewAuthenticate(signature string, extra map[string]any) *Authenticate {
 	return &Authenticate{AuthenticateFields: &authenticateFields{signature: signature, extra: extra}}
 }
 
-func (a *Authenticate) Type() int {
+func (a *Authenticate) Type() uint64 {
 	return MessageTypeAuthenticate
 }
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const MessageTypeInvocation = 68
+const MessageTypeInvocation uint64 = 68
 const MessageNameInvocation = "INVOCATION"
 
 var invocationValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -113,7 +113,7 @@ func NewInvocationBinary(requestID, registrationID uint64, details map[string]an
 	}}
 }
 
-func (e *Invocation) Type() int {
+func (e *Invocation) Type() uint64 {
 	return MessageTypeInvocation
 }
 

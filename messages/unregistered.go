@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnregistered = 67
+const MessageTypeUnregistered uint64 = 67
 const MessageNameUnregistered = "UNREGISTERED"
 
 var unregisteredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -38,7 +38,7 @@ func NewUnregisteredWithFields(fields UnregisteredFields) *Unregistered {
 	return &Unregistered{UnregisteredFields: fields}
 }
 
-func (ur *Unregistered) Type() int {
+func (ur *Unregistered) Type() uint64 {
 	return MessageTypeUnregistered
 }
 

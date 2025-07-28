@@ -6,7 +6,7 @@ import (
 	"github.com/xconnio/wampproto-go/util"
 )
 
-const MessageTypeHello = 1
+const MessageTypeHello uint64 = 1
 const MessageNameHello = "HELLO"
 
 var helloValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -71,7 +71,7 @@ func NewHello(realm, authID string, authExtra, roles map[string]any, authMethods
 	}}
 }
 
-func (h *Hello) Type() int {
+func (h *Hello) Type() uint64 {
 	return MessageTypeHello
 }
 

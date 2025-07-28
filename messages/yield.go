@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeYield = 70
+const MessageTypeYield uint64 = 70
 const MessageNameYield = "YIELD"
 
 var yieldValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -95,7 +95,7 @@ func NewYieldBinary(requestID uint64, options map[string]any, payload []byte, se
 	}}
 }
 
-func (e *Yield) Type() int {
+func (e *Yield) Type() uint64 {
 	return MessageTypeYield
 }
 

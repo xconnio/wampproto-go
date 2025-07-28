@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeInterrupt = 69
+const MessageTypeInterrupt uint64 = 69
 const MessageNameInterrupt = "INTERRUPT"
 
 var interruptValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewInterrupt(requestID uint64, options map[string]any) *Interrupt {
 	return &Interrupt{InterruptFields: &interruptFields{requestID: requestID, options: options}}
 }
 
-func (c *Interrupt) Type() int {
+func (c *Interrupt) Type() uint64 {
 	return MessageTypeInterrupt
 }
 

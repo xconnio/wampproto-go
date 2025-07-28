@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeSubscribed = 33
+const MessageTypeSubscribed uint64 = 33
 const MessageNameSubscribed = "SUBSCRIBED"
 
 var subscribedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewSubscribedWithFields(fields SubscribedFields) *Subscribed {
 	return &Subscribed{SubscribedFields: fields}
 }
 
-func (s *Subscribed) Type() int {
+func (s *Subscribed) Type() uint64 {
 	return MessageTypeSubscribed
 }
 

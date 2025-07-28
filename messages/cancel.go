@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeCancel = 49
+const MessageTypeCancel uint64 = 49
 const MessageNameCancel = "CANCEL"
 
 var cancelValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewCancelWithFields(fields CancelFields) *Cancel {
 	return &Cancel{CancelFields: fields}
 }
 
-func (c *Cancel) Type() int {
+func (c *Cancel) Type() uint64 {
 	return MessageTypeCancel
 }
 

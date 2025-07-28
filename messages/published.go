@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypePublished = 17
+const MessageTypePublished uint64 = 17
 const MessageNamePublished = "PUBLISHED"
 
 var publishedValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewPublishedWithFields(fields PublishedFields) *Published {
 	return &Published{PublishedFields: fields}
 }
 
-func (p *Published) Type() int {
+func (p *Published) Type() uint64 {
 	return MessageTypePublished
 }
 

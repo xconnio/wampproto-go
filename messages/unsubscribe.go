@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeUnsubscribe = 34
+const MessageTypeUnsubscribe uint64 = 34
 const MessageNameUnsubscribe = "UNSUBSCRIBE"
 
 var unsubscribeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewUnsubscribeWithFields(fields UnsubscribeFields) *Unsubscribe {
 	return &Unsubscribe{UnsubscribeFields: fields}
 }
 
-func (us *Unsubscribe) Type() int {
+func (us *Unsubscribe) Type() uint64 {
 	return MessageTypeUnsubscribe
 }
 

@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypePublish = 16
+const MessageTypePublish uint64 = 16
 const MessageNamePublish = "PUBLISH"
 
 var publishValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -88,7 +88,7 @@ func NewPublish(requestID uint64, option map[string]any, uri string, args []any,
 
 func NewPublishWithFields(fields PublishFields) *Publish { return &Publish{PublishFields: fields} }
 
-func (e *Publish) Type() int {
+func (e *Publish) Type() uint64 {
 	return MessageTypePublish
 }
 

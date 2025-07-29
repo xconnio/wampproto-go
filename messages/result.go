@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeResult = 50
+const MessageTypeResult uint64 = 50
 const MessageNameResult = "RESULT"
 
 var resultValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -93,7 +93,7 @@ func NewResultBinary(requestID uint64, details map[string]any, payload []byte, s
 	}}
 }
 
-func (e *Result) Type() int {
+func (e *Result) Type() uint64 {
 	return MessageTypeResult
 }
 

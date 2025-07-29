@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeError = 8
+const MessageTypeError uint64 = 8
 const MessageNameError = "ERROR"
 
 var errorValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -97,7 +97,7 @@ func NewError(messageType, requestID uint64, details map[string]any, uri string,
 	}}
 }
 
-func (e *Error) Type() int {
+func (e *Error) Type() uint64 {
 	return MessageTypeError
 }
 

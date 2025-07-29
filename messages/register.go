@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeRegister = 64
+const MessageTypeRegister uint64 = 64
 const MessageNameRegister = "REGISTER"
 
 var registerValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -56,7 +56,7 @@ func NewRegisterWithFields(fields RegisterFields) *Register {
 	return &Register{RegisterFields: fields}
 }
 
-func (r *Register) Type() int {
+func (r *Register) Type() uint64 {
 	return MessageTypeRegister
 }
 

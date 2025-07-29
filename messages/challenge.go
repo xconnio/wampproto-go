@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeChallenge = 4
+const MessageTypeChallenge uint64 = 4
 const MessageNameChallenge = "CHALLENGE"
 
 var challengeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewChallenge(authMethod string, extra map[string]any) *Challenge {
 	return &Challenge{ChallengeFields: &challengeFields{authMethod: authMethod, extra: extra}}
 }
 
-func (c *Challenge) Type() int {
+func (c *Challenge) Type() uint64 {
 	return MessageTypeChallenge
 }
 

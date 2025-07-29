@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeEvent = 36
+const MessageTypeEvent uint64 = 36
 const MessageNameEvent = "EVENT"
 
 var eventValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -88,7 +88,7 @@ func NewEvent(subscriptionID, publicationID uint64, details map[string]any, args
 	}}
 }
 
-func (e *Event) Type() int {
+func (e *Event) Type() uint64 {
 	return MessageTypeEvent
 }
 

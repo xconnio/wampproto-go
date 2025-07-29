@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeRegistered = 65
+const MessageTypeRegistered uint64 = 65
 const MessageNameRegistered = "REGISTERED"
 
 var registeredValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -45,7 +45,7 @@ func NewRegisteredWithFields(fields RegisteredFields) *Registered {
 	return &Registered{RegisteredFields: fields}
 }
 
-func (r *Registered) Type() int {
+func (r *Registered) Type() uint64 {
 	return MessageTypeRegistered
 }
 

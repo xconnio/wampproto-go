@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeWelcome = 2
+const MessageTypeWelcome uint64 = 2
 const MessageNameWelcome = "WELCOME"
 
 var welcomeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -43,7 +43,7 @@ func NewWelcome(sessionID uint64, details map[string]any) *Welcome {
 
 func NewWelcomeWithFields(fields WelcomeFields) *Welcome { return &Welcome{WelcomeFields: fields} }
 
-func (w *Welcome) Type() int {
+func (w *Welcome) Type() uint64 {
 	return MessageTypeWelcome
 }
 

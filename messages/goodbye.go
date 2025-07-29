@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeGoodbye = 6
+const MessageTypeGoodbye uint64 = 6
 const MessageNameGoodbye = "GOODBYE"
 
 var goodByeValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -47,7 +47,7 @@ func NewGoodBye(reason string, details map[string]any) *GoodBye {
 	return &GoodBye{GoodByeFields: &goodByeFields{reason: reason, details: details}}
 }
 
-func (g *GoodBye) Type() int {
+func (g *GoodBye) Type() uint64 {
 	return MessageTypeGoodbye
 }
 

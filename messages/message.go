@@ -1,7 +1,7 @@
 package messages
 
 type Message interface {
-	Type() int
+	Type() uint64
 	Parse([]any) error
 	Marshal() []any
 }

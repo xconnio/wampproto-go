@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeCall = 48
+const MessageTypeCall uint64 = 48
 const MessageNameCall = "CALL"
 
 var callValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -106,7 +106,7 @@ func NewCallBinary(requestID uint64, options map[string]any, procedure string, p
 	}}
 }
 
-func (e *Call) Type() int {
+func (e *Call) Type() uint64 {
 	return MessageTypeCall
 }
 

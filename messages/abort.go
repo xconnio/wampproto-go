@@ -2,7 +2,7 @@ package messages
 
 import "fmt"
 
-const MessageTypeAbort = 3
+const MessageTypeAbort uint64 = 3
 const MessageNameAbort = "ABORT"
 
 var abortValidationSpec = ValidationSpec{ //nolint:gochecknoglobals
@@ -66,7 +66,7 @@ func NewAbort(details map[string]any, reason string, args []any, KwArgs map[stri
 
 func NewAbortWithFields(fields AbortFields) *Abort { return &Abort{AbortFields: fields} }
 
-func (a *Abort) Type() int {
+func (a *Abort) Type() uint64 {
 	return MessageTypeAbort
 }
 

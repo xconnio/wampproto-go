@@ -42,6 +42,10 @@ func NewInterruptWithFields(fields InterruptFields) *Interrupt {
 }
 
 func NewInterrupt(requestID uint64, options map[string]any) *Interrupt {
+	if options == nil {
+		options = make(map[string]any)
+	}
+
 	return &Interrupt{InterruptFields: &interruptFields{requestID: requestID, options: options}}
 }
 

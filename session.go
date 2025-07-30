@@ -14,14 +14,14 @@ type Session struct {
 	// data structures for RPC
 	callRequests       internal.Map[uint64, struct{}]
 	registerRequests   internal.Map[uint64, struct{}]
-	registrations      internal.Map[uint64, uint64]
+	registrations      internal.Map[uint64, struct{}]
 	invocationRequests internal.Map[uint64, struct{}]
 	unregisterRequests internal.Map[uint64, uint64]
 
 	// data structures for PubSub
 	publishRequests     internal.Map[uint64, struct{}]
 	subscribeRequests   internal.Map[uint64, struct{}]
-	subscriptions       internal.Map[uint64, uint64]
+	subscriptions       internal.Map[uint64, struct{}]
 	unsubscribeRequests internal.Map[uint64, uint64]
 }
 
@@ -35,13 +35,13 @@ func NewSession(serializer serializers.Serializer) *Session {
 
 		callRequests:       internal.Map[uint64, struct{}]{},
 		registerRequests:   internal.Map[uint64, struct{}]{},
-		registrations:      internal.Map[uint64, uint64]{},
+		registrations:      internal.Map[uint64, struct{}]{},
 		invocationRequests: internal.Map[uint64, struct{}]{},
 		unregisterRequests: internal.Map[uint64, uint64]{},
 
 		publishRequests:     internal.Map[uint64, struct{}]{},
 		subscribeRequests:   internal.Map[uint64, struct{}]{},
-		subscriptions:       internal.Map[uint64, uint64]{},
+		subscriptions:       internal.Map[uint64, struct{}]{},
 		unsubscribeRequests: internal.Map[uint64, uint64]{},
 	}
 }
@@ -146,7 +146,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 			return nil, fmt.Errorf("received REGISTERED for invalid requestID")
 		}
 
-		w.registrations.Store(registered.RegistrationID(), registered.RegistrationID())
+		w.registrations.Store(registered.RegistrationID(), struct{}{})
 		return registered, nil
 	case messages.MessageTypeUnregistered:
 		unregistered := msg.(*messages.Unregistered)
@@ -186,7 +186,7 @@ func (w *Session) ReceiveMessage(msg messages.Message) (messages.Message, error)
 			return nil, fmt.Errorf("received SUBSCRIBED for invalid requestID")
 		}
 
-		w.subscriptions.Store(subscribed.SubscriptionID(), subscribed.SubscriptionID())
+		w.subscriptions.Store(subscribed.SubscriptionID(), struct{}{})
 
 		return subscribed, nil
 	case messages.MessageTypeUnsubscribed:

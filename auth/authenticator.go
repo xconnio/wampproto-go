@@ -33,7 +33,6 @@ type Request interface {
 	Realm() string
 	AuthMethod() Method
 	AuthID() string
-	AuthRole() string
 	AuthExtra() map[string]any
 }
 
@@ -50,7 +49,6 @@ type baseRequest struct {
 	authMethod Method
 	realm      string
 	authID     string
-	authRole   string
 	authExtra  map[string]any
 }
 
@@ -64,10 +62,6 @@ func (b *baseRequest) Realm() string {
 
 func (b *baseRequest) AuthID() string {
 	return b.authID
-}
-
-func (b *baseRequest) AuthRole() string {
-	return b.authRole
 }
 
 func (b *baseRequest) AuthExtra() map[string]any {

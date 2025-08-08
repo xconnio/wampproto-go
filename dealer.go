@@ -56,6 +56,7 @@ type Dealer struct {
 	wcRegistrationsByProcedure map[string]*Registration
 	pendingCalls               map[uint64]*PendingInvocation
 	invocationIDbyCall         map[CallMap]uint64
+	details                    bool
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
@@ -71,6 +72,7 @@ func NewDealer() *Dealer {
 		idGen:                      &SessionScopeIDGenerator{},
 		prefixTree:                 iradix.New[*Registration](),
 		wcRegistrationsByProcedure: make(map[string]*Registration),
+		details:                    true,
 	}
 }
 
@@ -195,6 +197,15 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			if progress {
 				details[OptionProgress] = progress
 			}
+
+			if d.details {
+				caller := d.sessions[sessionID]
+				details["procedure"] = call.Procedure()
+				details["caller"] = sessionID
+				details["caller_authid"] = caller.AuthID()
+				details["caller_authrole"] = caller.AuthRole()
+			}
+
 			invocation = messages.NewInvocation(invocationID, regs.ID, details, call.Args(), call.KwArgs())
 		}
 

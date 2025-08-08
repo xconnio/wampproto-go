@@ -20,6 +20,7 @@ type Broker struct {
 	sessions               map[uint64]*SessionDetails
 	prefixTree             *iradix.Tree[*Subscription]
 	wcSubscriptionsByTopic map[string]*Subscription
+	details                bool
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
@@ -33,6 +34,7 @@ func NewBroker() *Broker {
 		idGen:                  &SessionScopeIDGenerator{},
 		prefixTree:             iradix.New[*Subscription](),
 		wcSubscriptionsByTopic: make(map[string]*Subscription),
+		details:                true,
 	}
 }
 
@@ -200,7 +202,16 @@ func (b *Broker) ReceivePublish(sessionID uint64, publish *messages.Publish) (*P
 		}
 	}
 	if exists && len(subscription.Subscribers) > 0 {
-		event := messages.NewEvent(subscription.ID, publicationID, nil, publish.Args(), publish.KwArgs())
+		details := map[string]any{}
+		if b.details {
+			publisher := b.sessions[sessionID]
+			details["topic"] = publish.Topic()
+			details["publisher"] = sessionID
+			details["publisher_authid"] = publisher.AuthID()
+			details["publisher_authrole"] = publisher.AuthRole()
+		}
+
+		event := messages.NewEvent(subscription.ID, publicationID, details, publish.Args(), publish.KwArgs())
 		result.Event = event
 		for _, subscriber := range subscription.Subscribers {
 			result.Recipients = append(result.Recipients, subscriber)

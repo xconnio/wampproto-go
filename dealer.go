@@ -185,27 +185,28 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			d.invocationIDbyCall[CallMap{CallerID: sessionID, CallID: call.RequestID()}] = invocationID
 		}
 
+		details := map[string]any{}
+		if receiveProgress {
+			details[OptionReceiveProgress] = receiveProgress
+		}
+
+		if progress {
+			details[OptionProgress] = progress
+		}
+
+		if d.details {
+			caller := d.sessions[sessionID]
+			details["procedure"] = call.Procedure()
+			details["caller"] = sessionID
+			details["caller_authid"] = caller.AuthID()
+			details["caller_authrole"] = caller.AuthRole()
+		}
+
 		var invocation *messages.Invocation
 		if call.PayloadIsBinary() && d.sessions[callee].StaticSerializer() {
-			invocation = messages.NewInvocationBinary(invocationID, regs.ID, nil, call.Payload(),
+			invocation = messages.NewInvocationBinary(invocationID, regs.ID, details, call.Payload(),
 				call.PayloadSerializer())
 		} else {
-			details := map[string]any{}
-			if receiveProgress {
-				details[OptionReceiveProgress] = receiveProgress
-			}
-			if progress {
-				details[OptionProgress] = progress
-			}
-
-			if d.details {
-				caller := d.sessions[sessionID]
-				details["procedure"] = call.Procedure()
-				details["caller"] = sessionID
-				details["caller_authid"] = caller.AuthID()
-				details["caller_authrole"] = caller.AuthRole()
-			}
-
 			invocation = messages.NewInvocation(invocationID, regs.ID, details, call.Args(), call.KwArgs())
 		}
 
@@ -227,7 +228,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 
 		var result *messages.Result
 		if yield.PayloadIsBinary() && d.sessions[pending.CallerID].StaticSerializer() {
-			result = messages.NewResultBinary(pending.RequestID, nil, yield.Payload(), yield.PayloadSerializer())
+			result = messages.NewResultBinary(pending.RequestID, details, yield.Payload(), yield.PayloadSerializer())
 		} else {
 			result = messages.NewResult(pending.RequestID, details, yield.Args(), yield.KwArgs())
 		}

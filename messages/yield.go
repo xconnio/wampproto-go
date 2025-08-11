@@ -23,9 +23,7 @@ type YieldFields interface {
 	Args() []any
 	KwArgs() map[string]any
 
-	PayloadIsBinary() bool
-	Payload() []byte
-	PayloadSerializer() uint64
+	BinaryPayload
 }
 
 type yieldFields struct {
@@ -34,6 +32,7 @@ type yieldFields struct {
 	args      []any
 	kwArgs    map[string]any
 
+	binary     bool
 	serializer uint64
 	payload    []byte
 }
@@ -55,7 +54,7 @@ func (e *yieldFields) KwArgs() map[string]any {
 }
 
 func (e *yieldFields) PayloadIsBinary() bool {
-	return e.serializer != 0
+	return e.binary
 }
 
 func (e *yieldFields) Payload() []byte {
@@ -90,6 +89,7 @@ func NewYieldBinary(requestID uint64, options map[string]any, payload []byte, se
 	return &Yield{YieldFields: &yieldFields{
 		requestID:  requestID,
 		options:    options,
+		binary:     true,
 		serializer: serializer,
 		payload:    payload,
 	}}

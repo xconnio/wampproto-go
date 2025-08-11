@@ -37,6 +37,7 @@ type invocationFields struct {
 	args           []any
 	kwArgs         map[string]any
 
+	binary     bool
 	serializer uint64
 	payload    []byte
 }
@@ -62,7 +63,7 @@ func (e *invocationFields) KwArgs() map[string]any {
 }
 
 func (e *invocationFields) PayloadIsBinary() bool {
-	return e.serializer != 0
+	return e.binary
 }
 
 func (e *invocationFields) Payload() []byte {
@@ -108,6 +109,7 @@ func NewInvocationBinary(requestID, registrationID uint64, details map[string]an
 		requestID:      requestID,
 		registrationID: registrationID,
 		details:        details,
+		binary:         true,
 		serializer:     serializer,
 		payload:        payload,
 	}}

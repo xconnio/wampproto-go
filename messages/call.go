@@ -35,6 +35,7 @@ type callFields struct {
 	args      []any
 	kwArgs    map[string]any
 
+	binary     bool
 	serializer uint64
 	payload    []byte
 }
@@ -60,7 +61,7 @@ func (e *callFields) KwArgs() map[string]any {
 }
 
 func (e *callFields) PayloadIsBinary() bool {
-	return e.serializer != 0
+	return e.binary
 }
 
 func (e *callFields) Payload() []byte {
@@ -101,6 +102,7 @@ func NewCallBinary(requestID uint64, options map[string]any, procedure string, p
 		requestID:  requestID,
 		options:    options,
 		procedure:  procedure,
+		binary:     true,
 		payload:    payload,
 		serializer: serializer,
 	}}

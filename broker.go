@@ -34,7 +34,6 @@ func NewBroker() *Broker {
 		idGen:                  &SessionScopeIDGenerator{},
 		prefixTree:             iradix.New[*Subscription](),
 		wcSubscriptionsByTopic: make(map[string]*Subscription),
-		details:                true,
 	}
 }
 
@@ -92,6 +91,12 @@ func (b *Broker) HasSubscription(topic string) bool {
 
 	_, exists := b.subscriptionsByTopic[topic]
 	return exists
+}
+
+func (b *Broker) AutoDisclosePublisher(disclose bool) {
+	b.Lock()
+	defer b.Unlock()
+	b.details = disclose
 }
 
 func (b *Broker) ReceiveMessage(sessionID uint64, msg messages.Message) (*MessageWithRecipient, error) {

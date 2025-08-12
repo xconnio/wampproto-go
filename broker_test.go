@@ -203,3 +203,44 @@ func testBrokerSubscriptionFlow(t *testing.T, matchType, topic, publishURI strin
 		require.Len(t, publication.Recipients, 1)
 	})
 }
+
+func TestBrokerDisclosePublisherDetails(t *testing.T) {
+	broker := wampproto.NewBroker()
+
+	subDetails := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	err := broker.AddSession(subDetails)
+	require.NoError(t, err)
+
+	subscribe := messages.NewSubscribe(1, nil, "foo.bar")
+	_, err = broker.ReceiveMessage(subDetails.ID(), subscribe)
+	require.NoError(t, err)
+
+	pubDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+	err = broker.AddSession(pubDetails)
+	require.NoError(t, err)
+
+	t.Run("DisabledByDefault", func(t *testing.T) {
+		publish := messages.NewPublish(2, map[string]any{wampproto.OptAcknowledge: true}, "foo.bar", []any{1, 2}, nil)
+		publication, err := broker.ReceivePublish(pubDetails.ID(), publish)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{}, publication.Event.Details())
+	})
+
+	t.Run("Enable", func(t *testing.T) {
+		expectedDetails := map[string]any{"publisher": uint64(2), "publisher_authid": "authid",
+			"publisher_authrole": "anonymous", "topic": "foo.bar"}
+		broker.AutoDisclosePublisher(true)
+		publish := messages.NewPublish(3, map[string]any{wampproto.OptAcknowledge: true}, "foo.bar", []any{1, 2}, nil)
+		publication, err := broker.ReceivePublish(pubDetails.ID(), publish)
+		require.NoError(t, err)
+		require.Equal(t, expectedDetails, publication.Event.Details())
+	})
+
+	t.Run("Disable", func(t *testing.T) {
+		broker.AutoDisclosePublisher(false)
+		publish := messages.NewPublish(4, map[string]any{wampproto.OptAcknowledge: true}, "foo.bar", []any{1, 2}, nil)
+		publication, err := broker.ReceivePublish(pubDetails.ID(), publish)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{}, publication.Event.Details())
+	})
+}

@@ -72,7 +72,6 @@ func NewDealer() *Dealer {
 		idGen:                      &SessionScopeIDGenerator{},
 		prefixTree:                 iradix.New[*Registration](),
 		wcRegistrationsByProcedure: make(map[string]*Registration),
-		details:                    true,
 	}
 }
 
@@ -127,6 +126,12 @@ func (d *Dealer) HasProcedure(procedure string) bool {
 
 	reg, exists := d.registrationsByProcedure[procedure]
 	return exists && len(reg.Registrants) > 0
+}
+
+func (d *Dealer) AutoDiscloseCaller(disclose bool) {
+	d.Lock()
+	defer d.Unlock()
+	d.details = disclose
 }
 
 func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*MessageWithRecipient, error) {

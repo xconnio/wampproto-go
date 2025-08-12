@@ -267,3 +267,47 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 		require.Equal(t, messages.MessageTypeResult, yieldWithRecipient.Message.Type())
 	})
 }
+
+func TestDealerDiscloseCallerDetails(t *testing.T) {
+	dealer := wampproto.NewDealer()
+
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	err := dealer.AddSession(callee)
+	require.NoError(t, err)
+
+	register := messages.NewRegister(1, nil, "foo.bar")
+	_, err = dealer.ReceiveMessage(callee.ID(), register)
+	require.NoError(t, err)
+
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+	err = dealer.AddSession(caller)
+	require.NoError(t, err)
+
+	t.Run("DisabledByDefault", func(t *testing.T) {
+		call := messages.NewCall(3, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+		invocation := invWithRecipient.Message.(*messages.Invocation)
+		require.Equal(t, map[string]any{}, invocation.Details())
+	})
+
+	t.Run("Enable", func(t *testing.T) {
+		dealer.AutoDiscloseCaller(true)
+		call := messages.NewCall(4, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+		invocation := invWithRecipient.Message.(*messages.Invocation)
+		expectedDetails := map[string]any{"caller": uint64(2), "caller_authid": "authid",
+			"caller_authrole": "anonymous", "procedure": "foo.bar"}
+		require.Equal(t, expectedDetails, invocation.Details())
+	})
+
+	t.Run("Disable", func(t *testing.T) {
+		dealer.AutoDiscloseCaller(false)
+		call := messages.NewCall(4, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+		invocation := invWithRecipient.Message.(*messages.Invocation)
+		require.Equal(t, map[string]any{}, invocation.Details())
+	})
+}

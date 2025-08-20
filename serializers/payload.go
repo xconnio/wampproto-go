@@ -65,7 +65,7 @@ func CBOREncodePayload(args []any, kwargs map[string]any) ([]byte, error) {
 
 func CBORDecodePayload(b []byte) ([]any, map[string]any, error) {
 	var arr []any
-	if err := cbor.Unmarshal(b, &arr); err != nil {
+	if err := cborEncoder.Unmarshal(b, &arr); err != nil {
 		return nil, nil, err
 	}
 

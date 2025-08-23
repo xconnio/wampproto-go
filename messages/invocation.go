@@ -105,6 +105,8 @@ func NewInvocationBinary(requestID, registrationID uint64, details map[string]an
 		details = make(map[string]any)
 	}
 
+	details["x_payload_serializer"] = serializer
+
 	return &Invocation{InvocationFields: &invocationFields{
 		requestID:      requestID,
 		registrationID: registrationID,

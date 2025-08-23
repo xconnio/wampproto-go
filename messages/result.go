@@ -86,6 +86,8 @@ func NewResultBinary(requestID uint64, details map[string]any, payload []byte, s
 		details = make(map[string]any)
 	}
 
+	details["x_payload_serializer"] = serializer
+
 	return &Result{ResultFields: &resultFields{
 		requestID:  requestID,
 		details:    details,

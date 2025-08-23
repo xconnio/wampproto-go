@@ -169,9 +169,9 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			return &MessageWithRecipient{Message: callErr, Recipient: sessionID}, nil
 		}
 
-		var callee uint64
+		var calleeID uint64
 		for session := range regs.Registrants {
-			callee = session
+			calleeID = session
 			break
 		}
 		receiveProgress, _ := call.Options()[OptionReceiveProgress].(bool)
@@ -183,7 +183,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			d.pendingCalls[invocationID] = &PendingInvocation{
 				RequestID:       call.RequestID(),
 				CallerID:        sessionID,
-				CalleeID:        callee,
+				CalleeID:        calleeID,
 				ReceiveProgress: receiveProgress,
 				Progress:        progress,
 			}
@@ -208,14 +208,19 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		}
 
 		var invocation *messages.Invocation
-		if call.PayloadIsBinary() && d.sessions[callee].StaticSerializer() {
+		callee := d.sessions[calleeID]
+		if callee == nil {
+			return nil, fmt.Errorf("call: callee %d gone before sending invocation", calleeID)
+		}
+
+		if call.PayloadIsBinary() && callee.StaticSerializer() {
 			invocation = messages.NewInvocationBinary(invocationID, regs.ID, details, call.Payload(),
 				call.PayloadSerializer())
 		} else {
 			invocation = messages.NewInvocation(invocationID, regs.ID, details, call.Args(), call.KwArgs())
 		}
 
-		return &MessageWithRecipient{Message: invocation, Recipient: callee}, nil
+		return &MessageWithRecipient{Message: invocation, Recipient: calleeID}, nil
 	case messages.MessageTypeYield:
 		yield := msg.(*messages.Yield)
 		pending, exists := d.pendingCalls[yield.RequestID()]
@@ -232,7 +237,12 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		}
 
 		var result *messages.Result
-		if yield.PayloadIsBinary() && d.sessions[pending.CallerID].StaticSerializer() {
+		caller := d.sessions[pending.CallerID]
+		if caller == nil {
+			return nil, fmt.Errorf("yield: caller %d gone before receiving result", pending.CallerID)
+		}
+
+		if yield.PayloadIsBinary() && caller.StaticSerializer() {
 			result = messages.NewResultBinary(pending.RequestID, details, yield.Payload(), yield.PayloadSerializer())
 		} else {
 			result = messages.NewResult(pending.RequestID, details, yield.Args(), yield.KwArgs())

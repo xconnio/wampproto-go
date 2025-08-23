@@ -98,6 +98,8 @@ func NewCallBinary(requestID uint64, options map[string]any, procedure string, p
 		options = make(map[string]any)
 	}
 
+	options["x_payload_serializer"] = serializer
+
 	return &Call{CallFields: &callFields{
 		requestID:  requestID,
 		options:    options,

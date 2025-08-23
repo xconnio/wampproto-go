@@ -86,6 +86,8 @@ func NewYieldBinary(requestID uint64, options map[string]any, payload []byte, se
 		options = make(map[string]any)
 	}
 
+	options["x_payload_serializer"] = serializer
+
 	return &Yield{YieldFields: &yieldFields{
 		requestID:  requestID,
 		options:    options,

@@ -280,3 +280,50 @@ func TestCryptosignAuth(t *testing.T) {
 		require.EqualError(t, err, "wamp.error.authentication_failed")
 	})
 }
+
+type testAuthenticator struct {
+}
+
+func newTestAuthenticator() *testAuthenticator {
+	return &testAuthenticator{}
+}
+
+func (a *testAuthenticator) Methods() []auth.Method {
+	return []auth.Method{auth.MethodAnonymous}
+}
+
+func (a *testAuthenticator) Authenticate(request auth.Request) (auth.Response, error) {
+	switch request.AuthMethod() {
+	case auth.MethodAnonymous:
+		if request.Realm() == realm && request.AuthID() == authID {
+			return auth.NewResponse(request.AuthID(), "anonymous", 0)
+		}
+
+		return nil, fmt.Errorf("invalid realm")
+
+	default:
+		return nil, fmt.Errorf("unsupported authentication method: %v", request.AuthMethod())
+	}
+}
+
+func TestUnsupportedAuthMethod(t *testing.T) {
+	var authenticator = newTestAuthenticator()
+	ticketAuthenticator := auth.NewTicketAuthenticator(authID, "", map[string]any{})
+	serializer := &serializers.JSONSerializer{}
+	joiner := wampproto.NewJoiner(realm, serializer, ticketAuthenticator)
+	acceptor := wampproto.NewAcceptor(serializer, authenticator)
+
+	hello, err := joiner.SendHello()
+	require.NoError(t, err)
+
+	payload, welcomed, err := acceptor.Receive(hello)
+	require.NoError(t, err)
+	require.False(t, welcomed)
+
+	abort, err := serializer.Deserialize(payload)
+	require.NoError(t, err)
+	require.IsType(t, &messages.Abort{}, abort)
+
+	// test supported authmethod
+	testAnonymousAuth(t, serializer)
+}

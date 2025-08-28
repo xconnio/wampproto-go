@@ -106,7 +106,8 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 		hello := msg.(*messages.Hello)
 		authMethod, err := auth.SelectAuthMethod(a.authenticator.Methods(), hello.AuthMethods())
 		if err != nil {
-			return nil, err
+			abort := messages.NewAbort(map[string]any{}, ErrAuthenticationFailed, []any{err.Error()}, nil)
+			return abort, nil
 		}
 
 		a.authMethod = authMethod

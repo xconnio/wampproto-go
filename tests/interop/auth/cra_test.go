@@ -13,7 +13,7 @@ import (
 const testSecret = "private"
 
 func TestGenerateCRAChallenge(t *testing.T) {
-	challenge, err := auth.GenerateCRAChallenge(1, "anonymous", "anonymous", "static")
+	challenge, err := auth.GenerateWAMPCRAChallenge(1, "anonymous", "anonymous", "static")
 	require.NoError(t, err)
 
 	var signChallengeCommand = fmt.Sprintf("auth cra sign-challenge %s %s", challenge, testSecret)
@@ -30,7 +30,7 @@ func TestSignCRAChallenge(t *testing.T) {
 	challenge, err := tests.RunCommand(challengeCommand)
 	require.NoError(t, err)
 
-	signature := auth.SignCRAChallenge(challenge, []byte(testSecret))
+	signature := auth.SignWAMPCRAChallenge(challenge, []byte(testSecret))
 	require.NoError(t, err)
 
 	var verifySignatureCommand = fmt.Sprintf("auth cra verify-signature %s %s %s", challenge, signature, testSecret)
@@ -47,6 +47,6 @@ func TestVerifyCRAChallenge(t *testing.T) {
 	signature, err := tests.RunCommand(signChallengeCommand)
 	require.NoError(t, err)
 
-	isVerified := auth.VerifyCRASignature(signature, challenge, []byte(testSecret))
+	isVerified := auth.VerifyWAMPCRASignature(signature, challenge, []byte(testSecret))
 	require.True(t, isVerified)
 }

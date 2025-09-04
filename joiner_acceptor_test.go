@@ -208,35 +208,35 @@ func TestTicketAuth(t *testing.T) {
 func TestCRAAuth(t *testing.T) {
 	t.Run("JSONSerializer", func(t *testing.T) {
 		jsonSerializer := &serializers.JSONSerializer{}
-		craAuthenticator := auth.NewCRAAuthenticator(authID, secret, map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator(authID, secret, map[string]any{})
 		err := testAuth(t, craAuthenticator, jsonSerializer)
 		require.NoError(t, err)
 	})
 
 	t.Run("CBORSerializer", func(t *testing.T) {
 		cborSerializer := &serializers.CBORSerializer{}
-		craAuthenticator := auth.NewCRAAuthenticator(authID, secret, map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator(authID, secret, map[string]any{})
 		err := testAuth(t, craAuthenticator, cborSerializer)
 		require.NoError(t, err)
 	})
 
 	t.Run("MsgPackSerializer", func(t *testing.T) {
 		msgPackSerializer := &serializers.MsgPackSerializer{}
-		craAuthenticator := auth.NewCRAAuthenticator(authID, secret, map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator(authID, secret, map[string]any{})
 		err := testAuth(t, craAuthenticator, msgPackSerializer)
 		require.NoError(t, err)
 	})
 
 	t.Run("InvalidSecret", func(t *testing.T) {
 		jsonSerializer := &serializers.JSONSerializer{}
-		craAuthenticator := auth.NewCRAAuthenticator(authID, "abc", map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator(authID, "abc", map[string]any{})
 		err := testAuth(t, craAuthenticator, jsonSerializer)
 		require.EqualError(t, err, "wamp.error.authentication_failed")
 	})
 
 	t.Run("InvalidAuthID", func(t *testing.T) {
 		jsonSerializer := &serializers.JSONSerializer{}
-		craAuthenticator := auth.NewCRAAuthenticator("abc", secret, map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator("abc", secret, map[string]any{})
 		err := testAuth(t, craAuthenticator, jsonSerializer)
 		require.EqualError(t, err, "wamp.error.authentication_failed")
 	})

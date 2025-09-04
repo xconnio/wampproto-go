@@ -139,7 +139,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 				return nil, errors.New("internal response for WAMPCRA auth was of invalid type")
 			}
 
-			chStr, err := auth.GenerateCRAChallenge(GenerateID(), response.AuthID(), response.AuthRole(), "dynamic")
+			chStr, err := auth.GenerateWAMPCRAChallenge(GenerateID(), response.AuthID(), response.AuthRole(), "dynamic")
 			if err != nil {
 				return nil, err
 			}
@@ -220,10 +220,10 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 			if response.Salt() == "" {
 				secret = []byte(response.Secret())
 			} else {
-				secret = auth.DeriveCRAKey(response.Salt(), response.Secret(), response.Iterations(), response.KeyLen())
+				secret = auth.DeriveWAMPCRAKey(response.Salt(), response.Secret(), response.Iterations(), response.KeyLen())
 			}
 
-			if !auth.VerifyCRASignature(authenticate.Signature(), a.challenge, secret) {
+			if !auth.VerifyWAMPCRASignature(authenticate.Signature(), a.challenge, secret) {
 				abort := messages.NewAbort(map[string]any{}, "wamp.error.authentication_failed", nil, nil)
 				return abort, nil
 			}

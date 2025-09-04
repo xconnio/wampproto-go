@@ -16,34 +16,34 @@ import (
 
 const MethodCRA = "wampcra"
 
-type craAuthenticator struct {
+type wampcraAuthenticator struct {
 	authID    string
 	authExtra map[string]any
 
 	secret string
 }
 
-func NewCRAAuthenticator(authID string, secret string, authExtra map[string]any) ClientAuthenticator {
-	return &craAuthenticator{
+func NewWAMPCRAAuthenticator(authID string, secret string, authExtra map[string]any) ClientAuthenticator {
+	return &wampcraAuthenticator{
 		authID:    authID,
 		authExtra: authExtra,
 		secret:    secret,
 	}
 }
 
-func (a *craAuthenticator) AuthMethod() string {
+func (a *wampcraAuthenticator) AuthMethod() string {
 	return MethodCRA
 }
 
-func (a *craAuthenticator) AuthID() string {
+func (a *wampcraAuthenticator) AuthID() string {
 	return a.authID
 }
 
-func (a *craAuthenticator) AuthExtra() map[string]any {
+func (a *wampcraAuthenticator) AuthExtra() map[string]any {
 	return a.authExtra
 }
 
-func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (*messages.Authenticate, error) {
+func (a *wampcraAuthenticator) Authenticate(challenge messages.Challenge) (*messages.Authenticate, error) {
 	ch, _ := challenge.Extra()["challenge"].(string)
 	// If the client needed to look up a user's key, this would require decoding
 	// the JSON-encoded challenge string and getting the authid.  For this
@@ -58,30 +58,30 @@ func (a *craAuthenticator) Authenticate(challenge messages.Challenge) (*messages
 		iters, _ := util.AsInt(challenge.Extra()["iterations"])
 		keylen, _ := util.AsInt(challenge.Extra()["keylen"])
 
-		rawSecret = DeriveCRAKey(saltStr, a.secret, iters, keylen)
+		rawSecret = DeriveWAMPCRAKey(saltStr, a.secret, iters, keylen)
 	} else {
 		rawSecret = []byte(a.secret)
 	}
 
-	challengeStr := SignCRAChallenge(ch, rawSecret)
+	challengeStr := SignWAMPCRAChallenge(ch, rawSecret)
 	return messages.NewAuthenticate(challengeStr, map[string]any{}), nil
 }
 
-// SignCRAChallengeBytes computes the HMAC-SHA256, using the given key, over the
+// SignWAMPCRAChallengeBytes computes the HMAC-SHA256, using the given key, over the
 // challenge string, and returns the result.
-func SignCRAChallengeBytes(ch string, key []byte) []byte {
+func SignWAMPCRAChallengeBytes(ch string, key []byte) []byte {
 	sig := hmac.New(sha256.New, key)
 	sig.Write([]byte(ch))
 	return sig.Sum(nil)
 }
 
-// SignCRAChallenge computes the HMAC-SHA256, using the given key, over the
+// SignWAMPCRAChallenge computes the HMAC-SHA256, using the given key, over the
 // challenge string, and returns the result as a base64-encoded string.
-func SignCRAChallenge(ch string, key []byte) string {
-	return base64.StdEncoding.EncodeToString(SignCRAChallengeBytes(ch, key))
+func SignWAMPCRAChallenge(ch string, key []byte) string {
+	return base64.StdEncoding.EncodeToString(SignWAMPCRAChallengeBytes(ch, key))
 }
 
-func DeriveCRAKey(saltStr string, secret string, iterations int, keyLength int) []byte {
+func DeriveWAMPCRAKey(saltStr string, secret string, iterations int, keyLength int) []byte {
 	// If salting info give, then compute a derived key using PBKDF2.
 	salt := []byte(saltStr)
 
@@ -100,21 +100,21 @@ func DeriveCRAKey(saltStr string, secret string, iterations int, keyLength int) 
 	return derivedKey
 }
 
-// VerifyCRASignature compares a signature to a signature that the computed over
+// VerifyWAMPCRASignature compares a signature to a signature that the computed over
 // the given challenge string using the key.  The signature is a base64-encoded
 // string, generally presented by a client, and the challenge string and key
 // are used to compute the expected HMAC signature.  If these are the same,
 // then true is returned.
-func VerifyCRASignature(sig, chal string, key []byte) bool {
+func VerifyWAMPCRASignature(sig, chal string, key []byte) bool {
 	sigBytes, err := base64.StdEncoding.DecodeString(sig)
 	if err != nil {
 		return false
 	}
 
-	return hmac.Equal(sigBytes, SignCRAChallengeBytes(chal, key))
+	return hmac.Equal(sigBytes, SignWAMPCRAChallengeBytes(chal, key))
 }
 
-func GenerateCRAChallenge(session uint64, authid, authrole, provider string) (string, error) {
+func GenerateWAMPCRAChallenge(session uint64, authid, authrole, provider string) (string, error) {
 	nonce, err := makeNonce()
 	if err != nil {
 		return "", fmt.Errorf("failed to get nonce: %w", err)

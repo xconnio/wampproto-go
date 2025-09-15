@@ -262,7 +262,7 @@ func (a *Acceptor) sendWelcome(sessionID uint64, response auth.Response) *messag
 	})
 
 	a.sessionDetails = NewSessionDetails(sessionID, a.hello.Realm(), response.AuthID(), response.AuthRole(),
-		a.serializer.Static())
+		a.serializer.Static(), RouterRoles)
 	a.state = AcceptorStateWelcomeSent
 
 	return welcome

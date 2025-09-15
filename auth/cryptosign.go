@@ -33,8 +33,12 @@ func NewCryptoSignAuthenticator(authID string, privateKeyHex string,
 	publicKey := privateKey.Public().(ed25519.PublicKey)
 	publicKeyHex := hex.EncodeToString(publicKey)
 
-	if authExtra == nil || authExtra["pubkey"] == nil {
-		authExtra = map[string]any{"pubkey": publicKeyHex}
+	if authExtra == nil {
+		authExtra = map[string]any{}
+	}
+
+	if authExtra["pubkey"] == nil {
+		authExtra["pubkey"] = publicKeyHex
 	} else if val, ok := authExtra["pubkey"].(string); ok {
 		if val != publicKeyHex {
 			return nil, errors.New("provided pubkey does not correspond to the private key")

@@ -37,6 +37,15 @@ func TestNewCryptoSignAuthenticator(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("Authextra", func(t *testing.T) {
+		authenticatorWithExtra, err := auth.NewCryptoSignAuthenticator(testAuthID, testPrivateKey, map[string]any{"abc": 123})
+		require.NoError(t, err)
+
+		expectedAuthExtra := map[string]any{"abc": 123,
+			"pubkey": "2b7ec216daa877c7f4c9439db8a722ea2340eacad506988db2564e258284f895"}
+		require.Equal(t, expectedAuthExtra, authenticatorWithExtra.AuthExtra())
+	})
+
 	t.Run("Authenticate", func(t *testing.T) {
 		challenge := messages.NewChallenge(auth.MethodCryptoSign, map[string]any{"challenge": testChallenge})
 

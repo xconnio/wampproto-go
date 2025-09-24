@@ -311,3 +311,57 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 		require.Equal(t, map[string]any{}, invocation.Details())
 	})
 }
+
+func TestDealerInvocationOptions(t *testing.T) {
+	dealer := wampproto.NewDealer()
+
+	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+	require.NoError(t, dealer.AddSession(callee1))
+	require.NoError(t, dealer.AddSession(callee2))
+
+	caller := wampproto.NewSessionDetails(3, "realm", "authid", "anonymous", false)
+	require.NoError(t, dealer.AddSession(caller))
+
+	registerProcedures := func(proc, policy string) {
+		for _, callee := range []uint64{callee1.ID(), callee2.ID()} {
+			register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
+			msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
+			require.NoError(t, err)
+			require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+		}
+	}
+
+	t.Run("First", func(t *testing.T) {
+		registerProcedures("first.proc", "first")
+
+		for i := 0; i < 3; i++ {
+			call := messages.NewCall(uint64(20+i), nil, "first.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.Equal(t, callee1.ID(), inv.Recipient)
+		}
+	})
+
+	t.Run("Last", func(t *testing.T) {
+		registerProcedures("last.proc", "last")
+
+		for i := 0; i < 3; i++ {
+			call := messages.NewCall(uint64(30+i), nil, "last.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.Equal(t, callee2.ID(), inv.Recipient)
+		}
+	})
+
+	t.Run("RegisterFirstAndThenLast", func(t *testing.T) {
+		register := messages.NewRegister(callee1.ID(), map[string]any{"invoke": "first"}, "io.xconn.test")
+		_, err := dealer.ReceiveMessage(callee1.ID(), register)
+		require.NoError(t, err)
+
+		register1 := messages.NewRegister(callee2.ID(), map[string]any{"invoke": "last"}, "io.xconn.test")
+		msgWithRecipient, err := dealer.ReceiveMessage(callee2.ID(), register1)
+		require.NoError(t, err)
+		require.Equal(t, messages.MessageTypeError, msgWithRecipient.Message.Type())
+	})
+}

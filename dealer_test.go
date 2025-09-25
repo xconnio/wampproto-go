@@ -401,3 +401,68 @@ func TestDealerInvocationOptions(t *testing.T) {
 		require.Len(t, recipients, 2)
 	})
 }
+
+func TestRegistrationMaps(t *testing.T) {
+	dealer := wampproto.NewDealer()
+	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	require.NoError(t, dealer.AddSession(callee1))
+	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+	require.NoError(t, dealer.AddSession(callee2))
+
+	registerProcedures := func(callee *wampproto.SessionDetails, proc, match string) uint64 {
+		register := messages.NewRegister(callee.ID(), map[string]any{
+			"invoke": "first",
+			"match":  match,
+		}, proc)
+		msgWithRecipient, err := dealer.ReceiveMessage(callee.ID(), register)
+		require.NoError(t, err)
+		require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+		return msgWithRecipient.Message.(*messages.Registered).RegistrationID()
+	}
+
+	runRegistrationTest := func(t *testing.T, match string,
+		getMap func() map[uint64]*wampproto.Registration) {
+
+		regID1 := registerProcedures(callee1, "io.xconn.test."+match, match)
+		require.Contains(t, getMap(), regID1)
+		require.Len(t, getMap()[regID1].Registrants, 1)
+
+		regID2 := registerProcedures(callee2, "io.xconn.test."+match, match)
+		require.Equal(t, regID1, regID2)
+		require.Contains(t, getMap(), regID1)
+		require.Len(t, getMap(), 1)
+		require.Len(t, getMap()[regID2].Registrants, 2)
+
+		// Unregister the first callee: registration should remain
+		unregister1 := messages.NewUnregister(callee1.ID(), regID1)
+		_, err := dealer.ReceiveMessage(callee1.ID(), unregister1)
+		require.NoError(t, err)
+		require.Contains(t, getMap(), regID1)
+		require.Len(t, getMap()[regID1].Registrants, 1)
+
+		// Unregister the second (last) callee: registration should be removed
+		unregister2 := messages.NewUnregister(callee2.ID(), regID2)
+		_, err = dealer.ReceiveMessage(callee2.ID(), unregister2)
+		require.NoError(t, err)
+		require.NotContains(t, getMap(), regID1)
+		require.Empty(t, getMap())
+	}
+
+	t.Run("Exact", func(t *testing.T) {
+		runRegistrationTest(t, "exact", dealer.ExactRegistrationsByID)
+		require.Empty(t, dealer.PrefixRegistrationsByID())
+		require.Empty(t, dealer.WildCardRegistrationsByID())
+	})
+
+	t.Run("Prefix", func(t *testing.T) {
+		runRegistrationTest(t, "prefix", dealer.PrefixRegistrationsByID)
+		require.Empty(t, dealer.ExactRegistrationsByID())
+		require.Empty(t, dealer.WildCardRegistrationsByID())
+	})
+
+	t.Run("Wildcard", func(t *testing.T) {
+		runRegistrationTest(t, "wildcard", dealer.WildCardRegistrationsByID)
+		require.Empty(t, dealer.ExactRegistrationsByID())
+		require.Empty(t, dealer.PrefixRegistrationsByID())
+	})
+}

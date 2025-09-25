@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/go-immutable-radix/v2"
 
+	"github.com/xconnio/wampproto-go/auth"
 	"github.com/xconnio/wampproto-go/messages"
 	"github.com/xconnio/wampproto-go/util"
 )
@@ -52,6 +53,7 @@ type Registration struct {
 	nextCallee       int
 	callees          []uint64
 	Match            string
+	Created          string
 }
 
 type CallMap struct {
@@ -334,6 +336,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 				Registrants:      map[uint64]uint64{sessionID: sessionID},
 				callees:          []uint64{sessionID},
 				InvocationPolicy: invokePolicy,
+				Created:          auth.NowISO8601(),
 			}
 			d.RegistrationCreated <- registration
 

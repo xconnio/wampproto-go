@@ -59,6 +59,11 @@ type CallMap struct {
 	CallID   uint64
 }
 
+type RegistrationEvent struct {
+	SessionID      uint64
+	RegistrationID uint64
+}
+
 type Dealer struct {
 	sessions                   map[uint64]*SessionDetails
 	registrationsByProcedure   map[string]*Registration
@@ -71,6 +76,11 @@ type Dealer struct {
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
+
+	RegistrationCreated chan *Registration
+	CalleeAdded         chan RegistrationEvent
+	CalleeRemoved       chan RegistrationEvent
+	RegistrationDeleted chan RegistrationEvent
 }
 
 func NewDealer() *Dealer {
@@ -83,6 +93,10 @@ func NewDealer() *Dealer {
 		idGen:                      &SessionScopeIDGenerator{},
 		prefixTree:                 iradix.New[*Registration](),
 		wcRegistrationsByProcedure: make(map[string]*Registration),
+		RegistrationCreated:        make(chan *Registration, 1),
+		CalleeAdded:                make(chan RegistrationEvent, 1),
+		CalleeRemoved:              make(chan RegistrationEvent, 1),
+		RegistrationDeleted:        make(chan RegistrationEvent, 1),
 	}
 }
 
@@ -311,6 +325,8 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			registration.Registrants[sessionID] = sessionID
 			registration.callees = append(registration.callees, sessionID)
 
+			d.CalleeAdded <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}
+
 		} else {
 			registration = &Registration{
 				ID:               d.idGen.NextID(),
@@ -319,6 +335,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 				callees:          []uint64{sessionID},
 				InvocationPolicy: invokePolicy,
 			}
+			d.RegistrationCreated <- registration
 
 			match := util.ToString(register.Options()[OptionMatch])
 			switch match {
@@ -348,6 +365,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 
 		registration := registrations[unregister.RegistrationID()]
 		delete(registration.Registrants, sessionID)
+		d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}
 
 		if len(registration.Registrants) == 0 {
 			delete(registrations, unregister.RegistrationID())
@@ -358,6 +376,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			if registration.Match == MatchWildcard {
 				delete(d.wcRegistrationsByProcedure, registration.Procedure)
 			}
+			d.RegistrationDeleted <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}
 		}
 
 		unregistered := messages.NewUnregistered(unregister.RequestID())

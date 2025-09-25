@@ -50,6 +50,7 @@ func TestDealerRegisterUnregister(t *testing.T) {
 		hasProcedure := dealer.HasProcedure("foo.bar")
 		require.True(t, hasProcedure)
 		registerationID = msg.Message.(*messages.Registered).RegistrationID()
+		<-dealer.RegistrationCreated
 
 		t.Run("DuplicateProcedure", func(t *testing.T) {
 			register = messages.NewRegister(2, nil, "foo.bar")
@@ -116,6 +117,8 @@ func TestDealerRegisterUnregister(t *testing.T) {
 
 		hasProcedure := dealer.HasProcedure("foo.bar")
 		require.False(t, hasProcedure)
+
+		<-dealer.RegistrationDeleted
 
 		t.Run("InvalidRegistration", func(t *testing.T) {
 			_, err = dealer.ReceiveMessage(callee.ID(), unregister)
@@ -243,6 +246,8 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 		require.Equal(t, msg.Recipient, callee.ID())
 		require.Equal(t, messages.MessageTypeRegistered, msg.Message.Type())
 		require.True(t, dealer.HasProcedure(procedure))
+
+		<-dealer.RegistrationCreated
 	})
 
 	t.Run("Call", func(t *testing.T) {
@@ -324,11 +329,16 @@ func TestDealerInvocationOptions(t *testing.T) {
 	require.NoError(t, dealer.AddSession(caller))
 
 	registerProcedures := func(proc, policy string) {
-		for _, callee := range []uint64{callee1.ID(), callee2.ID()} {
+		for i, callee := range []uint64{callee1.ID(), callee2.ID()} {
 			register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
 			msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
 			require.NoError(t, err)
 			require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+			if i == 0 {
+				<-dealer.RegistrationCreated
+			} else {
+				<-dealer.CalleeAdded
+			}
 		}
 	}
 

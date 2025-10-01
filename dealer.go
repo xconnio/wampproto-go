@@ -207,6 +207,10 @@ func (d *Dealer) removeRegistration(registrationID uint64, sessionID uint64) {
 			delete(d.exactRegistrationsByID, registration.ID)
 		}
 		select {
+		case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+		default:
+		}
+		select {
 		case d.RegistrationDeleted <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
 		default:
 		}
@@ -255,25 +259,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		var regs *Registration
 		var found bool
 
-		regs, found = d.registrationsByProcedure[call.Procedure()]
-		if !found || len(regs.Registrants) == 0 {
-			if d.prefixTree.Len() > 0 {
-				_, reg, ok := d.prefixTree.Root().LongestPrefix([]byte(call.Procedure()))
-				if ok {
-					regs, found = reg, true
-				}
-			}
-
-			if !found {
-				for procedure, reg := range d.wcRegistrationsByProcedure {
-					if wildcardMatch(call.Procedure(), procedure) {
-						regs, found = reg, true
-						break
-					}
-				}
-			}
-		}
-
+		regs, found = d.MatchRegistration(call.Procedure())
 		if !found || len(regs.Registrants) == 0 {
 			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), map[string]any{},
 				"wamp.error.no_such_procedure", nil, nil)
@@ -397,12 +383,6 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			}
 			registration.Registrants[sessionID] = sessionID
 			registration.callees = append(registration.callees, sessionID)
-
-			select {
-			case d.CalleeAdded <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
-			default:
-			}
-
 		} else {
 			registration = &Registration{
 				ID:               d.idGen.NextID(),
@@ -416,6 +396,11 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			case d.RegistrationCreated <- registration:
 			default:
 			}
+		}
+
+		select {
+		case d.CalleeAdded <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+		default:
 		}
 
 		match := util.ToString(register.Options()[OptionMatch])
@@ -469,6 +454,27 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 	default:
 		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)
 	}
+}
+
+func (d *Dealer) MatchRegistration(procedure string) (reg *Registration, found bool) {
+	if r, ok := d.registrationsByProcedure[procedure]; ok && len(r.Registrants) > 0 {
+		return r, true
+	}
+
+	if d.prefixTree.Len() > 0 {
+		_, reg, ok := d.prefixTree.Root().LongestPrefix([]byte(procedure))
+		if ok {
+			return reg, true
+		}
+	}
+
+	for pattern, reg := range d.wcRegistrationsByProcedure {
+		if wildcardMatch(procedure, pattern) {
+			return reg, true
+		}
+	}
+
+	return nil, false
 }
 
 func wildcardMatch(str, pattern string) bool {

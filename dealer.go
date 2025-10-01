@@ -127,6 +127,12 @@ func (d *Dealer) WildCardRegistrationsByID() map[uint64]*Registration {
 	return d.wcRegistrationsByID
 }
 
+func (d *Dealer) RegistrationsByProcedure() map[string]*Registration {
+	d.Lock()
+	defer d.Unlock()
+	return d.registrationsByProcedure
+}
+
 func (d *Dealer) AddSession(details *SessionDetails) error {
 	d.Lock()
 	defer d.Unlock()

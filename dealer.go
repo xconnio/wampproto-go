@@ -199,7 +199,7 @@ func (d *Dealer) removeRegistration(registrationID uint64, sessionID uint64) {
 		switch registration.Match {
 		case MatchPrefix:
 			delete(d.prefixRegistrationsByID, registration.ID)
-			d.prefixTree.Delete([]byte(registration.Procedure))
+			d.prefixTree, _, _ = d.prefixTree.Delete([]byte(registration.Procedure))
 		case MatchWildcard:
 			delete(d.wcRegistrationsByID, registration.ID)
 			delete(d.wcRegistrationsByProcedure, registration.Procedure)

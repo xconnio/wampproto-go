@@ -87,6 +87,7 @@ type Dealer struct {
 	exactRegistrationsByID  map[uint64]*Registration
 	prefixRegistrationsByID map[uint64]*Registration
 	wcRegistrationsByID     map[uint64]*Registration
+	metaAPi                 bool
 }
 
 func NewDealer() *Dealer {
@@ -206,13 +207,15 @@ func (d *Dealer) removeRegistration(registrationID uint64, sessionID uint64) {
 		default:
 			delete(d.exactRegistrationsByID, registration.ID)
 		}
-		select {
-		case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
-		default:
-		}
-		select {
-		case d.RegistrationDeleted <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
-		default:
+		if d.metaAPi {
+			select {
+			case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
+			select {
+			case d.RegistrationDeleted <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
 		}
 	} else {
 		registrations[registrationID] = registration
@@ -227,9 +230,11 @@ func (d *Dealer) removeRegistration(registrationID uint64, sessionID uint64) {
 		default:
 			d.exactRegistrationsByID[registration.ID] = registration
 		}
-		select {
-		case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
-		default:
+		if d.metaAPi {
+			select {
+			case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
 		}
 	}
 	d.registrationsBySession[sessionID] = registrations
@@ -392,15 +397,19 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 				InvocationPolicy: invokePolicy,
 				Created:          auth.NowISO8601(),
 			}
-			select {
-			case d.RegistrationCreated <- registration:
-			default:
+			if d.metaAPi {
+				select {
+				case d.RegistrationCreated <- registration:
+				default:
+				}
 			}
 		}
 
-		select {
-		case d.CalleeAdded <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
-		default:
+		if d.metaAPi {
+			select {
+			case d.CalleeAdded <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
 		}
 
 		match := util.ToString(register.Options()[OptionMatch])
@@ -475,6 +484,12 @@ func (d *Dealer) MatchRegistration(procedure string) (reg *Registration, found b
 	}
 
 	return nil, false
+}
+
+func (d *Dealer) EnableMetaAPI() {
+	d.Lock()
+	defer d.Unlock()
+	d.metaAPi = true
 }
 
 func wildcardMatch(str, pattern string) bool {

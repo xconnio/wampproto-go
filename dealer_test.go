@@ -32,6 +32,7 @@ func TestDealerAddRemoveSession(t *testing.T) {
 
 func TestDealerRegisterUnregister(t *testing.T) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 
 	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	err := dealer.AddSession(callee)
@@ -231,6 +232,7 @@ func TestDealerWildcardRegistration(t *testing.T) {
 
 func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI string) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 
 	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	err := dealer.AddSession(callee)
@@ -319,6 +321,7 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 
 func TestDealerInvocationOptions(t *testing.T) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 
 	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
@@ -404,6 +407,7 @@ func TestDealerInvocationOptions(t *testing.T) {
 
 func TestRegistrationMaps(t *testing.T) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
 	require.NoError(t, dealer.AddSession(callee1))
 	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)

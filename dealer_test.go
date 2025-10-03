@@ -408,9 +408,9 @@ func TestDealerInvocationOptions(t *testing.T) {
 func TestRegistrationMaps(t *testing.T) {
 	dealer := wampproto.NewDealer()
 	dealer.EnableMetaAPI()
-	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
+	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	require.NoError(t, dealer.AddSession(callee1))
-	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	require.NoError(t, dealer.AddSession(callee2))
 
 	registerProcedures := func(callee *wampproto.SessionDetails, proc, match string) uint64 {

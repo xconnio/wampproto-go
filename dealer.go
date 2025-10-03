@@ -100,10 +100,10 @@ func NewDealer() *Dealer {
 		idGen:                      &SessionScopeIDGenerator{},
 		prefixTree:                 iradix.New[*Registration](),
 		wcRegistrationsByProcedure: make(map[string]*Registration),
-		RegistrationCreated:        make(chan *Registration, 1),
-		CalleeAdded:                make(chan RegistrationEvent, 1),
-		CalleeRemoved:              make(chan RegistrationEvent, 1),
-		RegistrationDeleted:        make(chan RegistrationEvent, 1),
+		RegistrationCreated:        make(chan *Registration),
+		CalleeAdded:                make(chan RegistrationEvent),
+		CalleeRemoved:              make(chan RegistrationEvent),
+		RegistrationDeleted:        make(chan RegistrationEvent),
 		exactRegistrationsByID:     make(map[uint64]*Registration),
 		prefixRegistrationsByID:    make(map[uint64]*Registration),
 		wcRegistrationsByID:        make(map[uint64]*Registration),
@@ -111,15 +111,21 @@ func NewDealer() *Dealer {
 }
 
 func (d *Dealer) ExactRegistrationsByID() map[uint64]*Registration {
-	d.Lock()
-	defer d.Unlock()
-	return d.exactRegistrationsByID
+	copyMap := make(map[uint64]*Registration, len(d.exactRegistrationsByID))
+	for id, reg := range d.exactRegistrationsByID {
+		copyMap[id] = reg
+	}
+
+	return copyMap
 }
 
 func (d *Dealer) PrefixRegistrationsByID() map[uint64]*Registration {
-	d.Lock()
-	defer d.Unlock()
-	return d.prefixRegistrationsByID
+	copyMap := make(map[uint64]*Registration, len(d.prefixRegistrationsByID))
+	for id, reg := range d.prefixRegistrationsByID {
+		copyMap[id] = reg
+	}
+
+	return copyMap
 }
 
 func (d *Dealer) WildCardRegistrationsByID() map[uint64]*Registration {

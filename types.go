@@ -3,21 +3,24 @@ package wampproto
 import "github.com/xconnio/wampproto-go/messages"
 
 type SessionDetails struct {
-	id       uint64
-	realm    string
-	authID   string
-	authRole string
+	id          uint64
+	realm       string
+	authID      string
+	authRole    string
+	routerRoles map[string]any
 
 	staticSerializer bool
 }
 
-func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializer bool) *SessionDetails {
+func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializer bool,
+	routerRoles map[string]any) *SessionDetails {
 	return &SessionDetails{
 		id:               id,
 		realm:            realm,
 		authID:           authID,
 		authRole:         authRole,
 		staticSerializer: staticSerializer,
+		routerRoles:      routerRoles,
 	}
 }
 
@@ -39,6 +42,10 @@ func (s *SessionDetails) AuthRole() string {
 
 func (s *SessionDetails) StaticSerializer() bool {
 	return s.staticSerializer
+}
+
+func (s *SessionDetails) RouterRoles() map[string]any {
+	return s.routerRoles
 }
 
 type MessageWithRecipient struct {

@@ -364,4 +364,30 @@ func TestDealerInvocationOptions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, messages.MessageTypeError, msgWithRecipient.Message.Type())
 	})
+
+	t.Run("RoundRobin", func(t *testing.T) {
+		registerProcedures("roundrobin.proc", "roundrobin")
+
+		expectedRecipients := []uint64{callee1.ID(), callee2.ID(), callee1.ID(), callee2.ID()}
+		for i, expected := range expectedRecipients {
+			call := messages.NewCall(uint64(10+i), nil, "roundrobin.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.NotNil(t, inv)
+			require.Equal(t, expected, inv.Recipient)
+		}
+	})
+
+	t.Run("Random", func(t *testing.T) {
+		registerProcedures("random.proc", "random")
+
+		recipients := map[uint64]bool{}
+		for i := 0; i < 10; i++ {
+			call := messages.NewCall(uint64(40+i), nil, "random.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			recipients[inv.Recipient] = true
+		}
+		require.Len(t, recipients, 2)
+	})
 }

@@ -2,6 +2,7 @@ package wampproto
 
 import (
 	"fmt"
+	"math/rand"
 	"path"
 	"sync"
 
@@ -21,9 +22,11 @@ const (
 	MatchPrefix   = "prefix"
 	MatchWildcard = "wildcard"
 
-	InvokeSingle = "single"
-	InvokeFirst  = "first"
-	InvokeLast   = "last"
+	InvokeSingle     = "single"
+	InvokeFirst      = "first"
+	InvokeLast       = "last"
+	InvokeRoundRobin = "roundrobin"
+	InvokeRandom     = "random"
 )
 
 const (
@@ -45,6 +48,7 @@ type Registration struct {
 	Procedure        string
 	Registrants      map[uint64]uint64
 	InvocationPolicy string
+	nextCallee       int
 	callees          []uint64
 	Match            string
 }
@@ -192,6 +196,15 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 				calleeID = regs.callees[0]
 			case InvokeLast:
 				calleeID = regs.callees[len(regs.callees)-1]
+			case InvokeRoundRobin:
+				if regs.nextCallee >= len(regs.callees) {
+					regs.nextCallee = 0
+				}
+				calleeID = regs.callees[regs.nextCallee]
+				regs.nextCallee++
+			case InvokeRandom:
+				idx := rand.Intn(len(regs.callees)) // #nosec
+				calleeID = regs.callees[idx]
 			default:
 				fmt.Printf("multiple callees registered with '%s' policy", InvokeSingle)
 				calleeID = regs.callees[0]

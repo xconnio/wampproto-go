@@ -327,3 +327,23 @@ func TestUnsupportedAuthMethod(t *testing.T) {
 	// test supported authmethod
 	testAnonymousAuth(t, serializer)
 }
+
+func TestNilRoles(t *testing.T) {
+	joiner := wampproto.NewJoiner(realm, &serializers.JSONSerializer{}, nil)
+	_, err := joiner.SendHello()
+	require.NoError(t, err)
+
+	welcomeMsg := messages.NewWelcome(1, map[string]any{
+		"authrole":   "anonymous",
+		"authid":     "foo",
+		"authmethod": "anonymous",
+		"authextra":  map[string]any{"foo": "bar"},
+	})
+	message, err := joiner.ReceiveMessage(welcomeMsg)
+	require.NoError(t, err)
+	require.Nil(t, message)
+
+	d, err := joiner.SessionDetails()
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{}, d.RouterRoles())
+}

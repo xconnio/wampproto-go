@@ -315,12 +315,12 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 func TestDealerInvocationOptions(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false)
-	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false)
+	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	require.NoError(t, dealer.AddSession(callee1))
 	require.NoError(t, dealer.AddSession(callee2))
 
-	caller := wampproto.NewSessionDetails(3, "realm", "authid", "anonymous", false)
+	caller := wampproto.NewSessionDetails(3, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
 	require.NoError(t, dealer.AddSession(caller))
 
 	registerProcedures := func(proc, policy string) {

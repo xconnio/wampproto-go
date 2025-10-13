@@ -14,6 +14,9 @@ type SessionDetails struct {
 
 func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializer bool,
 	routerRoles map[string]any) *SessionDetails {
+	if routerRoles == nil {
+		routerRoles = make(map[string]any)
+	}
 	return &SessionDetails{
 		id:               id,
 		realm:            realm,

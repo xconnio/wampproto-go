@@ -118,8 +118,9 @@ func (j *Joiner) ReceiveMessage(msg messages.Message) (messages.Message, error) 
 		}
 
 		welcome := msg.(*messages.Welcome)
+		roles, _ := welcome.Details()["roles"].(map[string]any)
 		j.sessionDetails = NewSessionDetails(welcome.SessionID(), j.realm, welcome.Details()["authid"].(string),
-			welcome.Details()["authrole"].(string), j.serializer.Static(), welcome.Details()["roles"].(map[string]any))
+			welcome.Details()["authrole"].(string), j.serializer.Static(), roles)
 		j.state = joinerStateJoined
 
 		return nil, nil

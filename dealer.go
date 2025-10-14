@@ -111,6 +111,8 @@ func NewDealer() *Dealer {
 }
 
 func (d *Dealer) ExactRegistrationsByID() map[uint64]*Registration {
+	d.Lock()
+	defer d.Unlock()
 	copyMap := make(map[uint64]*Registration, len(d.exactRegistrationsByID))
 	for id, reg := range d.exactRegistrationsByID {
 		copyMap[id] = reg
@@ -120,6 +122,8 @@ func (d *Dealer) ExactRegistrationsByID() map[uint64]*Registration {
 }
 
 func (d *Dealer) PrefixRegistrationsByID() map[uint64]*Registration {
+	d.Lock()
+	defer d.Unlock()
 	copyMap := make(map[uint64]*Registration, len(d.prefixRegistrationsByID))
 	for id, reg := range d.prefixRegistrationsByID {
 		copyMap[id] = reg
@@ -131,13 +135,22 @@ func (d *Dealer) PrefixRegistrationsByID() map[uint64]*Registration {
 func (d *Dealer) WildCardRegistrationsByID() map[uint64]*Registration {
 	d.Lock()
 	defer d.Unlock()
-	return d.wcRegistrationsByID
+	copyMap := make(map[uint64]*Registration, len(d.wcRegistrationsByID))
+	for id, reg := range d.wcRegistrationsByID {
+		copyMap[id] = reg
+	}
+
+	return copyMap
 }
 
 func (d *Dealer) RegistrationsByProcedure() map[string]*Registration {
 	d.Lock()
 	defer d.Unlock()
-	return d.registrationsByProcedure
+	copyMap := make(map[string]*Registration, len(d.registrationsByProcedure))
+	for id, reg := range d.registrationsByProcedure {
+		copyMap[id] = reg
+	}
+	return copyMap
 }
 
 func (d *Dealer) AddSession(details *SessionDetails) error {
@@ -270,7 +283,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		var regs *Registration
 		var found bool
 
-		regs, found = d.MatchRegistration(call.Procedure())
+		regs, found = d.matchRegistration(call.Procedure())
 		if !found || len(regs.Registrants) == 0 {
 			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), map[string]any{},
 				"wamp.error.no_such_procedure", nil, nil)
@@ -471,7 +484,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 	}
 }
 
-func (d *Dealer) MatchRegistration(procedure string) (reg *Registration, found bool) {
+func (d *Dealer) matchRegistration(procedure string) (reg *Registration, found bool) {
 	if r, ok := d.registrationsByProcedure[procedure]; ok && len(r.Registrants) > 0 {
 		return r, true
 	}
@@ -490,6 +503,11 @@ func (d *Dealer) MatchRegistration(procedure string) (reg *Registration, found b
 	}
 
 	return nil, false
+}
+func (d *Dealer) MatchRegistration(procedure string) (reg *Registration, found bool) {
+	d.Lock()
+	defer d.Unlock()
+	return d.matchRegistration(procedure)
 }
 
 func (d *Dealer) EnableMetaAPI() {

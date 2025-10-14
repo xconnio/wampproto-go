@@ -51,7 +51,6 @@ func TestDealerRegisterUnregister(t *testing.T) {
 		hasProcedure := dealer.HasProcedure("foo.bar")
 		require.True(t, hasProcedure)
 		registerationID = msg.Message.(*messages.Registered).RegistrationID()
-		<-dealer.RegistrationCreated
 
 		t.Run("DuplicateProcedure", func(t *testing.T) {
 			register = messages.NewRegister(2, nil, "foo.bar")
@@ -110,14 +109,16 @@ func TestDealerRegisterUnregister(t *testing.T) {
 
 	t.Run("Unregister", func(t *testing.T) {
 		unregister := messages.NewUnregister(callee.ID(), registerationID)
-		unregWithRecipient, err := dealer.ReceiveMessage(callee.ID(), unregister)
-		require.NoError(t, err)
-		require.NotNil(t, unregWithRecipient)
-		require.Equal(t, callee.ID(), unregWithRecipient.Recipient)
-		require.Equal(t, messages.MessageTypeUnregistered, unregWithRecipient.Message.Type())
+		go func() {
+			unregWithRecipient, err := dealer.ReceiveMessage(callee.ID(), unregister)
+			require.NoError(t, err)
+			require.NotNil(t, unregWithRecipient)
+			require.Equal(t, callee.ID(), unregWithRecipient.Recipient)
+			require.Equal(t, messages.MessageTypeUnregistered, unregWithRecipient.Message.Type())
 
-		hasProcedure := dealer.HasProcedure("foo.bar")
-		require.False(t, hasProcedure)
+			hasProcedure := dealer.HasProcedure("foo.bar")
+			require.False(t, hasProcedure)
+		}()
 
 		<-dealer.RegistrationDeleted
 
@@ -248,8 +249,6 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 		require.Equal(t, msg.Recipient, callee.ID())
 		require.Equal(t, messages.MessageTypeRegistered, msg.Message.Type())
 		require.True(t, dealer.HasProcedure(procedure))
-
-		<-dealer.RegistrationCreated
 	})
 
 	t.Run("Call", func(t *testing.T) {
@@ -333,10 +332,12 @@ func TestDealerInvocationOptions(t *testing.T) {
 
 	registerProcedures := func(proc, policy string) {
 		for i, callee := range []uint64{callee1.ID(), callee2.ID()} {
-			register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
-			msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
-			require.NoError(t, err)
-			require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+			go func() {
+				register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
+				msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
+				require.NoError(t, err)
+				require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+			}()
 			if i == 0 {
 				<-dealer.RegistrationCreated
 			} else {

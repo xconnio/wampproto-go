@@ -55,3 +55,37 @@ jobs:
       - name: Run unit tests
         run: |
           make test
+
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
+
+      - name: Run benchmarks and check regression
+        run: |
+          go test -bench=. -benchmem ./... | tee current.txt
+          git fetch origin main
+          git checkout origin/main
+          go test -bench=. -benchmem ./... | tee baseline.txt
+          benchstat baseline.txt current.txt | tee benchdiff.txt
+          awk '
+          {
+              if ($0 ~ /[+-][0-9]+[.0-9]*%/) {
+                  match($0, /[+-][0-9]+[.0-9]*%/)
+                  value = substr($0, RSTART, RLENGTH)
+                  gsub("%", "", value)
+                  num = value + 0
+                  if (num > 5) {
+                      print "Regression detected: " value "% slower -> " $0
+                      found = 1
+                  } else if (num < -5) {
+                      print "Significant speedup: " value "% faster -> " $0
+                  }
+              }
+          }
+          END {
+              if (found) {
+                  exit 1
+              } else {
+                  print "No regression detected"
+                  exit 0
+              }
+          }' benchdiff.txt

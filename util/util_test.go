@@ -8,7 +8,7 @@ import (
 	"github.com/xconnio/wampproto-go/util"
 )
 
-func TestAsInt64(t *testing.T) {
+func TestAsUInt64(t *testing.T) {
 	t.Run("ValidConversion", func(t *testing.T) {
 		tests := []struct {
 			input    interface{}
@@ -37,6 +37,39 @@ func TestAsInt64(t *testing.T) {
 		result, ok := util.AsUInt64("invalid")
 		require.False(t, ok)
 		require.Equal(t, uint64(0), result)
+	})
+}
+
+func TestAsInt64(t *testing.T) {
+	t.Run("ValidConversion", func(t *testing.T) {
+		tests := []struct {
+			input    interface{}
+			expected int64
+		}{
+			{input: int64(123), expected: 123},
+			{input: uint64(456), expected: 456},
+			{input: uint8(7), expected: 7},
+			{input: 890, expected: 890},
+			{input: int8(12), expected: 12},
+			{input: int32(345), expected: 345},
+			{input: uint(678), expected: 678},
+			{input: uint16(901), expected: 901},
+			{input: uint32(234), expected: 234},
+			{input: 56.78, expected: 56},
+			{input: float32(9.01), expected: 9},
+		}
+
+		for _, test := range tests {
+			result, ok := util.AsInt64(test.input)
+			require.True(t, ok)
+			require.Equal(t, test.expected, result)
+		}
+	})
+
+	t.Run("InvalidConversion", func(t *testing.T) {
+		result, ok := util.AsInt64("invalid")
+		require.False(t, ok)
+		require.Equal(t, int64(0), result)
 	})
 }
 

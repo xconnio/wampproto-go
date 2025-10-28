@@ -33,6 +33,7 @@ const (
 	FeatureProgressiveCallInvocations = "progressive_call_invocations"
 	FeatureProgressiveCallResults     = "progressive_call_results"
 	FeatureCallCancelling             = "call_canceling"
+	FeaturePublisherExclusion         = "publisher_exclusion"
 )
 
 type PendingInvocation struct {

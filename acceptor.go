@@ -26,7 +26,9 @@ var RouterRoles = map[string]any{ //nolint:gochecknoglobals
 		},
 	},
 	"broker": map[string]any{
-		"features": map[string]any{},
+		"features": map[string]any{
+			FeaturePublisherExclusion: true,
+		},
 	},
 }
 

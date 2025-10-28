@@ -24,7 +24,9 @@ var ClientRoles = map[string]any{ //nolint:gochecknoglobals
 		},
 	},
 	"publisher": map[string]any{
-		"features": map[string]any{},
+		"features": map[string]any{
+			FeaturePublisherExclusion: true,
+		},
 	},
 	"subscriber": map[string]any{
 		"features": map[string]any{},

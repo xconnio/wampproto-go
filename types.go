@@ -1,6 +1,9 @@
 package wampproto
 
-import "github.com/xconnio/wampproto-go/messages"
+import (
+	"github.com/xconnio/wampproto-go/auth"
+	"github.com/xconnio/wampproto-go/messages"
+)
 
 type SessionDetails struct {
 	id          uint64
@@ -8,6 +11,7 @@ type SessionDetails struct {
 	authID      string
 	authRole    string
 	routerRoles map[string]any
+	created     string
 
 	staticSerializer bool
 }
@@ -24,6 +28,7 @@ func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializ
 		authRole:         authRole,
 		staticSerializer: staticSerializer,
 		routerRoles:      routerRoles,
+		created:          auth.NowISO8601(),
 	}
 }
 

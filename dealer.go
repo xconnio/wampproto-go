@@ -110,8 +110,11 @@ func (d *Dealer) RemoveSession(id uint64) error {
 	}
 
 	registrations := d.registrationsBySession[id]
-	for _, registration := range registrations {
-		registration = d.registrationsByProcedure[registration.Procedure]
+	for _, reg := range registrations {
+		registration, ok := d.registrationsByProcedure[reg.Procedure]
+		if !ok {
+			continue
+		}
 		delete(registration.Registrants, id)
 		if len(registration.Registrants) == 0 {
 			delete(d.registrationsByProcedure, registration.Procedure)

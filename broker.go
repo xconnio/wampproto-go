@@ -72,7 +72,7 @@ func (b *Broker) RemoveSession(id uint64) error {
 		}
 
 		if subscription.Match == MatchPrefix {
-			b.prefixTree.Delete([]byte(subscription.Topic))
+			b.prefixTree, _, _ = b.prefixTree.Delete([]byte(subscription.Topic))
 		}
 
 		if subscription.Match == MatchWildcard {
@@ -157,7 +157,7 @@ func (b *Broker) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			delete(b.subscriptionsByTopic, subscription.Topic)
 		}
 		if subscription.Match == MatchPrefix {
-			b.prefixTree.Delete([]byte(subscription.Topic))
+			b.prefixTree, _, _ = b.prefixTree.Delete([]byte(subscription.Topic))
 		}
 		if subscription.Match == MatchWildcard {
 			delete(b.wcSubscriptionsByTopic, subscription.Topic)

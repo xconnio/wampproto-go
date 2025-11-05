@@ -71,7 +71,7 @@ func (a *cryptoSignAuthenticator) Authenticate(challenge messages.Challenge) (*m
 		return nil, fmt.Errorf("failed to sign challenge")
 	}
 
-	return messages.NewAuthenticate(result, map[string]any{}), nil
+	return messages.NewAuthenticate(result, a.AuthExtra()), nil
 }
 
 func SignCryptoSignChallenge(challenge string, privateKey ed25519.PrivateKey) (string, error) {

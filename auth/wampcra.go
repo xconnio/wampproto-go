@@ -64,7 +64,7 @@ func (a *wampcraAuthenticator) Authenticate(challenge messages.Challenge) (*mess
 	}
 
 	challengeStr := SignWAMPCRAChallenge(ch, rawSecret)
-	return messages.NewAuthenticate(challengeStr, map[string]any{}), nil
+	return messages.NewAuthenticate(challengeStr, a.AuthExtra()), nil
 }
 
 // SignWAMPCRAChallengeBytes computes the HMAC-SHA256, using the given key, over the

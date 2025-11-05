@@ -66,5 +66,10 @@ func (a *Authenticate) Parse(wampMsg []any) error {
 }
 
 func (a *Authenticate) Marshal() []any {
-	return []any{MessageTypeAuthenticate, a.Signature(), a.Extra()}
+	authExtra := a.Extra()
+	if authExtra == nil {
+		authExtra = make(map[string]any)
+	}
+
+	return []any{MessageTypeAuthenticate, a.Signature(), authExtra}
 }

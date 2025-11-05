@@ -12,14 +12,19 @@ type SessionDetails struct {
 	authRole    string
 	routerRoles map[string]any
 	createdAt   string
+	authExtra   map[string]any
+	authMethod  string
 
 	staticSerializer bool
 }
 
-func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializer bool,
-	routerRoles map[string]any) *SessionDetails {
+func NewSessionDetails(id uint64, realm, authID, authRole, authMethod string, staticSerializer bool,
+	routerRoles, authExtra map[string]any) *SessionDetails {
 	if routerRoles == nil {
 		routerRoles = make(map[string]any)
+	}
+	if authExtra == nil {
+		authExtra = make(map[string]any)
 	}
 	return &SessionDetails{
 		id:               id,
@@ -29,6 +34,8 @@ func NewSessionDetails(id uint64, realm, authID, authRole string, staticSerializ
 		staticSerializer: staticSerializer,
 		routerRoles:      routerRoles,
 		createdAt:        auth.NowISO8601(),
+		authMethod:       authMethod,
+		authExtra:        authExtra,
 	}
 }
 
@@ -48,6 +55,10 @@ func (s *SessionDetails) AuthRole() string {
 	return s.authRole
 }
 
+func (s *SessionDetails) AuthMethod() string {
+	return s.authMethod
+}
+
 func (s *SessionDetails) StaticSerializer() bool {
 	return s.staticSerializer
 }
@@ -58,6 +69,10 @@ func (s *SessionDetails) RouterRoles() map[string]any {
 
 func (s *SessionDetails) CreatedAt() string {
 	return s.createdAt
+}
+
+func (s *SessionDetails) AuthExtra() map[string]any {
+	return s.authExtra
 }
 
 type MessageWithRecipient struct {

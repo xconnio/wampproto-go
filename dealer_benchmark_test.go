@@ -13,7 +13,7 @@ import (
 
 func BenchmarkDealerConcurrentRegistrations(b *testing.B) {
 	dealer := wampproto.NewDealer()
-	session := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	session := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	require.NoError(b, dealer.AddSession(session))
 
 	const proc = "io.xconn.test"
@@ -52,8 +52,8 @@ func performCall(b *testing.B, dealer *wampproto.Dealer, caller, callee *wamppro
 func BenchmarkDealerConcurrentCalls(b *testing.B) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 
 	require.NoError(b, dealer.AddSession(callee))
 	require.NoError(b, dealer.AddSession(caller))
@@ -79,8 +79,8 @@ func BenchmarkDealerConcurrentCalls(b *testing.B) {
 func BenchmarkDealerConcurrentPrefixCalls(b *testing.B) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 
 	require.NoError(b, dealer.AddSession(callee))
 	require.NoError(b, dealer.AddSession(caller))
@@ -109,8 +109,8 @@ func BenchmarkDealerConcurrentPrefixCalls(b *testing.B) {
 func BenchmarkDealerConcurrentWildcardCalls(b *testing.B) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 
 	require.NoError(b, dealer.AddSession(callee))
 	require.NoError(b, dealer.AddSession(caller))

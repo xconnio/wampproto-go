@@ -34,5 +34,5 @@ func (a *ticketAuthenticator) AuthExtra() map[string]any {
 }
 
 func (a *ticketAuthenticator) Authenticate(_ messages.Challenge) (*messages.Authenticate, error) {
-	return messages.NewAuthenticate(a.ticket, map[string]any{}), nil
+	return messages.NewAuthenticate(a.ticket, a.AuthExtra()), nil
 }

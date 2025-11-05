@@ -124,7 +124,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 				return abort, nil
 			}
 
-			return a.sendWelcome(GenerateID(), response), nil
+			return a.sendWelcome(GenerateID(), response, nil), nil
 		case auth.Ticket:
 			a.state = AcceptorStateChallengeSent
 			return messages.NewChallenge(string(authMethod), map[string]any{}), nil
@@ -213,7 +213,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 				return abort, nil
 			}
 
-			return a.sendWelcome(GenerateID(), response), nil
+			return a.sendWelcome(GenerateID(), response, authenticate.Extra()), nil
 		case auth.WAMPCRA:
 			authenticate := msg.(*messages.Authenticate)
 			response := a.response.(*auth.CRAResponse)
@@ -230,7 +230,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 				return abort, nil
 			}
 
-			return a.sendWelcome(GenerateID(), a.response), nil
+			return a.sendWelcome(GenerateID(), a.response, authenticate.Extra()), nil
 		case auth.CryptoSign:
 			authenticate := msg.(*messages.Authenticate)
 			request := a.request.(*auth.RequestCryptoSign)
@@ -245,7 +245,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 				return abort, nil
 			}
 
-			return a.sendWelcome(GenerateID(), a.response), nil
+			return a.sendWelcome(GenerateID(), a.response, authenticate.Extra()), nil
 		default:
 			return nil, fmt.Errorf("received AUTHENTICATE for unexpected authmethod %s", a.authMethod)
 		}
@@ -254,7 +254,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 	}
 }
 
-func (a *Acceptor) sendWelcome(sessionID uint64, response auth.Response) *messages.Welcome {
+func (a *Acceptor) sendWelcome(sessionID uint64, response auth.Response, authExtra map[string]any) *messages.Welcome {
 	welcome := messages.NewWelcome(sessionID, map[string]any{
 		"realm":      a.hello.Realm(),
 		"roles":      RouterRoles,
@@ -264,7 +264,7 @@ func (a *Acceptor) sendWelcome(sessionID uint64, response auth.Response) *messag
 	})
 
 	a.sessionDetails = NewSessionDetails(sessionID, a.hello.Realm(), response.AuthID(), response.AuthRole(),
-		a.serializer.Static(), RouterRoles)
+		string(a.authMethod), a.serializer.Static(), RouterRoles, authExtra)
 	a.state = AcceptorStateWelcomeSent
 
 	return welcome

@@ -18,7 +18,7 @@ func TestBrokerAddRemoveSession(t *testing.T) {
 	})
 
 	t.Run("AddRemove", func(t *testing.T) {
-		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 		err := broker.AddSession(details)
 		require.NoError(t, err)
 
@@ -33,7 +33,7 @@ func TestBrokerAddRemoveSession(t *testing.T) {
 func TestBrokerPublish(t *testing.T) {
 	broker := wampproto.NewBroker()
 
-	details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err := broker.AddSession(details)
 	require.NoError(t, err)
 
@@ -54,7 +54,7 @@ func TestBrokerPublish(t *testing.T) {
 	})
 
 	t.Run("WithSubscriber", func(t *testing.T) {
-		subDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+		subDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 		err = broker.AddSession(subDetails)
 		require.NoError(t, err)
 
@@ -93,7 +93,7 @@ func TestBrokerPublish(t *testing.T) {
 func TestBrokerSubscribeUnsubscribe(t *testing.T) {
 	broker := wampproto.NewBroker()
 
-	subDetails := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	subDetails := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err := broker.AddSession(subDetails)
 	require.NoError(t, err)
 
@@ -109,7 +109,7 @@ func TestBrokerSubscribeUnsubscribe(t *testing.T) {
 	})
 
 	t.Run("PublishAndReceiveEvent", func(t *testing.T) {
-		pubDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+		pubDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 		err = broker.AddSession(pubDetails)
 		require.NoError(t, err)
 
@@ -173,7 +173,7 @@ func TestBrokerWildcardSubscription(t *testing.T) {
 func testBrokerSubscriptionFlow(t *testing.T, matchType, topic, publishURI string) {
 	broker := wampproto.NewBroker()
 
-	subscriber := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	subscriber := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err := broker.AddSession(subscriber)
 	require.NoError(t, err)
 
@@ -192,7 +192,7 @@ func testBrokerSubscriptionFlow(t *testing.T, matchType, topic, publishURI strin
 	})
 
 	t.Run("Publish", func(t *testing.T) {
-		publisher := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+		publisher := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 		err := broker.AddSession(publisher)
 		require.NoError(t, err)
 
@@ -207,7 +207,7 @@ func testBrokerSubscriptionFlow(t *testing.T, matchType, topic, publishURI strin
 func TestBrokerDisclosePublisherDetails(t *testing.T) {
 	broker := wampproto.NewBroker()
 
-	subDetails := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	subDetails := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err := broker.AddSession(subDetails)
 	require.NoError(t, err)
 
@@ -215,7 +215,7 @@ func TestBrokerDisclosePublisherDetails(t *testing.T) {
 	_, err = broker.ReceiveMessage(subDetails.ID(), subscribe)
 	require.NoError(t, err)
 
-	pubDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	pubDetails := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err = broker.AddSession(pubDetails)
 	require.NoError(t, err)
 

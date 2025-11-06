@@ -76,6 +76,35 @@ func AsUInt64(i any) (uint64, bool) {
 	return 0, false
 }
 
+func AsInt64(i any) (int64, bool) {
+	switch v := i.(type) {
+	case int64:
+		return v, true // #nosec
+	case uint64:
+		return int64(v), true // #nosec
+	case uint8:
+		return int64(v), true
+	case int:
+		return int64(v), true // #nosec
+	case int8:
+		return int64(v), true // #nosec
+	case int32:
+		return int64(v), true // #nosec
+	case uint:
+		return int64(v), true // #nosec
+	case uint16:
+		return int64(v), true
+	case uint32:
+		return int64(v), true
+	case float64:
+		return int64(v), true
+	case float32:
+		return int64(v), true
+	}
+
+	return 0, false
+}
+
 func AsFloat64(v interface{}) (float64, bool) {
 	switch v := v.(type) {
 	case float64:

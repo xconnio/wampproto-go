@@ -7,7 +7,9 @@ import (
 	"sync"
 
 	"github.com/hashicorp/go-immutable-radix/v2"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/xconnio/wampproto-go/auth"
 	"github.com/xconnio/wampproto-go/messages"
 	"github.com/xconnio/wampproto-go/util"
 )
@@ -52,6 +54,7 @@ type Registration struct {
 	nextCallee       int
 	callees          []uint64
 	Match            string
+	Created          string
 }
 
 type CallMap struct {
@@ -59,31 +62,96 @@ type CallMap struct {
 	CallID   uint64
 }
 
+type RegistrationEvent struct {
+	SessionID      uint64
+	RegistrationID uint64
+}
+
 type Dealer struct {
-	sessions                   map[uint64]*SessionDetails
-	registrationsByProcedure   map[string]*Registration
-	registrationsBySession     map[uint64]map[uint64]*Registration
-	prefixTree                 *iradix.Tree[*Registration]
-	wcRegistrationsByProcedure map[string]*Registration
-	pendingCalls               map[uint64]*PendingInvocation
-	invocationIDbyCall         map[CallMap]uint64
-	details                    bool
+	sessions                         map[uint64]*SessionDetails
+	registrationsByProcedure         map[string]*Registration
+	registrationsBySession           map[uint64]map[uint64]*Registration
+	prefixTree                       *iradix.Tree[*Registration]
+	wildcardRegistrationsByProcedure map[string]*Registration
+	pendingCalls                     map[uint64]*PendingInvocation
+	invocationIDbyCall               map[CallMap]uint64
+	details                          bool
 
 	idGen *SessionScopeIDGenerator
 	sync.Mutex
+
+	RegistrationCreated chan *Registration
+	CalleeAdded         chan RegistrationEvent
+	CalleeRemoved       chan RegistrationEvent
+	RegistrationDeleted chan RegistrationEvent
+
+	exactRegistrationsByID    map[uint64]*Registration
+	prefixRegistrationsByID   map[uint64]*Registration
+	wildcardRegistrationsByID map[uint64]*Registration
+	metaAPi                   bool
 }
 
 func NewDealer() *Dealer {
 	return &Dealer{
-		sessions:                   make(map[uint64]*SessionDetails),
-		registrationsByProcedure:   make(map[string]*Registration),
-		registrationsBySession:     make(map[uint64]map[uint64]*Registration),
-		pendingCalls:               make(map[uint64]*PendingInvocation),
-		invocationIDbyCall:         make(map[CallMap]uint64),
-		idGen:                      &SessionScopeIDGenerator{},
-		prefixTree:                 iradix.New[*Registration](),
-		wcRegistrationsByProcedure: make(map[string]*Registration),
+		sessions:                         make(map[uint64]*SessionDetails),
+		registrationsByProcedure:         make(map[string]*Registration),
+		registrationsBySession:           make(map[uint64]map[uint64]*Registration),
+		pendingCalls:                     make(map[uint64]*PendingInvocation),
+		invocationIDbyCall:               make(map[CallMap]uint64),
+		idGen:                            &SessionScopeIDGenerator{},
+		prefixTree:                       iradix.New[*Registration](),
+		wildcardRegistrationsByProcedure: make(map[string]*Registration),
+		RegistrationCreated:              make(chan *Registration),
+		CalleeAdded:                      make(chan RegistrationEvent),
+		CalleeRemoved:                    make(chan RegistrationEvent),
+		RegistrationDeleted:              make(chan RegistrationEvent),
+		exactRegistrationsByID:           make(map[uint64]*Registration),
+		prefixRegistrationsByID:          make(map[uint64]*Registration),
+		wildcardRegistrationsByID:        make(map[uint64]*Registration),
 	}
+}
+
+func (d *Dealer) ExactRegistrationsByID() map[uint64]*Registration {
+	d.Lock()
+	defer d.Unlock()
+	copyMap := make(map[uint64]*Registration, len(d.exactRegistrationsByID))
+	for id, reg := range d.exactRegistrationsByID {
+		copyMap[id] = reg
+	}
+
+	return copyMap
+}
+
+func (d *Dealer) PrefixRegistrationsByID() map[uint64]*Registration {
+	d.Lock()
+	defer d.Unlock()
+	copyMap := make(map[uint64]*Registration, len(d.prefixRegistrationsByID))
+	for id, reg := range d.prefixRegistrationsByID {
+		copyMap[id] = reg
+	}
+
+	return copyMap
+}
+
+func (d *Dealer) WildCardRegistrationsByID() map[uint64]*Registration {
+	d.Lock()
+	defer d.Unlock()
+	copyMap := make(map[uint64]*Registration, len(d.wildcardRegistrationsByID))
+	for id, reg := range d.wildcardRegistrationsByID {
+		copyMap[id] = reg
+	}
+
+	return copyMap
+}
+
+func (d *Dealer) RegistrationsByProcedure() map[string]*Registration {
+	d.Lock()
+	defer d.Unlock()
+	copyMap := make(map[string]*Registration, len(d.registrationsByProcedure))
+	for id, reg := range d.registrationsByProcedure {
+		copyMap[id] = reg
+	}
+	return copyMap
 }
 
 func (d *Dealer) AddSession(details *SessionDetails) error {
@@ -109,39 +177,95 @@ func (d *Dealer) RemoveSession(id uint64) error {
 		return fmt.Errorf("cannot remove client with id %d not attached", id)
 	}
 
-	registrations := d.registrationsBySession[id]
-	for _, reg := range registrations {
-		registration, ok := d.registrationsByProcedure[reg.Procedure]
-		if !ok {
-			continue
-		}
-		delete(registration.Registrants, id)
-		if len(registration.Registrants) == 0 {
-			delete(d.registrationsByProcedure, registration.Procedure)
-		}
-		if registration.Match == MatchPrefix {
-			d.prefixTree.Delete([]byte(registration.Procedure))
-		}
-
-		if registration.Match == MatchWildcard {
-			delete(d.wcRegistrationsByProcedure, registration.Procedure)
-		}
-
-		for i, callee := range registration.callees {
-			if callee == id {
-				if len(registration.callees) == 1 {
-					registration.callees = make([]uint64, 0)
-				} else {
-					registration.callees = append(registration.callees[:i], registration.callees[i+1:]...)
-				}
+	registrations, ok := d.registrationsBySession[id]
+	if ok {
+		for _, reg := range registrations {
+			registration, ok := d.registrationsByProcedure[reg.Procedure]
+			if !ok {
+				continue
 			}
+			d.removeRegistration(registration.ID, id)
 		}
+	} else {
+		log.Debugf("Dealer: no registrations found for session %d", id)
 	}
 
 	delete(d.registrationsBySession, id)
 	delete(d.sessions, id)
 
 	return nil
+}
+
+func removeCallee(callees []uint64, id uint64) []uint64 {
+	for i, callee := range callees {
+		if callee == id {
+			if len(callees) == 1 {
+				return make([]uint64, 0)
+			}
+			return append(callees[:i], callees[i+1:]...)
+		}
+	}
+	return callees
+}
+
+func (d *Dealer) removeRegistration(registrationID uint64, sessionID uint64) {
+	registrations, exists := d.registrationsBySession[sessionID]
+	if !exists || len(registrations) == 0 {
+		return
+	}
+
+	registration, ok := registrations[registrationID]
+	if !ok {
+		log.Debugf("Dealer: registration %d not found for session %d", registrationID, sessionID)
+		return
+	}
+	delete(registration.Registrants, sessionID)
+	registration.callees = removeCallee(registration.callees, sessionID)
+
+	if len(registration.Registrants) == 0 {
+		delete(registrations, registrationID)
+		delete(d.registrationsByProcedure, registration.Procedure)
+		switch registration.Match {
+		case MatchPrefix:
+			delete(d.prefixRegistrationsByID, registration.ID)
+			d.prefixTree, _, _ = d.prefixTree.Delete([]byte(registration.Procedure))
+		case MatchWildcard:
+			delete(d.wildcardRegistrationsByID, registration.ID)
+			delete(d.wildcardRegistrationsByProcedure, registration.Procedure)
+		default:
+			delete(d.exactRegistrationsByID, registration.ID)
+		}
+		if d.metaAPi {
+			select {
+			case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
+			select {
+			case d.RegistrationDeleted <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
+		}
+	} else {
+		registrations[registrationID] = registration
+		d.registrationsByProcedure[registration.Procedure] = registration
+		switch registration.Match {
+		case MatchPrefix:
+			d.prefixTree, _, _ = d.prefixTree.Insert([]byte(registration.Procedure), registration)
+			d.prefixRegistrationsByID[registration.ID] = registration
+		case MatchWildcard:
+			d.wildcardRegistrationsByProcedure[registration.Procedure] = registration
+			d.wildcardRegistrationsByID[registration.ID] = registration
+		default:
+			d.exactRegistrationsByID[registration.ID] = registration
+		}
+		if d.metaAPi {
+			select {
+			case d.CalleeRemoved <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
+			default:
+			}
+		}
+	}
+	d.registrationsBySession[sessionID] = registrations
 }
 
 func (d *Dealer) HasProcedure(procedure string) bool {
@@ -168,25 +292,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		var regs *Registration
 		var found bool
 
-		regs, found = d.registrationsByProcedure[call.Procedure()]
-		if !found || len(regs.Registrants) == 0 {
-			if d.prefixTree.Len() > 0 {
-				_, reg, ok := d.prefixTree.Root().LongestPrefix([]byte(call.Procedure()))
-				if ok {
-					regs, found = reg, true
-				}
-			}
-
-			if !found {
-				for procedure, reg := range d.wcRegistrationsByProcedure {
-					if wildcardMatch(call.Procedure(), procedure) {
-						regs, found = reg, true
-						break
-					}
-				}
-			}
-		}
-
+		regs, found = d.matchRegistration(call.Procedure())
 		if !found || len(regs.Registrants) == 0 {
 			callErr := messages.NewError(messages.MessageTypeCall, call.RequestID(), map[string]any{},
 				"wamp.error.no_such_procedure", nil, nil)
@@ -251,8 +357,9 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		}
 
 		var invocation *messages.Invocation
-		callee := d.sessions[calleeID]
-		if callee == nil {
+		callee, ok := d.sessions[calleeID]
+		if !ok || callee == nil {
+			log.Debugf("Dealer: callee %d gone before sending invocation", calleeID)
 			return nil, fmt.Errorf("call: callee %d gone before sending invocation", calleeID)
 		}
 
@@ -280,8 +387,9 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		}
 
 		var result *messages.Result
-		caller := d.sessions[pending.CallerID]
-		if caller == nil {
+		caller, ok := d.sessions[pending.CallerID]
+		if !ok || caller == nil {
+			log.Debugf("Dealer: caller %d gone before receiving result", pending.CallerID)
 			return nil, fmt.Errorf("yield: caller %d gone before receiving result", pending.CallerID)
 		}
 
@@ -310,7 +418,6 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			}
 			registration.Registrants[sessionID] = sessionID
 			registration.callees = append(registration.callees, sessionID)
-
 		} else {
 			registration = &Registration{
 				ID:               d.idGen.NextID(),
@@ -318,19 +425,36 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 				Registrants:      map[uint64]uint64{sessionID: sessionID},
 				callees:          []uint64{sessionID},
 				InvocationPolicy: invokePolicy,
+				Created:          auth.NowISO8601(),
 			}
+			if d.metaAPi {
+				select {
+				case d.RegistrationCreated <- registration:
+				default:
+				}
+			}
+		}
 
-			match := util.ToString(register.Options()[OptionMatch])
-			switch match {
-			case MatchPrefix:
-				registration.Match = match
-				d.prefixTree, _, _ = d.prefixTree.Insert([]byte(registration.Procedure), registration)
-			case MatchWildcard:
-				registration.Match = match
-				d.wcRegistrationsByProcedure[registration.Procedure] = registration
+		if d.metaAPi {
+			select {
+			case d.CalleeAdded <- RegistrationEvent{SessionID: sessionID, RegistrationID: registration.ID}:
 			default:
-				registration.Match = MatchExact
 			}
+		}
+
+		match := util.ToString(register.Options()[OptionMatch])
+		switch match {
+		case MatchPrefix:
+			registration.Match = match
+			d.prefixTree, _, _ = d.prefixTree.Insert([]byte(registration.Procedure), registration)
+			d.prefixRegistrationsByID[registration.ID] = registration
+		case MatchWildcard:
+			registration.Match = match
+			d.wildcardRegistrationsByProcedure[registration.Procedure] = registration
+			d.wildcardRegistrationsByID[registration.ID] = registration
+		default:
+			registration.Match = MatchExact
+			d.exactRegistrationsByID[registration.ID] = registration
 		}
 
 		d.registrationsByProcedure[register.Procedure()] = registration
@@ -346,19 +470,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 				unregister.RegistrationID())
 		}
 
-		registration := registrations[unregister.RegistrationID()]
-		delete(registration.Registrants, sessionID)
-
-		if len(registration.Registrants) == 0 {
-			delete(registrations, unregister.RegistrationID())
-			delete(d.registrationsByProcedure, registration.Procedure)
-			if registration.Match == MatchPrefix {
-				d.prefixTree.Delete([]byte(registration.Procedure))
-			}
-			if registration.Match == MatchWildcard {
-				delete(d.wcRegistrationsByProcedure, registration.Procedure)
-			}
-		}
+		d.removeRegistration(unregister.RegistrationID(), sessionID)
 
 		unregistered := messages.NewUnregistered(unregister.RequestID())
 		return &MessageWithRecipient{Message: unregistered, Recipient: sessionID}, nil
@@ -381,6 +493,38 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 	default:
 		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)
 	}
+}
+
+func (d *Dealer) matchRegistration(procedure string) (reg *Registration, found bool) {
+	if r, ok := d.registrationsByProcedure[procedure]; ok && len(r.Registrants) > 0 {
+		return r, true
+	}
+
+	if d.prefixTree.Len() > 0 {
+		_, reg, ok := d.prefixTree.Root().LongestPrefix([]byte(procedure))
+		if ok {
+			return reg, true
+		}
+	}
+
+	for pattern, reg := range d.wildcardRegistrationsByProcedure {
+		if wildcardMatch(procedure, pattern) {
+			return reg, true
+		}
+	}
+
+	return nil, false
+}
+func (d *Dealer) MatchRegistration(procedure string) (reg *Registration, found bool) {
+	d.Lock()
+	defer d.Unlock()
+	return d.matchRegistration(procedure)
+}
+
+func (d *Dealer) EnableMetaAPI() {
+	d.Lock()
+	defer d.Unlock()
+	d.metaAPi = true
 }
 
 func wildcardMatch(str, pattern string) bool {

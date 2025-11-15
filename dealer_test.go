@@ -390,4 +390,36 @@ func TestDealerInvocationOptions(t *testing.T) {
 		}
 		require.Len(t, recipients, 2)
 	})
+
+	t.Run("DisconnectOneCalleeAndCall", func(t *testing.T) {
+		require.NoError(t, dealer.RemoveSession(callee1.ID()))
+
+		for i := 0; i < 3; i++ {
+			call := messages.NewCall(uint64(10+i), nil, "roundrobin.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.Equal(t, callee2.ID(), inv.Recipient)
+		}
+
+		for i := 0; i < 3; i++ {
+			call := messages.NewCall(uint64(20+i), nil, "first.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.Equal(t, callee2.ID(), inv.Recipient)
+		}
+
+		for i := 0; i < 3; i++ {
+			call := messages.NewCall(uint64(30+i), nil, "last.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.Equal(t, callee2.ID(), inv.Recipient)
+		}
+
+		for i := 0; i < 3; i++ {
+			call := messages.NewCall(uint64(40+i), nil, "random.proc", nil, nil)
+			inv, err := dealer.ReceiveMessage(caller.ID(), call)
+			require.NoError(t, err)
+			require.Equal(t, callee2.ID(), inv.Recipient)
+		}
+	})
 }

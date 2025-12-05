@@ -218,14 +218,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 			authenticate := msg.(*messages.Authenticate)
 			response := a.response.(*auth.CRAResponse)
 
-			var secret []byte
-			if response.Salt() == "" {
-				secret = []byte(response.Secret())
-			} else {
-				secret = auth.DeriveWAMPCRAKey(response.Salt(), response.Secret(), response.Iterations(), response.KeyLen())
-			}
-
-			if !auth.VerifyWAMPCRASignature(authenticate.Signature(), a.challenge, secret) {
+			if !auth.VerifyWAMPCRASignature(authenticate.Signature(), a.challenge, []byte(response.Secret())) {
 				abort := messages.NewAbort(map[string]any{}, "wamp.error.authentication_failed", nil, nil)
 				return abort, nil
 			}

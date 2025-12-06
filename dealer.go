@@ -247,7 +247,7 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			details["procedure"] = call.Procedure()
 			details["caller"] = sessionID
 			details["caller_authid"] = caller.AuthID()
-			details["caller_authrole"] = caller.AuthRole()
+			details["caller_authroles"] = caller.AuthRoles()
 		}
 
 		var invocation *messages.Invocation

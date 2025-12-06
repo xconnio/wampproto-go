@@ -98,7 +98,7 @@ func TestGenerateCRAChallenge(t *testing.T) {
 	authrole := "authrole"
 	provider := "provider"
 
-	challenge, err := auth.GenerateWAMPCRAChallenge(session, authid, authrole, provider)
+	challenge, err := auth.GenerateWAMPCRAChallenge(session, authid, provider, []string{authrole})
 	require.NoError(t, err)
 
 	var data map[string]any
@@ -107,7 +107,7 @@ func TestGenerateCRAChallenge(t *testing.T) {
 
 	require.Equal(t, session, uint64(data["session"].(float64)))
 	require.Equal(t, authid, data["authid"])
-	require.Equal(t, authrole, data["authrole"])
+	require.Equal(t, []any{authrole}, data["authroles"])
 	require.Equal(t, provider, data["authprovider"])
 	require.Equal(t, auth.MethodCRA, data["authmethod"])
 	require.NotEmpty(t, data["nonce"])

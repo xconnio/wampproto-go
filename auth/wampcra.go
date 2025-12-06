@@ -114,7 +114,7 @@ func VerifyWAMPCRASignature(sig, chal string, key []byte) bool {
 	return hmac.Equal(sigBytes, SignWAMPCRAChallengeBytes(chal, key))
 }
 
-func GenerateWAMPCRAChallenge(session uint64, authid, authrole, provider string) (string, error) {
+func GenerateWAMPCRAChallenge(session uint64, authid, provider string, authroles []string) (string, error) {
 	nonce, err := makeNonce()
 	if err != nil {
 		return "", fmt.Errorf("failed to get nonce: %w", err)
@@ -125,7 +125,7 @@ func GenerateWAMPCRAChallenge(session uint64, authid, authrole, provider string)
 		"authprovider": provider,
 		"authid":       authid,
 		"timestamp":    NowISO8601(),
-		"authrole":     authrole,
+		"authroles":    authroles,
 		"authmethod":   MethodCRA,
 		"session":      session,
 	}

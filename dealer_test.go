@@ -18,7 +18,8 @@ func TestDealerAddRemoveSession(t *testing.T) {
 	})
 
 	t.Run("AddRemove", func(t *testing.T) {
-		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+			false, wampproto.RouterRoles, nil)
 		err := dealer.AddSession(details)
 		require.NoError(t, err)
 
@@ -33,7 +34,8 @@ func TestDealerAddRemoveSession(t *testing.T) {
 func TestDealerRegisterUnregister(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
@@ -71,7 +73,8 @@ func TestDealerRegisterUnregister(t *testing.T) {
 	})
 
 	t.Run("Call", func(t *testing.T) {
-		caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+		caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", []string{"anonymous"},
+			false, wampproto.RouterRoles, nil)
 		err := dealer.AddSession(caller)
 		require.NoError(t, err)
 
@@ -127,8 +130,10 @@ func TestDealerRegisterUnregister(t *testing.T) {
 func TestProgressiveCallResults(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
@@ -169,8 +174,10 @@ func TestProgressiveCallResults(t *testing.T) {
 func TestProgressiveCallInvocations(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
@@ -229,7 +236,8 @@ func TestDealerWildcardRegistration(t *testing.T) {
 func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI string) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
@@ -246,7 +254,8 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 	})
 
 	t.Run("Call", func(t *testing.T) {
-		caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+		caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", []string{"anonymous"},
+			false, wampproto.RouterRoles, nil)
 		err := dealer.AddSession(caller)
 		require.NoError(t, err)
 
@@ -271,7 +280,8 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 func TestDealerDiscloseCallerDetails(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
@@ -279,7 +289,8 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 	_, err = dealer.ReceiveMessage(callee.ID(), register)
 	require.NoError(t, err)
 
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 	err = dealer.AddSession(caller)
 	require.NoError(t, err)
 
@@ -298,7 +309,7 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 		require.NoError(t, err)
 		invocation := invWithRecipient.Message.(*messages.Invocation)
 		expectedDetails := map[string]any{"caller": uint64(2), "caller_authid": "authid",
-			"caller_authrole": "anonymous", "procedure": "foo.bar"}
+			"caller_authroles": []string{"anonymous"}, "procedure": "foo.bar"}
 		require.Equal(t, expectedDetails, invocation.Details())
 	})
 
@@ -315,12 +326,15 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 func TestDealerInvocationOptions(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
-	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
+	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 	require.NoError(t, dealer.AddSession(callee1))
 	require.NoError(t, dealer.AddSession(callee2))
 
-	caller := wampproto.NewSessionDetails(3, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(3, "realm", "authid", "anonymous", []string{"anonymous"},
+		false, wampproto.RouterRoles, nil)
 	require.NoError(t, dealer.AddSession(caller))
 
 	registerProcedures := func(proc, policy string) {

@@ -69,17 +69,17 @@ func (b *baseRequest) AuthExtra() map[string]any {
 }
 
 type baseResponse struct {
-	authID   string
-	authRole string
+	authID    string
+	authRoles []string
 
 	ttl time.Duration
 }
 
-func NewResponse(authID, authRole string, ttl time.Duration) (Response, error) {
+func NewResponse(authID string, authRoles []string, ttl time.Duration) (Response, error) {
 	return &baseResponse{
-		authID:   authID,
-		authRole: authRole,
-		ttl:      ttl,
+		authID:    authID,
+		authRoles: authRoles,
+		ttl:       ttl,
 	}, nil
 }
 
@@ -87,8 +87,8 @@ func (r *baseResponse) AuthID() string {
 	return r.authID
 }
 
-func (r *baseResponse) AuthRole() string {
-	return r.authRole
+func (r *baseResponse) AuthRoles() []string {
+	return r.authRoles
 }
 
 func (r *baseResponse) TTL() time.Duration {
@@ -97,7 +97,7 @@ func (r *baseResponse) TTL() time.Duration {
 
 type Response interface {
 	AuthID() string
-	AuthRole() string
+	AuthRoles() []string
 
 	TTL() time.Duration
 }
@@ -145,16 +145,17 @@ type CRAResponse struct {
 	keyLen     int
 }
 
-func NewCRAResponse(authID, authRole, secret string, ttl time.Duration) Response {
-	response, _ := NewResponse(authID, authRole, ttl)
+func NewCRAResponse(authID, secret string, authRoles []string, ttl time.Duration) Response {
+	response, _ := NewResponse(authID, authRoles, ttl)
 	return &CRAResponse{
 		Response: response,
 		secret:   secret,
 	}
 }
 
-func NewCRAResponseSalted(authID, authRole, secret, salt string, iterations, keyLen int, ttl time.Duration) Response {
-	response, _ := NewResponse(authID, authRole, ttl)
+func NewCRAResponseSalted(authID, secret, salt string, authRoles []string, iterations, keyLen int,
+	ttl time.Duration) Response {
+	response, _ := NewResponse(authID, authRoles, ttl)
 	return &CRAResponse{
 		Response:   response,
 		secret:     secret,

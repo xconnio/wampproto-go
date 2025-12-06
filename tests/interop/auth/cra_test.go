@@ -13,7 +13,7 @@ import (
 const testSecret = "private"
 
 func TestGenerateCRAChallenge(t *testing.T) {
-	challenge, err := auth.GenerateWAMPCRAChallenge(1, "anonymous", "anonymous", "static")
+	challenge, err := auth.GenerateWAMPCRAChallenge(1, "anonymous", "static", []string{"anonymous"})
 	require.NoError(t, err)
 
 	var signChallengeCommand = fmt.Sprintf("auth cra sign-challenge %s %s", challenge, testSecret)

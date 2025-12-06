@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/xconnio/wampproto-go/auth"
 	"github.com/xconnio/wampproto-go/messages"
@@ -43,7 +44,7 @@ func (d *defaultAuthenticator) Authenticate(request auth.Request) (auth.Response
 		return nil, fmt.Errorf("recevied request for %s auth but only anonymous is supported", request.AuthMethod())
 	}
 
-	return auth.NewResponse("anonymous", "anonymous", 0)
+	return auth.NewResponse("anonymous", []string{"anonymous"}, 0)
 }
 
 type Acceptor struct {
@@ -141,7 +142,7 @@ func (a *Acceptor) ReceiveMessage(msg messages.Message) (messages.Message, error
 				return nil, errors.New("internal response for WAMPCRA auth was of invalid type")
 			}
 
-			chStr, err := auth.GenerateWAMPCRAChallenge(GenerateID(), response.AuthID(), response.AuthRole(), "dynamic")
+			chStr, err := auth.GenerateWAMPCRAChallenge(GenerateID(), response.AuthID(), "dynamic", response.AuthRoles())
 			if err != nil {
 				return nil, err
 			}
@@ -252,12 +253,13 @@ func (a *Acceptor) sendWelcome(sessionID uint64, response auth.Response, authExt
 		"realm":      a.hello.Realm(),
 		"roles":      RouterRoles,
 		"authid":     response.AuthID(),
-		"authrole":   response.AuthRole(),
+		"authrole":   strings.Join(response.AuthRoles(), ","),
+		"authroles":  response.AuthRoles(),
 		"authmethod": a.authMethod,
 	})
 
-	a.sessionDetails = NewSessionDetails(sessionID, a.hello.Realm(), response.AuthID(), response.AuthRole(),
-		string(a.authMethod), a.serializer.Static(), RouterRoles, authExtra)
+	a.sessionDetails = NewSessionDetails(sessionID, a.hello.Realm(), response.AuthID(),
+		string(a.authMethod), response.AuthRoles(), a.serializer.Static(), RouterRoles, authExtra)
 	a.state = AcceptorStateWelcomeSent
 
 	return welcome

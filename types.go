@@ -9,7 +9,7 @@ type SessionDetails struct {
 	id          uint64
 	realm       string
 	authID      string
-	authRole    string
+	authRoles   []string
 	routerRoles map[string]any
 	createdAt   string
 	authExtra   map[string]any
@@ -18,7 +18,7 @@ type SessionDetails struct {
 	staticSerializer bool
 }
 
-func NewSessionDetails(id uint64, realm, authID, authRole, authMethod string, staticSerializer bool,
+func NewSessionDetails(id uint64, realm, authID, authMethod string, authRoles []string, staticSerializer bool,
 	routerRoles, authExtra map[string]any) *SessionDetails {
 	if routerRoles == nil {
 		routerRoles = make(map[string]any)
@@ -30,7 +30,7 @@ func NewSessionDetails(id uint64, realm, authID, authRole, authMethod string, st
 		id:               id,
 		realm:            realm,
 		authID:           authID,
-		authRole:         authRole,
+		authRoles:        authRoles,
 		staticSerializer: staticSerializer,
 		routerRoles:      routerRoles,
 		createdAt:        auth.NowISO8601(),
@@ -51,8 +51,8 @@ func (s *SessionDetails) AuthID() string {
 	return s.authID
 }
 
-func (s *SessionDetails) AuthRole() string {
-	return s.authRole
+func (s *SessionDetails) AuthRoles() []string {
+	return s.authRoles
 }
 
 func (s *SessionDetails) AuthMethod() string {

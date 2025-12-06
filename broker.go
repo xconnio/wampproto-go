@@ -213,7 +213,7 @@ func (b *Broker) ReceivePublish(sessionID uint64, publish *messages.Publish) (*P
 			details["topic"] = publish.Topic()
 			details["publisher"] = sessionID
 			details["publisher_authid"] = publisher.AuthID()
-			details["publisher_authrole"] = publisher.AuthRole()
+			details["publisher_authroles"] = publisher.AuthRoles()
 		}
 
 		event := messages.NewEvent(subscription.ID, publicationID, details, publish.Args(), publish.KwArgs())

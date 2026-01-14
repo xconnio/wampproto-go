@@ -32,6 +32,7 @@ func TestDealerAddRemoveSession(t *testing.T) {
 
 func TestDealerRegisterUnregister(t *testing.T) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 
 	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
@@ -108,14 +109,18 @@ func TestDealerRegisterUnregister(t *testing.T) {
 
 	t.Run("Unregister", func(t *testing.T) {
 		unregister := messages.NewUnregister(callee.ID(), registerationID)
-		unregWithRecipient, err := dealer.ReceiveMessage(callee.ID(), unregister)
-		require.NoError(t, err)
-		require.NotNil(t, unregWithRecipient)
-		require.Equal(t, callee.ID(), unregWithRecipient.Recipient)
-		require.Equal(t, messages.MessageTypeUnregistered, unregWithRecipient.Message.Type())
+		go func() {
+			unregWithRecipient, err := dealer.ReceiveMessage(callee.ID(), unregister)
+			require.NoError(t, err)
+			require.NotNil(t, unregWithRecipient)
+			require.Equal(t, callee.ID(), unregWithRecipient.Recipient)
+			require.Equal(t, messages.MessageTypeUnregistered, unregWithRecipient.Message.Type())
 
-		hasProcedure := dealer.HasProcedure("foo.bar")
-		require.False(t, hasProcedure)
+			hasProcedure := dealer.HasProcedure("foo.bar")
+			require.False(t, hasProcedure)
+		}()
+
+		<-dealer.RegistrationDeleted
 
 		t.Run("InvalidRegistration", func(t *testing.T) {
 			_, err = dealer.ReceiveMessage(callee.ID(), unregister)
@@ -228,6 +233,7 @@ func TestDealerWildcardRegistration(t *testing.T) {
 
 func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI string) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 
 	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
@@ -314,6 +320,7 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 
 func TestDealerInvocationOptions(t *testing.T) {
 	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
 
 	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
 	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
@@ -324,11 +331,18 @@ func TestDealerInvocationOptions(t *testing.T) {
 	require.NoError(t, dealer.AddSession(caller))
 
 	registerProcedures := func(proc, policy string) {
-		for _, callee := range []uint64{callee1.ID(), callee2.ID()} {
-			register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
-			msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
-			require.NoError(t, err)
-			require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+		for i, callee := range []uint64{callee1.ID(), callee2.ID()} {
+			go func() {
+				register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
+				msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
+				require.NoError(t, err)
+				require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+			}()
+			if i == 0 {
+				<-dealer.RegistrationCreated
+			} else {
+				<-dealer.CalleeAdded
+			}
 		}
 	}
 
@@ -389,5 +403,71 @@ func TestDealerInvocationOptions(t *testing.T) {
 			recipients[inv.Recipient] = true
 		}
 		require.Len(t, recipients, 2)
+	})
+}
+
+func TestRegistrationMaps(t *testing.T) {
+	dealer := wampproto.NewDealer()
+	dealer.EnableMetaAPI()
+	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	require.NoError(t, dealer.AddSession(callee1))
+	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", false, wampproto.RouterRoles)
+	require.NoError(t, dealer.AddSession(callee2))
+
+	registerProcedures := func(callee *wampproto.SessionDetails, proc, match string) uint64 {
+		register := messages.NewRegister(callee.ID(), map[string]any{
+			"invoke": "first",
+			"match":  match,
+		}, proc)
+		msgWithRecipient, err := dealer.ReceiveMessage(callee.ID(), register)
+		require.NoError(t, err)
+		require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
+		return msgWithRecipient.Message.(*messages.Registered).RegistrationID()
+	}
+
+	runRegistrationTest := func(t *testing.T, match string,
+		getMap func() map[uint64]*wampproto.Registration) {
+
+		regID1 := registerProcedures(callee1, "io.xconn.test."+match, match)
+		require.Contains(t, getMap(), regID1)
+		require.Len(t, getMap()[regID1].Registrants, 1)
+
+		regID2 := registerProcedures(callee2, "io.xconn.test."+match, match)
+		require.Equal(t, regID1, regID2)
+		require.Contains(t, getMap(), regID1)
+		require.Len(t, getMap(), 1)
+		require.Len(t, getMap()[regID2].Registrants, 2)
+
+		// Unregister the first callee: registration should remain
+		unregister1 := messages.NewUnregister(callee1.ID(), regID1)
+		_, err := dealer.ReceiveMessage(callee1.ID(), unregister1)
+		require.NoError(t, err)
+		require.Contains(t, getMap(), regID1)
+		require.Len(t, getMap()[regID1].Registrants, 1)
+
+		// Unregister the second (last) callee: registration should be removed
+		unregister2 := messages.NewUnregister(callee2.ID(), regID2)
+		_, err = dealer.ReceiveMessage(callee2.ID(), unregister2)
+		require.NoError(t, err)
+		require.NotContains(t, getMap(), regID1)
+		require.Empty(t, getMap())
+	}
+
+	t.Run("Exact", func(t *testing.T) {
+		runRegistrationTest(t, "exact", dealer.ExactRegistrationsByID)
+		require.Empty(t, dealer.PrefixRegistrationsByID())
+		require.Empty(t, dealer.WildCardRegistrationsByID())
+	})
+
+	t.Run("Prefix", func(t *testing.T) {
+		runRegistrationTest(t, "prefix", dealer.PrefixRegistrationsByID)
+		require.Empty(t, dealer.ExactRegistrationsByID())
+		require.Empty(t, dealer.WildCardRegistrationsByID())
+	})
+
+	t.Run("Wildcard", func(t *testing.T) {
+		runRegistrationTest(t, "wildcard", dealer.WildCardRegistrationsByID)
+		require.Empty(t, dealer.ExactRegistrationsByID())
+		require.Empty(t, dealer.PrefixRegistrationsByID())
 	})
 }

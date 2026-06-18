@@ -20,10 +20,10 @@ func welcomesEqual(msg1 *messages.Welcome, msg2 *messages.Welcome) bool {
 func testWelcomeMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
 	var message = messages.NewWelcome(1, map[string]any{
 		"roles":      map[string]any{"callee": true},
-		"authrole":   "anonymous",
-		"authid":     "foo",
-		"authmethod": "anonymous",
-		"authextra":  map[string]any{"foo": "bar"},
+		"authrole":   testAnonymous,
+		"authid":     testFoo,
+		"authmethod": testAnonymous,
+		"authextra":  map[string]any{testFoo: testBar},
 	})
 	command := fmt.Sprintf("message welcome 1 --authmethod=anonymous --authid=foo --authrole=anonymous "+
 		"--roles callee=true -e foo=bar --serializer %s --output hex", serializerStr)

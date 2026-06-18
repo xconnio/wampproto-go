@@ -22,7 +22,8 @@ func errorsEqual(msg1 *messages.Error, msg2 *messages.Error) bool {
 }
 
 func testErrorMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewError(1, 1, map[string]any{"foo": "bar"}, "test", []any{"abc"}, map[string]any{"abc": "xyz"})
+	var message = messages.NewError(1, 1, map[string]any{testFoo: testBar}, "test",
+		[]any{testAbc}, map[string]any{testAbc: testXyz})
 	command := fmt.Sprintf("message error 1 1 test abc -k abc=xyz -d foo=bar --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

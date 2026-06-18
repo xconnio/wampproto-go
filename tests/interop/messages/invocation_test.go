@@ -21,7 +21,8 @@ func invocationsEqual(msg1 *messages.Invocation, msg2 *messages.Invocation) bool
 }
 
 func testInvocationMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewInvocation(1, 1, map[string]any{"foo": true}, []any{"abc"}, map[string]any{"abc": "xyz"})
+	var message = messages.NewInvocation(1, 1, map[string]any{testFoo: true},
+		[]any{testAbc}, map[string]any{testAbc: testXyz})
 	command := fmt.Sprintf("message invocation 1 1 abc -d foo=true -k abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

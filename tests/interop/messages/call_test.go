@@ -21,7 +21,7 @@ func callsEqual(msg1 *messages.Call, msg2 *messages.Call) bool {
 }
 
 func testCallMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewCall(1, map[string]any{}, "test", []any{"abc"}, map[string]any{"abc": "xyz"})
+	var message = messages.NewCall(1, map[string]any{}, "test", []any{testAbc}, map[string]any{testAbc: testXyz})
 	command := fmt.Sprintf("message call 1 test abc -k abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

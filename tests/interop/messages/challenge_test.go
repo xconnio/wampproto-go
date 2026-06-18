@@ -18,7 +18,7 @@ func challengesEqual(msg1 *messages.Challenge, msg2 *messages.Challenge) bool {
 }
 
 func testChallengeMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewChallenge("anonymous", map[string]any{"foo": "bar"})
+	var message = messages.NewChallenge(testAnonymous, map[string]any{testFoo: testBar})
 	command := fmt.Sprintf("message challenge anonymous -e foo=bar --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

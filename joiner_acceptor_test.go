@@ -36,7 +36,7 @@ func (a *Authenticator) Authenticate(request auth.Request) (auth.Response, error
 	switch request.AuthMethod() {
 	case auth.MethodAnonymous:
 		if request.Realm() == realm && request.AuthID() == authID {
-			return auth.NewResponse(request.AuthID(), "anonymous", 0)
+			return auth.NewResponse(request.AuthID(), testRole, 0)
 		}
 
 		return nil, fmt.Errorf("invalid realm")
@@ -47,14 +47,14 @@ func (a *Authenticator) Authenticate(request auth.Request) (auth.Response, error
 			return nil, fmt.Errorf("invalid request")
 		}
 		if ticketRequest.Realm() == realm && ticketRequest.Ticket() == ticket {
-			return auth.NewResponse(ticketRequest.AuthID(), "anonymous", 0)
+			return auth.NewResponse(ticketRequest.AuthID(), testRole, 0)
 		}
 
 		return nil, fmt.Errorf("invalid ticket")
 
 	case auth.MethodCRA:
 		if request.Realm() == realm && request.AuthID() == authID {
-			return auth.NewCRAResponse(request.AuthID(), "anonymous", secret, 0), nil
+			return auth.NewCRAResponse(request.AuthID(), testRole, secret, 0), nil
 		}
 
 		return nil, fmt.Errorf("invalid realm")
@@ -66,7 +66,7 @@ func (a *Authenticator) Authenticate(request auth.Request) (auth.Response, error
 		}
 
 		if cryptosignRequest.Realm() == realm && cryptosignRequest.PublicKey() == publicKey {
-			return auth.NewResponse(cryptosignRequest.AuthID(), "anonymous", 0)
+			return auth.NewResponse(cryptosignRequest.AuthID(), testRole, 0)
 		}
 
 		return nil, fmt.Errorf("unknown publickey")
@@ -199,7 +199,7 @@ func TestTicketAuth(t *testing.T) {
 
 	t.Run("InvalidTicket", func(t *testing.T) {
 		jsonSerializer := &serializers.JSONSerializer{}
-		ticketAuthenticator := auth.NewTicketAuthenticator(authID, "abc", map[string]any{})
+		ticketAuthenticator := auth.NewTicketAuthenticator(authID, testArg, map[string]any{})
 		err := testAuth(t, ticketAuthenticator, jsonSerializer)
 		require.EqualError(t, err, "wamp.error.authentication_failed")
 	})
@@ -229,14 +229,14 @@ func TestCRAAuth(t *testing.T) {
 
 	t.Run("InvalidSecret", func(t *testing.T) {
 		jsonSerializer := &serializers.JSONSerializer{}
-		craAuthenticator := auth.NewWAMPCRAAuthenticator(authID, "abc", map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator(authID, testArg, map[string]any{})
 		err := testAuth(t, craAuthenticator, jsonSerializer)
 		require.EqualError(t, err, "wamp.error.authentication_failed")
 	})
 
 	t.Run("InvalidAuthID", func(t *testing.T) {
 		jsonSerializer := &serializers.JSONSerializer{}
-		craAuthenticator := auth.NewWAMPCRAAuthenticator("abc", secret, map[string]any{})
+		craAuthenticator := auth.NewWAMPCRAAuthenticator(testArg, secret, map[string]any{})
 		err := testAuth(t, craAuthenticator, jsonSerializer)
 		require.EqualError(t, err, "wamp.error.authentication_failed")
 	})
@@ -296,7 +296,7 @@ func (a *testAuthenticator) Authenticate(request auth.Request) (auth.Response, e
 	switch request.AuthMethod() {
 	case auth.MethodAnonymous:
 		if request.Realm() == realm && request.AuthID() == authID {
-			return auth.NewResponse(request.AuthID(), "anonymous", 0)
+			return auth.NewResponse(request.AuthID(), testRole, 0)
 		}
 
 		return nil, fmt.Errorf("invalid realm")
@@ -334,9 +334,9 @@ func TestNilRoles(t *testing.T) {
 	require.NoError(t, err)
 
 	welcomeMsg := messages.NewWelcome(1, map[string]any{
-		"authrole":   "anonymous",
-		"authid":     "foo",
-		"authmethod": "anonymous",
+		"authrole":   testRole,
+		testAuthID:   "foo",
+		"authmethod": testRole,
 		"authextra":  map[string]any{"foo": "bar"},
 	})
 	message, err := joiner.ReceiveMessage(welcomeMsg)

@@ -18,7 +18,7 @@ func cancelsEqual(msg1 *messages.Cancel, msg2 *messages.Cancel) bool {
 }
 
 func testCancelMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewCancel(1, map[string]any{"foo": "bar"})
+	var message = messages.NewCancel(1, map[string]any{testFoo: testBar})
 	command := fmt.Sprintf("message cancel 1 -o foo=bar --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

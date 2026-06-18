@@ -66,20 +66,19 @@ func registerCallAndUnregister(t *testing.T, procedure string, serializer serial
 }
 
 func TestSessionCall(t *testing.T) {
-	procedure := "foo.bar"
 	t.Run("JSON", func(t *testing.T) {
 		serializer := &serializers.JSONSerializer{}
-		registerCallAndUnregister(t, procedure, serializer)
+		registerCallAndUnregister(t, testURI, serializer)
 	})
 
 	t.Run("CBOR", func(t *testing.T) {
 		serializer := &serializers.CBORSerializer{}
-		registerCallAndUnregister(t, procedure, serializer)
+		registerCallAndUnregister(t, testURI, serializer)
 	})
 
 	t.Run("MSGPACK", func(t *testing.T) {
 		serializer := &serializers.MsgPackSerializer{}
-		registerCallAndUnregister(t, procedure, serializer)
+		registerCallAndUnregister(t, testURI, serializer)
 	})
 }
 
@@ -125,7 +124,7 @@ func subscribePublishAndUnsubscribe(t *testing.T, topic string, serializer seria
 }
 
 func TestSessionPublish(t *testing.T) {
-	topic := "foo.bar"
+	topic := testURI
 	t.Run("JSON", func(t *testing.T) {
 		serializer := &serializers.JSONSerializer{}
 		subscribePublishAndUnsubscribe(t, topic, serializer)

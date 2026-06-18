@@ -12,6 +12,14 @@ import (
 	"github.com/xconnio/wampproto-go/tests"
 )
 
+const (
+	testAbc       = "abc"
+	testXyz       = "xyz"
+	testBar       = "bar"
+	testFoo       = "foo"
+	testAnonymous = "anonymous"
+)
+
 func abortsEqual(msg1 *messages.Abort, msg2 *messages.Abort) bool {
 	return msg1.Reason() == msg2.Reason() &&
 		reflect.DeepEqual(msg1.Details(), msg2.Details()) &&
@@ -20,7 +28,7 @@ func abortsEqual(msg1 *messages.Abort, msg2 *messages.Abort) bool {
 }
 
 func testAbortMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewAbort(map[string]any{}, "crash", []any{"abc"}, map[string]any{"abc": "xyz"})
+	var message = messages.NewAbort(map[string]any{}, "crash", []any{testAbc}, map[string]any{testAbc: testXyz})
 	command := fmt.Sprintf("message abort crash abc -k abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

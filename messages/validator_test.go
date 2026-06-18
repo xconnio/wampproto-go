@@ -8,9 +8,16 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const (
+	testURI         = "io.xconn.test"
+	testAbc         = "abc"
+	testInvalidType = "invalidType"
+	testInvalid     = "invalid"
+)
+
 func TestValidateArgs(t *testing.T) {
 	t.Run("NoArgs", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}}
+		wampMsg := []any{1, testURI, map[string]any{}}
 		index := 3
 		var fields messages.Fields
 
@@ -20,17 +27,17 @@ func TestValidateArgs(t *testing.T) {
 	})
 
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, []any{"abc", 123, true}}
+		wampMsg := []any{1, testURI, map[string]any{}, []any{testAbc, 123, true}}
 		index := 3
 		var fields messages.Fields
 
 		err := messages.ValidateArgs(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, []any{"abc", 123, true}, fields.Args)
+		require.Equal(t, []any{testAbc, 123, true}, fields.Args)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, "invalidType"}
+		wampMsg := []any{1, testURI, map[string]any{}, testInvalidType}
 		index := 3
 		var fields messages.Fields
 
@@ -41,7 +48,7 @@ func TestValidateArgs(t *testing.T) {
 
 func TestValidateSessionID(t *testing.T) {
 	t.Run("ValidID", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}}
+		wampMsg := []any{1, testURI, map[string]any{}}
 		index := 0
 		var fields messages.Fields
 
@@ -51,7 +58,7 @@ func TestValidateSessionID(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{"invalidType", "io.xconn.test", map[string]any{}}
+		wampMsg := []any{testInvalidType, testURI, map[string]any{}}
 		index := 0
 		var fields messages.Fields
 
@@ -72,7 +79,7 @@ func TestValidateMessageType(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "invalid", map[string]any{}}
+		wampMsg := []any{1, testInvalid, map[string]any{}}
 		index := 1
 		var fields messages.Fields
 
@@ -93,7 +100,7 @@ func TestValidateRequestID(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{"invalid", 1, map[string]any{}}
+		wampMsg := []any{testInvalid, 1, map[string]any{}}
 		index := 0
 		var fields messages.Fields
 
@@ -114,7 +121,7 @@ func TestValidateRegistrationID(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "invalid", map[string]any{}}
+		wampMsg := []any{1, testInvalid, map[string]any{}}
 		index := 1
 		var fields messages.Fields
 
@@ -135,7 +142,7 @@ func TestValidatePublicationID(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "invalid", map[string]any{}}
+		wampMsg := []any{1, testInvalid, map[string]any{}}
 		index := 1
 		var fields messages.Fields
 
@@ -156,7 +163,7 @@ func TestValidateSubscriptionID(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "invalid", map[string]any{}}
+		wampMsg := []any{1, testInvalid, map[string]any{}}
 		index := 1
 		var fields messages.Fields
 
@@ -188,13 +195,13 @@ func TestValidateSignature(t *testing.T) {
 
 func TestValidateURI(t *testing.T) {
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}}
+		wampMsg := []any{1, testURI, map[string]any{}}
 		index := 1
 		var fields messages.Fields
 
 		err := messages.ValidateURI(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, "io.xconn.test", fields.URI)
+		require.Equal(t, testURI, fields.URI)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -209,13 +216,13 @@ func TestValidateURI(t *testing.T) {
 
 func TestValidateRealm(t *testing.T) {
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}}
+		wampMsg := []any{1, testURI, map[string]any{}}
 		index := 1
 		var fields messages.Fields
 
 		err := messages.ValidateRealm(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, "io.xconn.test", fields.Realm)
+		require.Equal(t, testURI, fields.Realm)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
@@ -272,7 +279,7 @@ func TestValidateReason(t *testing.T) {
 
 func TestValidateExtra(t *testing.T) {
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{"pubKey": "jhysggvvjygvb"}}
+		wampMsg := []any{1, testURI, map[string]any{"pubKey": "jhysggvvjygvb"}}
 		index := 2
 		var fields messages.Fields
 
@@ -282,7 +289,7 @@ func TestValidateExtra(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", 1}
+		wampMsg := []any{1, testURI, 1}
 		index := 2
 		var fields messages.Fields
 
@@ -293,7 +300,7 @@ func TestValidateExtra(t *testing.T) {
 
 func TestValidateOptions(t *testing.T) {
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{"invoke": "roundrobin"}}
+		wampMsg := []any{1, testURI, map[string]any{"invoke": "roundrobin"}}
 		index := 2
 		var fields messages.Fields
 
@@ -303,7 +310,7 @@ func TestValidateOptions(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", 1}
+		wampMsg := []any{1, testURI, 1}
 		index := 2
 		var fields messages.Fields
 
@@ -314,7 +321,7 @@ func TestValidateOptions(t *testing.T) {
 
 func TestValidateDetails(t *testing.T) {
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{"subscription": 1}}
+		wampMsg := []any{1, testURI, map[string]any{"subscription": 1}}
 		index := 2
 		var fields messages.Fields
 
@@ -324,7 +331,7 @@ func TestValidateDetails(t *testing.T) {
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", 1}
+		wampMsg := []any{1, testURI, 1}
 		index := 2
 		var fields messages.Fields
 
@@ -335,7 +342,7 @@ func TestValidateDetails(t *testing.T) {
 
 func TestValidateKwArgs(t *testing.T) {
 	t.Run("NoKwargs", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}}
+		wampMsg := []any{1, testURI, map[string]any{}}
 		index := 4
 		var fields messages.Fields
 
@@ -345,17 +352,17 @@ func TestValidateKwArgs(t *testing.T) {
 	})
 
 	t.Run("ValidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, []string{}, map[string]any{"abc": 123}}
+		wampMsg := []any{1, testURI, map[string]any{}, []string{}, map[string]any{testAbc: 123}}
 		index := 4
 		var fields messages.Fields
 
 		err := messages.ValidateDetails(wampMsg, index, &fields)
 		require.NoError(t, err)
-		require.Equal(t, map[string]any{"abc": 123}, fields.Details)
+		require.Equal(t, map[string]any{testAbc: 123}, fields.Details)
 	})
 
 	t.Run("InvalidType", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, []string{}, 1}
+		wampMsg := []any{1, testURI, map[string]any{}, []string{}, 1}
 		index := 4
 		var fields messages.Fields
 
@@ -378,7 +385,7 @@ func TestValidateMessage(t *testing.T) {
 	}
 
 	t.Run("ValidMessage", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, []any{"abc", 1}}
+		wampMsg := []any{1, testURI, map[string]any{}, []any{testAbc, 1}}
 		fields, err := messages.ValidateMessage(wampMsg, spec)
 
 		require.NoError(t, err)
@@ -395,14 +402,14 @@ func TestValidateMessage(t *testing.T) {
 	})
 
 	t.Run("ValidatorError", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, "invalidType"}
+		wampMsg := []any{1, testURI, map[string]any{}, testInvalidType}
 		_, err := messages.ValidateMessage(wampMsg, spec)
 
 		require.EqualError(t, err, "item at index 3 must be of type []any but was string")
 	})
 
 	t.Run("MultipleErrors", func(t *testing.T) {
-		wampMsg := []any{1, "io.xconn.test", map[string]any{}, "invalidType", "extra"}
+		wampMsg := []any{1, testURI, map[string]any{}, testInvalidType, "extra"}
 		_, err := messages.ValidateMessage(wampMsg, spec)
 
 		require.Contains(t, []string{

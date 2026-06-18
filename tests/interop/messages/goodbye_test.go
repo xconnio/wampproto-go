@@ -18,7 +18,7 @@ func goodByesEqual(msg1 *messages.GoodBye, msg2 *messages.GoodBye) bool {
 }
 
 func testGoodByeMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewGoodBye("disconnect", map[string]any{"foo": "bar"})
+	var message = messages.NewGoodBye("disconnect", map[string]any{testFoo: testBar})
 	command := fmt.Sprintf("message goodbye disconnect -d foo=bar --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

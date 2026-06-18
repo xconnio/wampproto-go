@@ -21,8 +21,8 @@ func hellosEqual(msg1 *messages.Hello, msg2 *messages.Hello) bool {
 }
 
 func testHelloMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewHello("realm1", "foo", map[string]any{"foo": "bar"},
-		map[string]any{"callee": true}, []string{"anonymous"})
+	var message = messages.NewHello("realm1", testFoo, map[string]any{testFoo: testBar},
+		map[string]any{"callee": true}, []string{testAnonymous})
 	command := fmt.Sprintf(
 		"message hello realm1 anonymous --authid foo -r callee=true -e foo:bar --serializer %s --output hex",
 		serializerStr)

@@ -19,7 +19,7 @@ func subscribesEqual(msg1 *messages.Subscribe, msg2 *messages.Subscribe) bool {
 }
 
 func testSubscribeMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewSubscribe(1, map[string]any{"abc": "xyz"}, "test")
+	var message = messages.NewSubscribe(1, map[string]any{testAbc: testXyz}, "test")
 	command := fmt.Sprintf("message subscribe 1 test -o abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

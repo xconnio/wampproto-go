@@ -8,6 +8,11 @@ import (
 	"github.com/xconnio/wampproto-go/util"
 )
 
+const (
+	testFoo = "foo"
+	testBar = "bar"
+)
+
 func TestAsInt64(t *testing.T) {
 	t.Run("ValidConversion", func(t *testing.T) {
 		tests := []struct {
@@ -117,15 +122,15 @@ func TestToString(t *testing.T) {
 
 func TestAnysToStrings(t *testing.T) {
 	t.Run("ValidConversion", func(t *testing.T) {
-		input := []any{"foo", "bar", "helloo"}
+		input := []any{testFoo, testBar, "helloo"}
 
 		result, err := util.AnysToStrings(input)
 		require.NoError(t, err)
-		require.Equal(t, []string{"foo", "bar", "helloo"}, result)
+		require.Equal(t, []string{testFoo, testBar, "helloo"}, result)
 	})
 
 	t.Run("InvalidConversion", func(t *testing.T) {
-		input := []any{"foo", 123, "bar"}
+		input := []any{testFoo, 123, testBar}
 
 		_, err := util.AnysToStrings(input)
 		require.Error(t, err)

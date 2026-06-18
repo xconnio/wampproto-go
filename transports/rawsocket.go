@@ -53,7 +53,7 @@ func SendHandshake(hs *Handshake) ([]byte, error) {
 		return nil, errors.New("maxMessageSize must be a power of 2 and >= 512")
 	}
 
-	b1 := byte((log2-9)<<4 | (int(hs.Serializer()) & 0x0F))
+	b1 := byte(((log2-9)<<4 | (int(hs.Serializer()) & 0x0F)) & 0xFF)
 	return []byte{MAGIC, b1, 0x00, 0x00}, nil
 }
 

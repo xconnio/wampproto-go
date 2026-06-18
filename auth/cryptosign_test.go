@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	testAuthID     = "foo"
-	testPublicKey  = "2b7ec216daa877c7f4c9439db8a722ea2340eacad506988db2564e258284f895"
-	testPrivateKey = "022b089bed5ab78808365e82dd12c796c835aeb98b4a5a9e099d3e72cb719516"
-	testChallenge  = "5c7b195948a15a9f94bdc31cf6d88294e380985e2c40f5f912fd707e080cb5ff"
+	testAuthID       = "foo"
+	testPublicKey    = "2b7ec216daa877c7f4c9439db8a722ea2340eacad506988db2564e258284f895"
+	testPrivateKey   = "022b089bed5ab78808365e82dd12c796c835aeb98b4a5a9e099d3e72cb719516"
+	testChallenge    = "5c7b195948a15a9f94bdc31cf6d88294e380985e2c40f5f912fd707e080cb5ff"
+	testChallengeKey = "challenge"
 )
 
 func TestNewCryptoSignAuthenticator(t *testing.T) {
@@ -47,7 +48,7 @@ func TestNewCryptoSignAuthenticator(t *testing.T) {
 	})
 
 	t.Run("Authenticate", func(t *testing.T) {
-		challenge := messages.NewChallenge(auth.MethodCryptoSign, map[string]any{"challenge": testChallenge})
+		challenge := messages.NewChallenge(auth.MethodCryptoSign, map[string]any{testChallengeKey: testChallenge})
 
 		authenticate, err := authenticator.Authenticate(*challenge)
 		require.NoError(t, err)

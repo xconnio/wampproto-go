@@ -9,6 +9,14 @@ import (
 	"github.com/xconnio/wampproto-go/messages"
 )
 
+const (
+	testArg    = "abc"
+	testAuthID = "authid"
+	testRole   = "anonymous"
+	testURI    = "foo.bar"
+	testInvoke = "invoke"
+)
+
 func TestDealerAddRemoveSession(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
@@ -18,7 +26,7 @@ func TestDealerAddRemoveSession(t *testing.T) {
 	})
 
 	t.Run("AddRemove", func(t *testing.T) {
-		details := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+		details := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 		err := dealer.AddSession(details)
 		require.NoError(t, err)
 
@@ -33,26 +41,26 @@ func TestDealerAddRemoveSession(t *testing.T) {
 func TestDealerRegisterUnregister(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
 	var registerationID uint64
 
 	t.Run("Register", func(t *testing.T) {
-		register := messages.NewRegister(1, nil, "foo.bar")
+		register := messages.NewRegister(1, nil, testURI)
 		msg, err := dealer.ReceiveMessage(callee.ID(), register)
 		require.NoError(t, err)
 		require.NotNil(t, msg)
 		require.Equal(t, msg.Recipient, callee.ID())
 		require.Equal(t, messages.MessageTypeRegistered, msg.Message.Type())
 
-		hasProcedure := dealer.HasProcedure("foo.bar")
+		hasProcedure := dealer.HasProcedure(testURI)
 		require.True(t, hasProcedure)
 		registerationID = msg.Message.(*messages.Registered).RegistrationID()
 
 		t.Run("DuplicateProcedure", func(t *testing.T) {
-			register = messages.NewRegister(2, nil, "foo.bar")
+			register = messages.NewRegister(2, nil, testURI)
 			msg, err = dealer.ReceiveMessage(callee.ID(), register)
 			require.NoError(t, err)
 			require.NotNil(t, msg)
@@ -64,18 +72,18 @@ func TestDealerRegisterUnregister(t *testing.T) {
 		})
 
 		t.Run("InvalidSessionID", func(t *testing.T) {
-			invalidRegister := messages.NewRegister(2, nil, "foo.bar")
+			invalidRegister := messages.NewRegister(2, nil, testURI)
 			_, err = dealer.ReceiveMessage(5, invalidRegister)
 			require.EqualError(t, err, "cannot register procedure for non-existent session 5")
 		})
 	})
 
 	t.Run("Call", func(t *testing.T) {
-		caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+		caller := wampproto.NewSessionDetails(2, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 		err := dealer.AddSession(caller)
 		require.NoError(t, err)
 
-		call := messages.NewCall(3, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		call := messages.NewCall(3, map[string]any{}, testURI, []any{testArg}, nil)
 		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
 		require.NoError(t, err)
 		require.NotNil(t, invWithRecipient)
@@ -84,7 +92,7 @@ func TestDealerRegisterUnregister(t *testing.T) {
 
 		// receive yield for invocation
 		invocation := invWithRecipient.Message.(*messages.Invocation)
-		yield := messages.NewYield(invocation.RequestID(), map[string]any{}, []any{"abc"}, nil)
+		yield := messages.NewYield(invocation.RequestID(), map[string]any{}, []any{testArg}, nil)
 		yieldWithRecipient, err := dealer.ReceiveMessage(caller.ID(), yield)
 		require.NoError(t, err)
 		require.NotNil(t, yieldWithRecipient)
@@ -92,7 +100,7 @@ func TestDealerRegisterUnregister(t *testing.T) {
 		require.Equal(t, messages.MessageTypeResult, yieldWithRecipient.Message.Type())
 
 		t.Run("NonExistingProcedure", func(t *testing.T) {
-			invalidCallMessage := messages.NewCall(3, map[string]any{}, "invalid", []any{"abc"}, nil)
+			invalidCallMessage := messages.NewCall(3, map[string]any{}, "invalid", []any{testArg}, nil)
 			errWithRecipient, err := dealer.ReceiveMessage(caller.ID(), invalidCallMessage)
 			require.NoError(t, err)
 			require.NotNil(t, errWithRecipient)
@@ -114,7 +122,7 @@ func TestDealerRegisterUnregister(t *testing.T) {
 		require.Equal(t, callee.ID(), unregWithRecipient.Recipient)
 		require.Equal(t, messages.MessageTypeUnregistered, unregWithRecipient.Message.Type())
 
-		hasProcedure := dealer.HasProcedure("foo.bar")
+		hasProcedure := dealer.HasProcedure(testURI)
 		require.False(t, hasProcedure)
 
 		t.Run("InvalidRegistration", func(t *testing.T) {
@@ -127,19 +135,19 @@ func TestDealerRegisterUnregister(t *testing.T) {
 func TestProgressiveCallResults(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 	err = dealer.AddSession(caller)
 	require.NoError(t, err)
 
-	register := messages.NewRegister(1, nil, "foo.bar")
+	register := messages.NewRegister(1, nil, testURI)
 	_, err = dealer.ReceiveMessage(callee.ID(), register)
 	require.NoError(t, err)
 
-	call := messages.NewCall(caller.ID(), map[string]any{wampproto.OptionReceiveProgress: true}, "foo.bar", []any{}, nil)
+	call := messages.NewCall(caller.ID(), map[string]any{wampproto.OptionReceiveProgress: true}, testURI, []any{}, nil)
 	messageWithRecipient, err := dealer.ReceiveMessage(callee.ID(), call)
 	require.NoError(t, err)
 	require.Equal(t, callee.ID(), messageWithRecipient.Recipient)
@@ -169,19 +177,19 @@ func TestProgressiveCallResults(t *testing.T) {
 func TestProgressiveCallInvocations(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 	err = dealer.AddSession(caller)
 	require.NoError(t, err)
 
-	register := messages.NewRegister(3, nil, "foo.bar")
+	register := messages.NewRegister(3, nil, testURI)
 	_, err = dealer.ReceiveMessage(callee.ID(), register)
 	require.NoError(t, err)
 
-	call := messages.NewCall(4, map[string]any{wampproto.OptionProgress: true}, "foo.bar", []any{}, nil)
+	call := messages.NewCall(4, map[string]any{wampproto.OptionProgress: true}, testURI, []any{}, nil)
 	messageWithRecipient, err := dealer.ReceiveMessage(callee.ID(), call)
 	require.NoError(t, err)
 	require.Equal(t, callee.ID(), messageWithRecipient.Recipient)
@@ -191,7 +199,7 @@ func TestProgressiveCallInvocations(t *testing.T) {
 
 	invRequestID := invMessage.RequestID()
 	for i := 0; i < 10; i++ {
-		call = messages.NewCall(4, map[string]any{wampproto.OptionProgress: true}, "foo.bar", []any{}, nil)
+		call = messages.NewCall(4, map[string]any{wampproto.OptionProgress: true}, testURI, []any{}, nil)
 		messageWithRecipient, err = dealer.ReceiveMessage(callee.ID(), call)
 		require.NoError(t, err)
 
@@ -200,7 +208,7 @@ func TestProgressiveCallInvocations(t *testing.T) {
 		require.Equal(t, invRequestID, invMessage.RequestID())
 	}
 
-	finalCall := messages.NewCall(4, map[string]any{}, "foo.bar", []any{}, nil)
+	finalCall := messages.NewCall(4, map[string]any{}, testURI, []any{}, nil)
 	messageWithRecipient, err = dealer.ReceiveMessage(callee.ID(), finalCall)
 	require.NoError(t, err)
 	require.Equal(t, callee.ID(), messageWithRecipient.Recipient)
@@ -229,7 +237,7 @@ func TestDealerWildcardRegistration(t *testing.T) {
 func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI string) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
@@ -246,11 +254,11 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 	})
 
 	t.Run("Call", func(t *testing.T) {
-		caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+		caller := wampproto.NewSessionDetails(2, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 		err := dealer.AddSession(caller)
 		require.NoError(t, err)
 
-		call := messages.NewCall(3, map[string]any{}, callURI, []any{"abc"}, nil)
+		call := messages.NewCall(3, map[string]any{}, callURI, []any{testArg}, nil)
 		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
 		require.NoError(t, err)
 		require.NotNil(t, invWithRecipient)
@@ -259,7 +267,7 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 
 		// receive yield for invocation
 		invocation := invWithRecipient.Message.(*messages.Invocation)
-		yield := messages.NewYield(invocation.RequestID(), map[string]any{}, []any{"abc"}, nil)
+		yield := messages.NewYield(invocation.RequestID(), map[string]any{}, []any{testArg}, nil)
 		yieldWithRecipient, err := dealer.ReceiveMessage(caller.ID(), yield)
 		require.NoError(t, err)
 		require.NotNil(t, yieldWithRecipient)
@@ -271,20 +279,20 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 func TestDealerDiscloseCallerDetails(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 	err := dealer.AddSession(callee)
 	require.NoError(t, err)
 
-	register := messages.NewRegister(1, nil, "foo.bar")
+	register := messages.NewRegister(1, nil, testURI)
 	_, err = dealer.ReceiveMessage(callee.ID(), register)
 	require.NoError(t, err)
 
-	caller := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(2, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 	err = dealer.AddSession(caller)
 	require.NoError(t, err)
 
 	t.Run("DisabledByDefault", func(t *testing.T) {
-		call := messages.NewCall(3, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		call := messages.NewCall(3, map[string]any{}, testURI, []any{testArg}, nil)
 		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
 		require.NoError(t, err)
 		invocation := invWithRecipient.Message.(*messages.Invocation)
@@ -293,18 +301,18 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 
 	t.Run("Enable", func(t *testing.T) {
 		dealer.AutoDiscloseCaller(true)
-		call := messages.NewCall(4, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		call := messages.NewCall(4, map[string]any{}, testURI, []any{testArg}, nil)
 		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
 		require.NoError(t, err)
 		invocation := invWithRecipient.Message.(*messages.Invocation)
-		expectedDetails := map[string]any{"caller": uint64(2), "caller_authid": "authid",
-			"caller_authrole": "anonymous", "procedure": "foo.bar"}
+		expectedDetails := map[string]any{"caller": uint64(2), "caller_authid": testAuthID,
+			"caller_authrole": testRole, "procedure": testURI}
 		require.Equal(t, expectedDetails, invocation.Details())
 	})
 
 	t.Run("Disable", func(t *testing.T) {
 		dealer.AutoDiscloseCaller(false)
-		call := messages.NewCall(4, map[string]any{}, "foo.bar", []any{"abc"}, nil)
+		call := messages.NewCall(4, map[string]any{}, testURI, []any{testArg}, nil)
 		invWithRecipient, err := dealer.ReceiveMessage(caller.ID(), call)
 		require.NoError(t, err)
 		invocation := invWithRecipient.Message.(*messages.Invocation)
@@ -315,17 +323,17 @@ func TestDealerDiscloseCallerDetails(t *testing.T) {
 func TestDealerInvocationOptions(t *testing.T) {
 	dealer := wampproto.NewDealer()
 
-	callee1 := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
-	callee2 := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee1 := wampproto.NewSessionDetails(1, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
+	callee2 := wampproto.NewSessionDetails(2, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 	require.NoError(t, dealer.AddSession(callee1))
 	require.NoError(t, dealer.AddSession(callee2))
 
-	caller := wampproto.NewSessionDetails(3, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	caller := wampproto.NewSessionDetails(3, "realm", testAuthID, testRole, "", false, wampproto.RouterRoles, nil)
 	require.NoError(t, dealer.AddSession(caller))
 
 	registerProcedures := func(proc, policy string) {
 		for _, callee := range []uint64{callee1.ID(), callee2.ID()} {
-			register := messages.NewRegister(callee, map[string]any{"invoke": policy}, proc)
+			register := messages.NewRegister(callee, map[string]any{testInvoke: policy}, proc)
 			msgWithRecipient, err := dealer.ReceiveMessage(callee, register)
 			require.NoError(t, err)
 			require.Equal(t, messages.MessageTypeRegistered, msgWithRecipient.Message.Type())
@@ -355,11 +363,11 @@ func TestDealerInvocationOptions(t *testing.T) {
 	})
 
 	t.Run("RegisterFirstAndThenLast", func(t *testing.T) {
-		register := messages.NewRegister(callee1.ID(), map[string]any{"invoke": "first"}, "io.xconn.test")
+		register := messages.NewRegister(callee1.ID(), map[string]any{testInvoke: "first"}, "io.xconn.test")
 		_, err := dealer.ReceiveMessage(callee1.ID(), register)
 		require.NoError(t, err)
 
-		register1 := messages.NewRegister(callee2.ID(), map[string]any{"invoke": "last"}, "io.xconn.test")
+		register1 := messages.NewRegister(callee2.ID(), map[string]any{testInvoke: "last"}, "io.xconn.test")
 		msgWithRecipient, err := dealer.ReceiveMessage(callee2.ID(), register1)
 		require.NoError(t, err)
 		require.Equal(t, messages.MessageTypeError, msgWithRecipient.Message.Type())

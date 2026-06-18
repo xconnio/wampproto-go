@@ -19,7 +19,7 @@ func registersEqual(msg1 *messages.Register, msg2 *messages.Register) bool {
 }
 
 func testRegisterMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewRegister(1, map[string]any{"abc": "xyz"}, "test")
+	var message = messages.NewRegister(1, map[string]any{testAbc: testXyz}, "test")
 	command := fmt.Sprintf("message register 1 test -o abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

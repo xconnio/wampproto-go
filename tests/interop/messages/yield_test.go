@@ -20,7 +20,7 @@ func yieldsEqual(msg1 *messages.Yield, msg2 *messages.Yield) bool {
 }
 
 func testYieldMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewYield(1, map[string]any{"foo": true}, []any{"abc"}, map[string]any{"abc": "xyz"})
+	var message = messages.NewYield(1, map[string]any{testFoo: true}, []any{testAbc}, map[string]any{testAbc: testXyz})
 	command := fmt.Sprintf("message yield 1 abc -o foo=true -k abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

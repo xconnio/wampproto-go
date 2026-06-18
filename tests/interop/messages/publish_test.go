@@ -21,7 +21,8 @@ func publishEqual(msg1 *messages.Publish, msg2 *messages.Publish) bool {
 }
 
 func testPublishMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewPublish(1, map[string]any{"abc": "xyz"}, "test", []any{"abc"}, map[string]any{"abc": "xyz"})
+	var message = messages.NewPublish(1, map[string]any{testAbc: testXyz}, "test",
+		[]any{testAbc}, map[string]any{testAbc: testXyz})
 	command := fmt.Sprintf("message publish 1 test abc -o abc:xyz -k abc=xyz --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

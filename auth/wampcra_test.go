@@ -34,7 +34,7 @@ func TestNewCRAAuthenticator(t *testing.T) {
 	require.Nil(t, authenticator.AuthExtra())
 
 	t.Run("Authenticate", func(t *testing.T) {
-		challengeData := map[string]any{"challenge": testCRAChallenge}
+		challengeData := map[string]any{testChallengeKey: testCRAChallenge}
 		challenge := messages.NewChallenge(auth.MethodCRA, challengeData)
 
 		authenticate, err := authenticator.Authenticate(*challenge)

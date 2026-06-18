@@ -18,7 +18,7 @@ func interruptsEqual(msg1 *messages.Interrupt, msg2 *messages.Interrupt) bool {
 }
 
 func testInterruptMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewInterrupt(1, map[string]any{"foo": "bar"})
+	var message = messages.NewInterrupt(1, map[string]any{testFoo: testBar})
 	command := fmt.Sprintf("message interrupt 1 -o foo=bar --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

@@ -18,7 +18,7 @@ func authenticatesEqual(msg1 *messages.Authenticate, msg2 *messages.Authenticate
 }
 
 func testAuthenticateMessage(t *testing.T, serializerStr string, serializer serializers.Serializer) {
-	var message = messages.NewAuthenticate("anonymous", map[string]any{"foo": "bar"})
+	var message = messages.NewAuthenticate(testAnonymous, map[string]any{testFoo: testBar})
 	command := fmt.Sprintf("message authenticate anonymous -e foo=bar --serializer %s --output hex", serializerStr)
 
 	msg := tests.RunCommandAndDeserialize(t, command, serializer)

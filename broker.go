@@ -63,9 +63,11 @@ func (b *Broker) RemoveSession(id uint64) error {
 	delete(b.subscriptionsBySession, id)
 	for _, v := range subscriptions {
 		subscription, ok := b.subscriptionsByTopic[v.Topic]
-		if ok {
-			delete(subscription.Subscribers, id)
+		if !ok {
+			continue
 		}
+
+		delete(subscription.Subscribers, id)
 
 		if len(subscription.Subscribers) == 0 {
 			delete(b.subscriptionsByTopic, v.Topic)

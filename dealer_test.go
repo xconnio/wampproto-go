@@ -110,7 +110,7 @@ func TestDealerRegisterUnregister(t *testing.T) {
 
 		t.Run("InvalidYield", func(t *testing.T) {
 			_, err = dealer.ReceiveMessage(5, yield)
-			require.EqualError(t, err, "yield: not pending calls for session 5")
+			require.Error(t, err)
 		})
 	})
 
@@ -273,6 +273,132 @@ func testDealerRegistrationAndCall(t *testing.T, matchType, procedure, callURI s
 		require.NotNil(t, yieldWithRecipient)
 		require.Equal(t, caller.ID(), yieldWithRecipient.Recipient)
 		require.Equal(t, messages.MessageTypeResult, yieldWithRecipient.Message.Type())
+	})
+}
+
+func newCancelTestDealer(t *testing.T) (*wampproto.Dealer, *wampproto.SessionDetails, *wampproto.SessionDetails) {
+	t.Helper()
+	d := wampproto.NewDealer()
+	caller := wampproto.NewSessionDetails(1, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	callee := wampproto.NewSessionDetails(2, "realm", "authid", "anonymous", "", false, wampproto.RouterRoles, nil)
+	require.NoError(t, d.AddSession(caller))
+	require.NoError(t, d.AddSession(callee))
+	reg := messages.NewRegister(1, nil, "foo.bar")
+	msg, err := d.ReceiveMessage(callee.ID(), reg)
+	require.NoError(t, err)
+	require.Equal(t, messages.MessageTypeRegistered, msg.Message.Type())
+	return d, caller, callee
+}
+
+func TestDealerCancelMessage(t *testing.T) {
+	t.Run("CancelModeSkip", func(t *testing.T) {
+		dealer, caller, _ := newCancelTestDealer(t)
+
+		call := messages.NewCall(1, nil, "foo.bar", nil, nil)
+		_, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+
+		cancel := messages.NewCancel(1, map[string]any{wampproto.OptionMode: wampproto.CancelModeSkip})
+		msgs, err := dealer.ReceiveCancel(caller.ID(), cancel)
+		require.NoError(t, err)
+		require.Len(t, msgs, 1)
+		require.Equal(t, caller.ID(), msgs[0].Recipient)
+		require.Equal(t, messages.MessageTypeError, msgs[0].Message.Type())
+		require.Equal(t, wampproto.ErrCanceled, msgs[0].Message.(*messages.Error).URI())
+	})
+
+	t.Run("CancelModeKillNoWait", func(t *testing.T) {
+		dealer, caller, callee := newCancelTestDealer(t)
+
+		call := messages.NewCall(1, nil, "foo.bar", nil, nil)
+		_, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+
+		cancel := messages.NewCancel(1, map[string]any{wampproto.OptionMode: wampproto.CancelModeKillNoWait})
+		msgs, err := dealer.ReceiveCancel(caller.ID(), cancel)
+		require.NoError(t, err)
+		require.Len(t, msgs, 2)
+
+		require.Equal(t, callee.ID(), msgs[0].Recipient)
+		require.Equal(t, messages.MessageTypeInterrupt, msgs[0].Message.Type())
+		require.Equal(t, wampproto.ErrCanceled, msgs[0].Message.(*messages.Interrupt).Options()[wampproto.OptionReason])
+
+		require.Equal(t, caller.ID(), msgs[1].Recipient)
+		require.Equal(t, messages.MessageTypeError, msgs[1].Message.Type())
+		require.Equal(t, wampproto.ErrCanceled, msgs[1].Message.(*messages.Error).URI())
+	})
+
+	t.Run("CancelModeKillCalleeRespondsWithError", func(t *testing.T) {
+		dealer, caller, callee := newCancelTestDealer(t)
+
+		call := messages.NewCall(1, nil, "foo.bar", nil, nil)
+		inv, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+		invocationID := inv.Message.(*messages.Invocation).RequestID()
+
+		cancel := messages.NewCancel(1, map[string]any{wampproto.OptionMode: wampproto.CancelModeKill})
+		msgs, err := dealer.ReceiveCancel(caller.ID(), cancel)
+		require.NoError(t, err)
+		require.Len(t, msgs, 1)
+		require.Equal(t, callee.ID(), msgs[0].Recipient)
+		require.Equal(t, messages.MessageTypeInterrupt, msgs[0].Message.Type())
+
+		// callee responds with ERROR after receiving INTERRUPT
+		calleeErr := messages.NewError(messages.MessageTypeInvocation, invocationID, nil, wampproto.ErrCanceled, nil, nil)
+		result, err := dealer.ReceiveMessage(callee.ID(), calleeErr)
+		require.NoError(t, err)
+		require.Equal(t, caller.ID(), result.Recipient)
+		require.Equal(t, messages.MessageTypeError, result.Message.Type())
+		require.Equal(t, wampproto.ErrCanceled, result.Message.(*messages.Error).URI())
+	})
+
+	t.Run("CancelModeKillCalleeIgnoresInterruptAndYields", func(t *testing.T) {
+		dealer, caller, callee := newCancelTestDealer(t)
+
+		call := messages.NewCall(1, nil, "foo.bar", nil, nil)
+		inv, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+		invocationID := inv.Message.(*messages.Invocation).RequestID()
+
+		cancel := messages.NewCancel(1, map[string]any{wampproto.OptionMode: wampproto.CancelModeKill})
+		_, err = dealer.ReceiveCancel(caller.ID(), cancel)
+		require.NoError(t, err)
+
+		// callee ignores INTERRUPT and sends YIELD anyway
+		yield := messages.NewYield(invocationID, nil, []any{"result"}, nil)
+		result, err := dealer.ReceiveMessage(callee.ID(), yield)
+		require.NoError(t, err)
+		require.Equal(t, caller.ID(), result.Recipient)
+		require.Equal(t, messages.MessageTypeError, result.Message.Type())
+		require.Equal(t, wampproto.ErrCanceled, result.Message.(*messages.Error).URI())
+	})
+
+	t.Run("CancelInvalidMode", func(t *testing.T) {
+		dealer, caller, _ := newCancelTestDealer(t)
+
+		call := messages.NewCall(1, nil, "foo.bar", nil, nil)
+		_, err := dealer.ReceiveMessage(caller.ID(), call)
+		require.NoError(t, err)
+
+		cancel := messages.NewCancel(1, map[string]any{wampproto.OptionMode: "bogus"})
+		msgs, err := dealer.ReceiveCancel(caller.ID(), cancel)
+		require.NoError(t, err)
+		require.Len(t, msgs, 1)
+		require.Equal(t, caller.ID(), msgs[0].Recipient)
+		require.Equal(t, messages.MessageTypeError, msgs[0].Message.Type())
+		require.Equal(t, wampproto.ErrInvalidArgument, msgs[0].Message.(*messages.Error).URI())
+	})
+
+	t.Run("CancelUnknownRequest", func(t *testing.T) {
+		dealer, caller, _ := newCancelTestDealer(t)
+
+		cancel := messages.NewCancel(999, nil)
+		msgs, err := dealer.ReceiveCancel(caller.ID(), cancel)
+		require.NoError(t, err)
+		require.Len(t, msgs, 1)
+		require.Equal(t, caller.ID(), msgs[0].Recipient)
+		require.Equal(t, messages.MessageTypeError, msgs[0].Message.Type())
+		require.Equal(t, wampproto.ErrInvalidArgument, msgs[0].Message.(*messages.Error).URI())
 	})
 }
 

@@ -24,7 +24,7 @@ var RouterRoles = map[string]any{ //nolint:gochecknoglobals
 	"dealer": map[string]any{
 		roleFeatures: map[string]any{
 			FeatureProgressiveCallInvocations: true,
-			FeatureCallCancelling:             true,
+			FeatureCallCanceling:              true,
 		},
 	},
 	"broker": map[string]any{

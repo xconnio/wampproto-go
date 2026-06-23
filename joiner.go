@@ -14,13 +14,14 @@ var ClientRoles = map[string]any{ //nolint:gochecknoglobals
 	"caller": map[string]any{
 		roleFeatures: map[string]any{
 			FeatureProgressiveCallInvocations: true,
+			FeatureCallCanceling:              true,
 		},
 	},
 	"callee": map[string]any{
 		roleFeatures: map[string]any{
 			FeatureProgressiveCallInvocations: true,
 			FeatureProgressiveCallResults:     true,
-			FeatureCallCancelling:             true,
+			FeatureCallCanceling:              true,
 		},
 	},
 	"publisher": map[string]any{

@@ -17,6 +17,12 @@ const (
 	OptionProgress        = "progress"
 	OptionMatch           = "match"
 	OptionInvoke          = "invoke"
+	OptionMode            = "mode"
+	OptionReason          = "reason"
+
+	CancelModeKill       = "kill"
+	CancelModeKillNoWait = "killnowait"
+	CancelModeSkip       = "skip"
 
 	MatchExact    = "exact"
 	MatchPrefix   = "prefix"
@@ -32,7 +38,7 @@ const (
 const (
 	FeatureProgressiveCallInvocations = "progressive_call_invocations"
 	FeatureProgressiveCallResults     = "progressive_call_results"
-	FeatureCallCancelling             = "call_canceling"
+	FeatureCallCanceling              = "call_canceling"
 	FeaturePublisherExclusion         = "publisher_exclusion"
 )
 
@@ -42,6 +48,7 @@ type PendingInvocation struct {
 	CalleeID        uint64
 	Progress        bool
 	ReceiveProgress bool
+	CancelMode      string
 }
 
 type Registration struct {
@@ -268,7 +275,39 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		yield := msg.(*messages.Yield)
 		pending, exists := d.pendingCalls[yield.RequestID()]
 		if !exists {
-			return nil, fmt.Errorf("yield: not pending calls for session %d", sessionID)
+			return nil, fmt.Errorf("yield: no pending call for invocation %d", yield.RequestID())
+		}
+
+		switch pending.CancelMode {
+		case CancelModeSkip, CancelModeKillNoWait:
+			// Caller already received ERROR; discard. For skip, the callee never got
+			// INTERRUPT so keep the pending call alive until the final YIELD.
+			progress, _ := yield.Options()[OptionProgress].(bool)
+			if !progress {
+				delete(d.pendingCalls, yield.RequestID())
+				delete(d.invocationIDbyCall, CallMap{CallerID: pending.CallerID, CallID: pending.RequestID})
+			}
+			return nil, nil
+		case CancelModeKill:
+			// Callee ignored the INTERRUPT and sent YIELD; deliver canceled error to caller.
+			delete(d.pendingCalls, yield.RequestID())
+			delete(d.invocationIDbyCall, CallMap{CallerID: pending.CallerID, CallID: pending.RequestID})
+			if d.sessions[pending.CallerID] == nil {
+				return nil, nil
+			}
+			errMsg := messages.NewError(messages.MessageTypeCall, pending.RequestID, nil, ErrCanceled, nil, nil)
+			return &MessageWithRecipient{Message: errMsg, Recipient: pending.CallerID}, nil
+		}
+
+		caller := d.sessions[pending.CallerID]
+		if caller == nil {
+			// Caller disconnected; interrupt the callee. Mark as killnowait so any
+			// further yields from a progressive call are discarded rather than erroring.
+			pending.CancelMode = CancelModeKillNoWait
+			return &MessageWithRecipient{Message: messages.NewInterrupt(yield.RequestID(),
+				map[string]any{OptionReason: ErrCanceled, OptionMode: CancelModeKillNoWait}),
+				Recipient: sessionID,
+			}, nil
 		}
 
 		progress, _ := yield.Options()[OptionProgress].(bool)
@@ -277,14 +316,10 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 			details = map[string]any{OptionProgress: progress}
 		} else {
 			delete(d.pendingCalls, yield.RequestID())
+			delete(d.invocationIDbyCall, CallMap{CallerID: pending.CallerID, CallID: pending.RequestID})
 		}
 
 		var result *messages.Result
-		caller := d.sessions[pending.CallerID]
-		if caller == nil {
-			return nil, fmt.Errorf("yield: caller %d gone before receiving result", pending.CallerID)
-		}
-
 		if yield.PayloadIsBinary() && caller.StaticSerializer() {
 			result = messages.NewResultBinary(pending.RequestID, details, yield.Payload(), yield.PayloadSerializer())
 		} else {
@@ -374,6 +409,12 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 		}
 
 		delete(d.pendingCalls, wErr.RequestID())
+		delete(d.invocationIDbyCall, CallMap{CallerID: pending.CallerID, CallID: pending.RequestID})
+
+		if pending.CancelMode == CancelModeSkip || pending.CancelMode == CancelModeKillNoWait {
+			// Caller already received ERROR.
+			return nil, nil
+		}
 
 		wErr = messages.NewError(messages.MessageTypeCall, pending.RequestID, wErr.Details(), wErr.URI(),
 			wErr.Args(), wErr.KwArgs())
@@ -381,6 +422,57 @@ func (d *Dealer) ReceiveMessage(sessionID uint64, msg messages.Message) (*Messag
 	default:
 		return nil, fmt.Errorf("dealer: received unexpected message of type %T", msg)
 	}
+}
+
+func (d *Dealer) ReceiveCancel(sessionID uint64, cancel *messages.Cancel) ([]*MessageWithRecipient, error) {
+	d.Lock()
+	defer d.Unlock()
+
+	mode := util.ToString(cancel.Options()[OptionMode])
+	switch mode {
+	case CancelModeSkip, CancelModeKill, CancelModeKillNoWait:
+	case "":
+		mode = CancelModeKillNoWait
+	default:
+		errMsg := messages.NewError(messages.MessageTypeCancel, cancel.RequestID(), nil, ErrInvalidArgument,
+			[]any{fmt.Sprintf("invalid cancel mode: %s", mode)}, nil)
+		return []*MessageWithRecipient{{Message: errMsg, Recipient: sessionID}}, nil
+	}
+
+	callMap := CallMap{CallerID: sessionID, CallID: cancel.RequestID()}
+	invocationID, ok := d.invocationIDbyCall[callMap]
+	if !ok {
+		errMsg := messages.NewError(messages.MessageTypeCancel, cancel.RequestID(), nil, ErrInvalidArgument, nil, nil)
+		return []*MessageWithRecipient{{Message: errMsg, Recipient: sessionID}}, nil
+	}
+
+	pendingCall, ok := d.pendingCalls[invocationID]
+	if !ok {
+		errMsg := messages.NewError(messages.MessageTypeCancel, cancel.RequestID(), nil, ErrInvalidArgument, nil, nil)
+		return []*MessageWithRecipient{{Message: errMsg, Recipient: sessionID}}, nil
+	}
+
+	// Mark the pending call with the cancel mode so YIELD/ERROR handlers know how to
+	// handle any future messages from the callee.
+	pendingCall.CancelMode = mode
+
+	var msgs []*MessageWithRecipient
+	if mode != CancelModeSkip {
+		msgs = append(msgs, &MessageWithRecipient{
+			Message:   messages.NewInterrupt(invocationID, map[string]any{OptionReason: ErrCanceled, OptionMode: mode}),
+			Recipient: pendingCall.CalleeID,
+		})
+	}
+
+	if mode != CancelModeKill {
+		// skip and killnowait: caller gets its error immediately.
+		msgs = append(msgs, &MessageWithRecipient{
+			Message:   messages.NewError(messages.MessageTypeCall, cancel.RequestID(), nil, ErrCanceled, nil, nil),
+			Recipient: pendingCall.CallerID,
+		})
+	}
+
+	return msgs, nil
 }
 
 func wildcardMatch(str, pattern string) bool {
